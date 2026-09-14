@@ -514,6 +514,62 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 .spritebox.tera-active:after{display:none !important;content:none !important;}
 </style>
 
+
+<style id="v3-2-11-final-override">
+/* V3.2.11 — 테라스탈 시각효과 제거 / 거·다이맥스 10배 */
+
+/* 테라스탈은 규칙/HUD 표시만 유지. 모든 시각 레이어를 완전히 숨긴다. */
+.tera-copy,
+.tera-color-overlay,
+.tera-overlay-img,
+.tera-crystal-mask,
+.spritebox.tera-active::before,
+.spritebox.tera-active::after {
+  display:none !important;
+  content:none !important;
+}
+.spritebox.tera-active > .sprite {
+  filter:none !important;
+}
+
+/* 포켓몬 그림자/발광 효과는 계속 사용하지 않는다. */
+.sprite,
+.sprite.dynamax,
+.sprite.hit,
+.sprite.attack,
+.sprite.faint,
+.spritebox.tera-active > .sprite,
+.spritebox.tera-active > .sprite.dynamax {
+  filter:none !important;
+  text-shadow:none !important;
+  box-shadow:none !important;
+}
+
+/* 거/다이맥스는 양쪽 모두 정확히 10배. 위치만 진영별로 유지한다. */
+.sprite.dynamax {
+  --base-scale:10 !important;
+  --base-y:-24px !important;
+}
+.enemy .sprite.dynamax {
+  --base-scale:10 !important;
+  --base-y:-58px !important;
+}
+.player .sprite.dynamax {
+  --base-scale:10 !important;
+  --base-y:34px !important;
+}
+
+@media(max-width:680px){
+  .sprite.dynamax,
+  .enemy .sprite.dynamax,
+  .player .sprite.dynamax {
+    --base-scale:10 !important;
+  }
+  .enemy .sprite.dynamax{--base-y:-48px !important;}
+  .player .sprite.dynamax{--base-y:28px !important;}
+}
+</style>
+
 </head>
 <body>
 <div class="shell">
@@ -1025,18 +1081,13 @@ function hud(t){const p=t.active,pct=Math.max(0,Math.min(100,p.currentHp/p.stats
 function renderTeam(t){return t.party.map((p,i)=>`<div class="teamrow"><img src="${spriteUrl(p,false)}" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · HP ${p.currentHp}/${p.stats.hp} · ${esc(displayItemName(p.item))}</small></div><span>${i===t.activeIndex?"●":""}</span></div>`).join("")}
 function renderGear(t){const g=t.gear||{};return[["키스톤",g.keyStone],["Z링",g.zRing],["다이맥스밴드",g.dynamaxBand],["테라스탈오브",g.teraOrb]].map(([name,on])=>`<span class="gear-chip ${on?"on":"off"}">${on?"✓":"×"} ${name}</span>`).join("")}
 function setTeraOverlay(base,overlay,p,isMine){
-  const box=base.closest(".spritebox");
-  if(!p.isTerastallized){
-    overlay.className="sprite tera-copy hidden";
+  // 테라스탈은 전투 규칙/HUD만 유지하고 스프라이트에는 시각 효과를 주지 않는다.
+  if(overlay){
+    overlay.className="hidden";
     overlay.removeAttribute("src");
-    box?.classList.remove("tera-active");
-    return;
+    overlay.style.display="none";
   }
-  const url=spriteUrl(p,isMine);
-  if(overlay.src!==url) overlay.src=url;
-  overlay.className=`sprite tera-copy${p.isDynamaxed?" dynamax":""}`;
-  overlay.style.opacity="0.40";
-  box?.classList.add("tera-active");
+  base?.closest(".spritebox")?.classList.remove("tera-active");
 }
 function renderBattle(){
   if(!battle)return;const mine=trainerByPerspective(true),enemy=trainerByPerspective(false),mp=mine.active,ep=enemy.active;qs("#battleSection").classList.remove("hidden");qs("#playerHud").innerHTML=hud(mine);qs("#enemyHud").innerHTML=hud(enemy);setSprite(qs("#playerSprite"),mp,true);setSprite(qs("#enemySprite"),ep,false);setTeraOverlay(qs("#playerSprite"),qs("#playerTeraOverlay"),mp,true);setTeraOverlay(qs("#enemySprite"),qs("#enemyTeraOverlay"),ep,false);
@@ -1123,8 +1174,34 @@ function validationHtml(d){if(!d)return"";const errs=(d.errors||[]).map(x=>`<div
 function previewEntry(data){if(!data?.partyData?.length){qs("#entryPreview").innerHTML=`<div class="bad">이 트레이너의 포켓몬 정보를 찾지 못했습니다.</div>${validationHtml(data)}`;return}qs("#entryPreview").innerHTML=`${validationHtml(data)}${data.partyData.map(p=>`<div class="teamrow"><img src="${CONFIG.showdownBase}/${p.shiny?"ani-shiny":"ani"}/${encodeURIComponent(p.showdownId)}.gif" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · 지닌물건 ${esc(displayItemName(p.item))}</small></div><span>레벨 ${p.level}</span></div>`).join("")}`}
 function startLocal(a,b){if(!a||!b||a.errors?.length||b.errors?.length){toast("엔트리 검증 오류가 있어 배틀을 시작할 수 없습니다.","bad");return}mode="local";mySide="A";battle=new Battle(a,b);resetActionSelection();lastControlTurn=null;lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;qs("#lobby").classList.add("hidden");renderBattle();startBgm();scrollTo({top:0,behavior:"smooth"})}
 function chooseEnemyAction(t){const p=t.active,alive=t.party.map((x,i)=>({x,i})).filter(o=>o.i!==t.activeIndex&&!o.x.isFainted());const heal=Object.keys(t.bag||{}).find(id=>["potion","superpotion","hyperpotion","maxpotion","fullrestore"].includes(id)&&t.bag[id]>0);if(heal&&p.currentHp/p.stats.hp<.32&&Math.random()<.7)return{kind:"item",itemId:heal,targetIndex:t.activeIndex};if(alive.length&&p.currentHp/p.stats.hp<.23&&Math.random()<.4)return{kind:"switch",switchIndex:alive[Math.floor(Math.random()*alive.length)].i};const legal=p.moves.map((m,i)=>({m,i})).filter(x=>x.m.pp>0),move=(legal[Math.floor(Math.random()*legal.length)]||{i:0}).i;let mechanic=null;const choices=[];for(const k of["mega","z","dynamax","gmax","tera"])if(mechanicAvailable(k,t,p,p.moves[move]))choices.push(k);if(Math.random()<.12&&choices.length)mechanic=choices[Math.floor(Math.random()*choices.length)];return{kind:"move",moveIndex:move,mechanic}}
-async function localSubmit(){if(!battle||mode!=="local")return;startBgm();const myAction=selectedAction(),enemyAction=chooseEnemyAction(battle.trainerB);battle.executeActions(myAction,enemyAction);resetActionSelection();lastControlTurn=null;renderBattle()}
-function localSwitch(){const idx=Number(selectedSwitchIndex);battle.switch("A",idx,true);if(battle.forceSwitch.B){const t=battle.trainerB,i=t.party.findIndex((p,x)=>x!==t.activeIndex&&!p.isFainted());if(i>=0)battle.switch("B",i,true)}resetActionSelection();lastControlTurn=null;renderBattle()}
+function autoLocalEnemyForcedSwitch(){
+  if(!battle||mode!=="local"||!battle.forceSwitch.B)return false;
+  const t=battle.trainerB;
+  const choices=t.party.map((p,i)=>({p,i})).filter(({p,i})=>i!==t.activeIndex&&!p.isFainted());
+  if(!choices.length)return false;
+  const pick=choices[Math.floor(Math.random()*choices.length)];
+  return battle.switch("B",pick.i,true)
+}
+async function localSubmit(){
+  if(!battle||mode!=="local")return;
+  startBgm();
+  // 데모 AI 쪽에 이전 턴의 강제 교체가 남아 있다면 플레이어 입력을 막지 않고 즉시 처리한다.
+  autoLocalEnemyForcedSwitch();
+  // 플레이어 자신의 포켓몬이 쓰러진 경우에만 플레이어가 직접 교체한다.
+  if(battle.forceSwitch.A){renderBattle();return}
+  const myAction=selectedAction(),enemyAction=chooseEnemyAction(battle.trainerB);
+  battle.executeActions(myAction,enemyAction);
+  // 이번 턴에 상대가 쓰러졌다면 데모 AI가 다음 포켓몬을 자동으로 내보낸다.
+  autoLocalEnemyForcedSwitch();
+  resetActionSelection();lastControlTurn=null;renderBattle()
+}
+function localSwitch(){
+  const idx=Number(selectedSwitchIndex);
+  battle.switch("A",idx,true);
+  // 양쪽이 동시에 쓰러졌더라도 상대 진영은 AI가 자동 교체한다.
+  autoLocalEnemyForcedSwitch();
+  resetActionSelection();lastControlTurn=null;renderBattle()
+}
 
 let scWidget=null,bgmPlaying=false,bgmManuallyStopped=false;
 function syncBgmButtons(){const play=qs("#musicPlay"),stop=qs("#musicStop");if(play)play.disabled=bgmPlaying;if(stop)stop.disabled=!bgmPlaying}
