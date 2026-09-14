@@ -263,19 +263,19 @@ function canonicalItem(s){return toID(s)}
 function spriteIdFromDexId(dexId,species){const base=toID(species?.baseSpecies||species?.name||dexId);if(dexId===base)return dexId;if(dexId.startsWith(base)){const suffix=dexId.slice(base.length);return suffix?`${base}-${suffix}`:base}return dexId}
 function typePill(t){const id=norm(t);return `<span class="type-pill type-${esc(id)}">${esc(TYPE_KO[id]||t)}</span>`}
 
-const dexStore={pokedex:null,moves:null,learnsets:null,items:null,abilities:null,ready:false,error:null};
+const dexStore={pokedex:null,moves:null,learnsets:null,ready:false,error:null};
 async function fetchJson(url){const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error(`${r.status} ${url}`);return r.json()}
 async function loadDex(){
   qs("#dexBadge").textContent="도감: 연결 중";
   try{
-    const [pokedex,moves,learnsets,items,abilities]=await Promise.all([
+    // Pokémon Showdown의 JSON 배포본은 pokedex / moves / learnsets에 사용한다.
+    // items와 abilities는 현재 data 디렉터리에 .js만 있으므로 JSON으로 요청하지 않는다.
+    const [pokedex,moves,learnsets]=await Promise.all([
       fetchJson(`${CONFIG.showdownData}/pokedex.json`),
       fetchJson(`${CONFIG.showdownData}/moves.json`),
-      fetchJson(`${CONFIG.showdownData}/learnsets.json`),
-      fetchJson(`${CONFIG.showdownData}/items.json`),
-      fetchJson(`${CONFIG.showdownData}/abilities.json`)
+      fetchJson(`${CONFIG.showdownData}/learnsets.json`)
     ]);
-    dexStore.pokedex=pokedex;dexStore.moves=moves;dexStore.learnsets=learnsets;dexStore.items=items;dexStore.abilities=abilities;dexStore.ready=true;dexStore.error=null;
+    dexStore.pokedex=pokedex;dexStore.moves=moves;dexStore.learnsets=learnsets;dexStore.ready=true;dexStore.error=null;
     qs("#dexBadge").textContent=`도감: Showdown · ${CONFIG.legalityMode==="anygen"?"전국도감":"제"+CONFIG.generation+"세대"}`;
     return true;
   }catch(e){
@@ -284,8 +284,6 @@ async function loadDex(){
 }
 function dexSpecies(id){return dexStore.pokedex?.[toID(id)]||null}
 function dexMove(id){return dexStore.moves?.[toID(id)]||null}
-function dexItem(id){return dexStore.items?.[toID(id)]||null}
-function dexAbility(id){return dexStore.abilities?.[toID(id)]||null}
 function speciesLearnset(showdownId){
   if(!dexStore.ready)return null;
   let id=toID(showdownId),guard=0;
@@ -338,8 +336,9 @@ async function fetchKoreanMoveName(moveId){
   const id=toID(moveId),m=dexMove(id);if(!m?.num||moveKoMap[id])return moveKoMap[id]||"";
   try{const data=await fetchJson(`${CONFIG.pokeApi}/move/${m.num}/`);const ko=koNameFrom(data);const desc=[...(data.flavor_text_entries||[])].reverse().find(x=>x.language?.name==="ko")?.flavor_text?.replace(/[\n\f]/g," ")||"";if(ko)moveKoMap[id]=ko;if(desc)moveKoDescMap[id]=desc;return ko}catch{return""}
 }
-async function fetchKoreanItemName(itemName){const id=toID(itemName);if(!id||itemKoMap[id])return itemKoMap[id]||"";const d=dexItem(id);if(!d?.num){if(ITEM_KO_FALLBACK[id])itemKoMap[id]=ITEM_KO_FALLBACK[id];return itemKoMap[id]||""}try{const data=await fetchJson(`${CONFIG.pokeApi}/item/${d.num}/`);const ko=koNameFrom(data);if(ko)itemKoMap[id]=ko;else if(ITEM_KO_FALLBACK[id])itemKoMap[id]=ITEM_KO_FALLBACK[id];return itemKoMap[id]||""}catch{if(ITEM_KO_FALLBACK[id])itemKoMap[id]=ITEM_KO_FALLBACK[id];return itemKoMap[id]||""}}
-async function fetchKoreanAbilityName(abilityName){const id=toID(abilityName);if(!id||abilityKoMap[id])return abilityKoMap[id]||"";const d=dexAbility(id);if(!d?.num)return"";try{const data=await fetchJson(`${CONFIG.pokeApi}/ability/${d.num}/`);const ko=koNameFrom(data);if(ko)abilityKoMap[id]=ko;return ko}catch{return""}}
+function pokeSlug(raw){return String(raw||"").trim().toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")}
+async function fetchKoreanItemName(itemName){const id=toID(itemName);if(!id||itemKoMap[id])return itemKoMap[id]||"";const slug=pokeSlug(itemName);try{const data=await fetchJson(`${CONFIG.pokeApi}/item/${slug}/`);const ko=koNameFrom(data);if(ko)itemKoMap[id]=ko;else if(ITEM_KO_FALLBACK[id])itemKoMap[id]=ITEM_KO_FALLBACK[id];return itemKoMap[id]||""}catch{if(ITEM_KO_FALLBACK[id])itemKoMap[id]=ITEM_KO_FALLBACK[id];return itemKoMap[id]||""}}
+async function fetchKoreanAbilityName(abilityName){const id=toID(abilityName);if(!id||abilityKoMap[id])return abilityKoMap[id]||"";const slug=pokeSlug(abilityName);try{const data=await fetchJson(`${CONFIG.pokeApi}/ability/${slug}/`);const ko=koNameFrom(data);if(ko)abilityKoMap[id]=ko;return ko}catch{return""}}
 async function fetchKoreanSpeciesName(showdownId){const id=toID(showdownId),sp=dexSpecies(id);if(!sp?.num)return"";const key=String(Math.abs(sp.num));if(speciesKoMap[key])return speciesKoMap[key];try{const data=await fetchJson(`${CONFIG.pokeApi}/pokemon-species/${Math.abs(sp.num)}/`);const ko=koNameFrom(data);if(ko)speciesKoMap[key]=ko;return ko}catch{return""}}
 function displayItemName(raw){if(!raw)return"없음";const id=toID(raw);return itemKoMap[id]||ITEM_KO_FALLBACK[id]||raw}
 function displayAbilityName(raw){if(!raw)return"없음";return abilityKoMap[toID(raw)]||raw}
