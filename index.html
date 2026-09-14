@@ -259,6 +259,96 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 }
 </style>
 
+
+<style id="v3-2-5-battle-visual-fix">
+/* V3.2.5 — 전장에는 원본 배경 외의 중앙선/장식 도형을 남기지 않는다. */
+.arena:before,.arena:after,.scene-horizon,.scene-floor,.scene-lines,.platform,.terrain-glow{
+  display:none !important;
+  content:none !important;
+  background:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+/* 상대 포켓몬은 이전보다 조금 아래로. */
+.fighter.enemy{
+  top:8% !important;
+  right:7% !important;
+}
+
+/* HUD는 거대한 스프라이트/테라 마스크보다 항상 위에 둔다. */
+.pokehud{position:relative !important;z-index:20 !important;}
+
+/* 다이맥스는 일반 스프라이트보다 훨씬 크게 보이게 한다. */
+.sprite.dynamax{
+  --base-scale:3.35 !important;
+  --base-y:-18px !important;
+  filter:drop-shadow(0 0 38px rgba(236,87,255,.68)) drop-shadow(0 0 82px rgba(188,58,255,.30)) drop-shadow(0 26px 16px rgba(0,0,0,.38)) !important;
+}
+.enemy .sprite.dynamax{
+  --base-scale:3.55 !important;
+  --base-y:-42px !important;
+}
+.player .sprite.dynamax{
+  --base-scale:3.35 !important;
+  --base-y:-4px !important;
+}
+
+/* Cristal.png가 포켓몬 실루엣 내부에 확실히 보이도록 하는 실제 마스크 레이어. */
+.tera-overlay-img{display:none !important;}
+.tera-crystal-mask{
+  display:block;
+  position:absolute !important;
+  left:50% !important;
+  bottom:0 !important;
+  width:100% !important;
+  height:100% !important;
+  z-index:8 !important;
+  pointer-events:none !important;
+  transform-origin:center bottom !important;
+  transform:translateX(-50%) translateY(var(--base-y)) scale(var(--base-scale)) !important;
+
+  background-color:rgba(255,245,255,.28) !important;
+  background-image:url('./Cristal.png') !important;
+  background-repeat:repeat !important;
+  background-position:center center !important;
+  background-size:165px 165px !important;
+
+  -webkit-mask-image:var(--tera-mask) !important;
+  mask-image:var(--tera-mask) !important;
+  -webkit-mask-repeat:no-repeat !important;
+  mask-repeat:no-repeat !important;
+  -webkit-mask-position:center bottom !important;
+  mask-position:center bottom !important;
+  -webkit-mask-size:contain !important;
+  mask-size:contain !important;
+  -webkit-mask-mode:alpha;
+  mask-mode:alpha;
+
+  opacity:.96 !important;
+  mix-blend-mode:screen !important;
+  filter:brightness(1.55) saturate(1.28) contrast(1.15) !important;
+  animation:none !important;
+}
+.tera-crystal-mask.hidden{display:none !important;}
+
+/* 테라스탈 중 원본도 약간 결정질에 어울리게 정리하되 떠오르지는 않는다. */
+.spritebox.tera-active > .sprite{
+  filter:brightness(1.08) saturate(.92) contrast(1.04) drop-shadow(0 18px 12px rgba(0,0,0,.32)) !important;
+}
+.spritebox.tera-active > .sprite.dynamax{
+  filter:brightness(1.08) saturate(.92) contrast(1.04) drop-shadow(0 0 38px rgba(236,87,255,.68)) drop-shadow(0 0 82px rgba(188,58,255,.30)) drop-shadow(0 26px 16px rgba(0,0,0,.38)) !important;
+}
+
+@media(max-width:680px){
+  .fighter.enemy{top:9% !important;right:1% !important;}
+  .sprite.dynamax{--base-scale:2.70 !important;--base-y:-10px !important;}
+  .enemy .sprite.dynamax{--base-scale:2.90 !important;--base-y:-30px !important;}
+  .player .sprite.dynamax{--base-scale:2.70 !important;--base-y:0px !important;}
+  .tera-crystal-mask{background-size:120px 120px !important;}
+}
+</style>
+
 </head>
 <body>
 <div class="shell">
@@ -772,7 +862,7 @@ function renderGear(t){const g=t.gear||{};return[["키스톤",g.keyStone],["Z링
 function setTeraOverlay(base,overlay,p,isMine){
   const box=base.closest(".spritebox");
   if(!p.isTerastallized){
-    overlay.classList.add("hidden");
+    overlay.className="tera-crystal-mask hidden";
     overlay.style.removeProperty("--tera-mask");
     box?.classList.remove("tera-active");
     return;
