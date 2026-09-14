@@ -381,24 +381,25 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 
 
 <style id="v3-2-8-terastal-visible-scale-fix">
-/* V3.2.8 — 테라스탈 표시 안정화 / 거대화 추가 확대 / 불필요한 시각 효과 제거 */
+/* V3.2.9 — 테라스탈 표시 유지 / 거·다이맥스 극대화 / 불필요한 시각 효과 제거 */
 
-/* 상대 포켓몬을 아주 조금 더 아래로. */
-.fighter.enemy{top:14% !important;}
+/* 상대 포켓몬을 기존보다 살짝 아래로 유지. */
+.fighter.enemy{top:14.8% !important;}
 
-/* 다이맥스/거다이맥스는 크기만 크게 하고 별도 발광 효과는 사용하지 않는다. */
+/* 거/다이맥스는 거의 15배 크기로 보이게 크게 확대한다. 추가 발광, 오오라, 색광 효과는 사용하지 않는다. */
+.arena{min-height:1180px !important;}
 .sprite.dynamax{
-  --base-scale:5.55 !important;
-  --base-y:-18px !important;
-  filter:drop-shadow(0 18px 12px rgba(0,0,0,.32)) !important;
+  --base-scale:13.8 !important;
+  --base-y:-32px !important;
+  filter:drop-shadow(0 18px 12px rgba(0,0,0,.28)) !important;
 }
 .enemy .sprite.dynamax{
-  --base-scale:5.80 !important;
-  --base-y:-34px !important;
+  --base-scale:14.4 !important;
+  --base-y:-82px !important;
 }
 .player .sprite.dynamax{
-  --base-scale:6.20 !important;
-  --base-y:16px !important;
+  --base-scale:14.9 !important;
+  --base-y:42px !important;
 }
 
 /* 테라스탈은 동일 스프라이트의 알파를 그대로 이용한 보라색 40% 컬러 오버레이. */
@@ -433,10 +434,10 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
   transform:translateX(-50%) translateY(-28px) scale(1.90) !important;
 }
 .player .tera-color-overlay.dynamax{
-  transform:translateX(-50%) translateY(16px) scale(6.20) !important;
+  transform:translateX(-50%) translateY(42px) scale(14.9) !important;
 }
 .enemy .tera-color-overlay.dynamax{
-  transform:translateX(-50%) translateY(-34px) scale(5.80) !important;
+  transform:translateX(-50%) translateY(-82px) scale(14.4) !important;
 }
 
 /* 테라스탈 자체 이외에는 별도 색조/광택을 더하지 않는다. */
@@ -453,14 +454,64 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 
 @media(max-width:680px){
   .fighter.enemy{top:15% !important;}
-  .sprite.dynamax{--base-scale:4.55 !important;--base-y:-10px !important;}
-  .enemy .sprite.dynamax{--base-scale:4.80 !important;--base-y:-26px !important;}
-  .player .sprite.dynamax{--base-scale:5.10 !important;--base-y:14px !important;}
+  .arena{min-height:930px !important;}.sprite.dynamax{--base-scale:9.8 !important;--base-y:-24px !important;}
+  .enemy .sprite.dynamax{--base-scale:10.4 !important;--base-y:-52px !important;}
+  .player .sprite.dynamax{--base-scale:10.9 !important;--base-y:30px !important;}
   .player .tera-color-overlay{transform:translateX(-50%) translateY(22px) scale(2.65) !important;}
   .enemy .tera-color-overlay{transform:translateX(-50%) translateY(-18px) scale(1.62) !important;}
-  .player .tera-color-overlay.dynamax{transform:translateX(-50%) translateY(14px) scale(5.10) !important;}
-  .enemy .tera-color-overlay.dynamax{transform:translateX(-50%) translateY(-26px) scale(4.80) !important;}
+  .player .tera-color-overlay.dynamax{transform:translateX(-50%) translateY(30px) scale(10.9) !important;}
+  .enemy .tera-color-overlay.dynamax{transform:translateX(-50%) translateY(-52px) scale(10.4) !important;}
 }
+
+
+/* V3.2.10 — 포켓몬 그림자 완전 제거 + 테라스탈 40% 보라색 복제 스프라이트 */
+/* 포켓몬 자체에는 어떤 그림자/광원 효과도 사용하지 않는다. */
+.sprite,
+.sprite.dynamax,
+.sprite.hit,
+.sprite.attack,
+.sprite.faint,
+.spritebox.tera-active > .sprite,
+.spritebox.tera-active > .sprite.dynamax{
+  filter:none !important;
+  text-shadow:none !important;
+  box-shadow:none !important;
+}
+
+/* 예전 테라스탈 레이어는 사용하지 않는다. */
+.tera-color-overlay,.tera-overlay-img,.tera-crystal-mask{display:none !important;}
+
+/* 원본 GIF를 그대로 한 장 겹쳐 보라색 단색에 가깝게 만든다. */
+.tera-copy{
+  display:block !important;
+  position:absolute !important;
+  left:50% !important;
+  bottom:0 !important;
+  z-index:12 !important;
+  width:auto !important;
+  height:auto !important;
+  max-width:95% !important;
+  max-height:95% !important;
+  object-fit:contain !important;
+  pointer-events:none !important;
+  opacity:.40 !important;
+  mix-blend-mode:normal !important;
+  transform-origin:center bottom !important;
+  transform:translateX(-50%) translateY(var(--base-y)) scale(var(--base-scale)) !important;
+  filter:brightness(0) saturate(100%) invert(31%) sepia(66%) saturate(2370%) hue-rotate(248deg) brightness(96%) contrast(98%) !important;
+  transition:none !important;
+  animation:none !important;
+}
+.tera-copy.hidden{display:none !important;}
+
+/* 거대화 상태에서도 원본과 정확히 같은 배율/위치를 사용한다. */
+.player .tera-copy.dynamax,
+.enemy .tera-copy.dynamax{
+  transform:translateX(-50%) translateY(var(--base-y)) scale(var(--base-scale)) !important;
+}
+
+/* 테라스탈 표시는 복제본 자체만 담당하며 다른 광택/발광은 추가하지 않는다. */
+.spritebox.tera-active:after{display:none !important;content:none !important;}
 </style>
 
 </head>
@@ -492,10 +543,10 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
       <div class="arena" id="arena">
         <div id="terrainGlow" class="terrain-glow"></div>
         <div class="fighter enemy" id="enemyFighter">
-          <div class="pokehud" id="enemyHud"></div><div class="spritebox"><img id="enemySprite" class="sprite" alt="상대 포켓몬"><img id="enemyTeraOverlay" class="tera-color-overlay hidden" alt="" aria-hidden="true"></div>
+          <div class="pokehud" id="enemyHud"></div><div class="spritebox"><img id="enemySprite" class="sprite" alt="상대 포켓몬"><img id="enemyTeraOverlay" class="sprite tera-copy hidden" alt="" aria-hidden="true"></div>
         </div>
         <div class="fighter player" id="playerFighter">
-          <div class="spritebox"><img id="playerSprite" class="sprite" alt="내 포켓몬"><img id="playerTeraOverlay" class="tera-color-overlay hidden" alt="" aria-hidden="true"></div><div class="pokehud" id="playerHud"></div>
+          <div class="spritebox"><img id="playerSprite" class="sprite" alt="내 포켓몬"><img id="playerTeraOverlay" class="sprite tera-copy hidden" alt="" aria-hidden="true"></div><div class="pokehud" id="playerHud"></div>
         </div>
       </div>
       <div class="battle-message battle-message-strip" id="battleMessage">배틀 준비 완료</div>
@@ -976,13 +1027,15 @@ function renderGear(t){const g=t.gear||{};return[["키스톤",g.keyStone],["Z링
 function setTeraOverlay(base,overlay,p,isMine){
   const box=base.closest(".spritebox");
   if(!p.isTerastallized){
-    overlay.className="tera-color-overlay hidden";
+    overlay.className="sprite tera-copy hidden";
     overlay.removeAttribute("src");
     box?.classList.remove("tera-active");
     return;
   }
-  overlay.src=spriteUrl(p,isMine);
-  overlay.className=`tera-color-overlay${p.isDynamaxed?" dynamax":""}`;
+  const url=spriteUrl(p,isMine);
+  if(overlay.src!==url) overlay.src=url;
+  overlay.className=`sprite tera-copy${p.isDynamaxed?" dynamax":""}`;
+  overlay.style.opacity="0.40";
   box?.classList.add("tera-active");
 }
 function renderBattle(){
