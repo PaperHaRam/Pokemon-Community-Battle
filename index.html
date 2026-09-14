@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pokémon RP Battle — Visual Online V3</title>
-<meta name="description" content="Pokémon RP visual battle simulator with Korean move names, mid-battle switching, trainer bag items, Pokémon Showdown sprites, SoundCloud BGM, and Firebase matchmaking.">
+<title>Pokémon RP 배틀 — 비주얼 온라인 V3.2</title>
+<meta name="description" content="한국어 로컬라이징, 교체·가방, 지닌물건 및 기믹 조건, Pokémon Showdown 스프라이트, BGM, Firebase 매칭을 지원하는 Pokémon RP 배틀 시뮬레이터.">
 <style>
 :root{
   --bg:#08101c;--panel:#101a2a;--panel2:#17243a;--line:#2b3d57;--text:#f7fbff;--muted:#9db0c7;
@@ -92,23 +92,45 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 .switch-grid,.bag-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.switch-card,.bag-card{position:relative;display:grid;grid-template-columns:58px 1fr auto;gap:10px;align-items:center;min-height:78px;padding:10px;border:1px solid #2d4763;border-radius:15px;background:linear-gradient(145deg,#122741,#0b1b2f);color:#edf7ff;text-align:left}.switch-card img{width:54px;height:54px;object-fit:contain}.switch-card small,.bag-card small{display:block;color:#9eb4c9;margin-top:3px}.switch-card.selected,.bag-card.selected{outline:2px solid #82ffe7;background:#16334b}.switch-card:disabled{opacity:.4}.bag-card{grid-template-columns:1fr auto}.bag-card .qty{font-weight:900;color:#ffe087}.target-picker{display:flex;gap:8px;align-items:center;margin-top:10px;padding:10px;border-radius:13px;background:#0a182a;border:1px dashed #31506f}.target-picker select{flex:1}
 .mechanics{margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px}.mechanics:empty{display:none}.submitrow{margin-top:12px}.submitrow .btn.primary{font-size:15px;min-height:48px}.action-summary{margin-top:9px;padding:8px 10px;border-radius:10px;background:#091626;color:#a9bed1;font-size:12px;border:1px solid #223b55}
 .sidepanel{border-radius:24px;padding:16px;background:linear-gradient(180deg,rgba(13,26,44,.96),rgba(7,16,29,.97))}.mini{border-radius:16px;background:rgba(7,17,30,.7)}.teamrow{background:linear-gradient(145deg,#10233a,#0b1a2c)}
-.mega-overlay{background:#000}.mega-overlay img{object-fit:cover;width:100vw;height:100vh}.mega-overlay canvas{position:absolute;inset:0;width:100vw;height:100vh;display:block}.musicbar{backdrop-filter:blur(10px)}.entry.item{border-color:#8ff0b5}.battle.visual-lock .controls{pointer-events:none;opacity:.78}.battle.visual-lock .battle-message::after{content:" · HIT";color:#ffd36e;font-weight:900}
+.mega-overlay{background:#000}.mega-overlay img{object-fit:cover;width:100vw;height:100vh}.mega-overlay canvas{position:absolute;inset:0;width:100vw;height:100vh;display:block}.musicbar{backdrop-filter:blur(10px)}.entry.item{border-color:#8ff0b5}.battle.visual-lock .controls{pointer-events:none;opacity:.78}.battle.visual-lock .battle-message::after{content:" · 피격";color:#ffd36e;font-weight:900}
 @media(max-width:980px){.command-shell{grid-template-columns:1fr}.action-tabs{grid-template-columns:repeat(3,1fr)}.action-tab{text-align:center}.battle-layout{grid-template-columns:1fr}.sidepanel{grid-template-columns:1fr 1fr}}
 @media(max-width:680px){.arena{min-height:620px}.fighter.enemy{width:52%;right:0}.fighter.player{width:58%;left:0}.spritebox{height:245px}.enemy .spritebox{height:220px}.switch-grid,.bag-grid,.movegrid{grid-template-columns:1fr}.action-tabs{grid-template-columns:1fr 1fr 1fr}.command-prompt{padding:10px}.battle-message{font-size:13px}.sidepanel{grid-template-columns:1fr}}
+
+/* V3.2 — 경기장 비주얼 / 한글 HUD */
+.arena{min-height:720px;background:linear-gradient(180deg,#052c33 0 19%,#064c53 19% 34%,#078c83 34% 55%,#087c70 55% 100%);box-shadow:inset 0 0 90px rgba(0,0,0,.28),inset 0 -60px 100px rgba(1,39,39,.28)}
+.arena:before{z-index:0;background:radial-gradient(ellipse at 78% 4%,rgba(45,255,222,.28),transparent 24%),linear-gradient(180deg,rgba(2,16,22,.25),transparent 42%,rgba(1,28,28,.16));pointer-events:none}
+.scene-horizon{left:0;right:0;top:0;height:36%;z-index:0;filter:none;background:linear-gradient(180deg,#04242c 0 13%,#06343b 13% 28%,#07555b 28% 100%);overflow:hidden;border-bottom:5px solid rgba(91,255,244,.9);box-shadow:0 8px 22px rgba(81,255,241,.32)}
+.scene-horizon:before{content:"";position:absolute;left:-1%;right:-1%;bottom:12px;height:72%;opacity:.78;background-image:radial-gradient(circle at 13px 10px,rgba(30,228,215,.92) 0 6px,transparent 7px),radial-gradient(ellipse at 13px 27px,rgba(15,166,164,.92) 0 8px,transparent 9px);background-size:27px 36px;mask-image:linear-gradient(180deg,rgba(0,0,0,.18),#000 38%,#000)}
+.scene-horizon:after{content:"";position:absolute;right:-3%;top:5%;width:34%;height:42%;border:4px solid rgba(67,255,224,.4);background:linear-gradient(180deg,rgba(18,180,153,.52),rgba(3,76,77,.25));box-shadow:0 0 25px rgba(39,255,217,.26),inset 0 0 35px rgba(86,255,225,.12);transform:skewX(-2deg)}
+.scene-floor{left:-7%;right:-7%;bottom:-8%;height:72%;z-index:0;transform:none;clip-path:polygon(0 19%,100% 8%,100% 100%,0 100%);background:radial-gradient(ellipse at 51% 60%,transparent 0 14%,rgba(85,255,238,.75) 14.5% 15.3%,transparent 15.8% 31%,rgba(37,218,200,.48) 31.4% 32.1%,transparent 32.7%),linear-gradient(175deg,#12a996 0 18%,#0a9386 18% 52%,#087e73 52% 100%);box-shadow:inset 0 18px 46px rgba(103,255,240,.17)}
+.scene-floor:before{content:"";position:absolute;left:7%;right:7%;top:13%;height:4px;background:linear-gradient(90deg,transparent,#70fff3 12%,#70fff3 88%,transparent);box-shadow:0 0 18px rgba(103,255,243,.74)}
+.scene-floor:after{content:"";position:absolute;left:50%;top:53%;width:150px;height:150px;transform:translate(-50%,-50%) scaleY(.56);border:8px solid rgba(104,255,242,.64);border-radius:50%;box-shadow:0 0 20px rgba(92,255,238,.25),inset 0 0 18px rgba(92,255,238,.12)}
+.scene-lines{left:4%;right:4%;bottom:0;height:53%;z-index:1;opacity:.42;clip-path:polygon(13% 0,87% 0,100% 100%,0 100%);background:linear-gradient(90deg,transparent 49.65%,rgba(97,255,242,.85) 49.75% 50.25%,transparent 50.35%),repeating-linear-gradient(90deg,transparent 0 89px,rgba(105,255,244,.12) 90px 92px),repeating-linear-gradient(180deg,transparent 0 69px,rgba(105,255,244,.1) 70px 72px)}
+.scene-lines:before{content:"";position:absolute;left:50%;top:48%;width:42px;height:42px;transform:translate(-50%,-50%) scaleY(.58);border-radius:50%;border:7px solid rgba(110,255,243,.83);box-shadow:0 0 14px rgba(91,255,240,.4)}
+.scene-lines:after{content:"";position:absolute;left:calc(50% - 76px);top:48%;width:152px;height:6px;background:rgba(110,255,243,.75);transform:translateY(-50%);box-shadow:0 0 12px rgba(91,255,240,.34)}
+.fighter.enemy{right:7%;top:21%;width:38%;max-width:460px}.fighter.player{left:1.5%;bottom:2%;width:50%;max-width:560px}.spritebox{height:330px}.enemy .spritebox{height:285px}
+.platform{width:86%;left:7%;height:18%;bottom:2%;background:radial-gradient(ellipse,rgba(6,71,68,.58) 0 45%,rgba(79,255,237,.34) 47% 52%,rgba(7,67,64,.18) 54% 66%,transparent 67%);filter:blur(.2px)}.enemy .platform{bottom:7%}
+.sprite{filter:drop-shadow(0 18px 10px rgba(0,25,28,.42));transition:filter .25s,transform .3s cubic-bezier(.2,.8,.2,1),opacity .4s}.sprite.dynamax{transform:scale(1.58) translateY(-8px);filter:drop-shadow(0 0 28px rgba(236,87,255,.7)) drop-shadow(0 0 54px rgba(188,58,255,.32)) drop-shadow(0 24px 13px rgba(0,0,0,.36))}.enemy .sprite.dynamax{transform:scale(1.62) translateY(-10px)}
+.pokehud{background:linear-gradient(145deg,rgba(252,255,255,.96),rgba(215,239,240,.94));border-color:rgba(143,255,246,.72);box-shadow:0 14px 34px rgba(0,31,38,.34),inset 0 0 0 1px rgba(7,84,87,.1)}
+.held-item{margin-top:6px;padding:5px 7px;border-radius:8px;background:rgba(7,73,78,.08);color:#365a65;font-size:11px;border:1px solid rgba(8,86,91,.1)}.held-item b{color:#123e48}
+.gear-list{display:flex;flex-wrap:wrap;gap:6px}.gear-chip{padding:6px 8px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid #31506b}.gear-chip.on{background:rgba(84,229,171,.12);border-color:rgba(84,229,171,.45);color:#9ff4c9}.gear-chip.off{background:rgba(255,105,105,.08);border-color:rgba(255,105,105,.3);color:#ffb1b1}
+.mechanic-tags span{font-size:10px}.battle.visual-lock .battle-message::after{content:" · 피격";color:#ffd36e;font-weight:900}
+.arena.terrain-bg-electric{box-shadow:inset 0 -110px 130px rgba(244,224,66,.22),inset 0 0 90px rgba(0,0,0,.2)}.arena.terrain-bg-grassy{box-shadow:inset 0 -110px 130px rgba(78,238,108,.2),inset 0 0 90px rgba(0,0,0,.2)}.arena.terrain-bg-psychic{box-shadow:inset 0 -110px 130px rgba(212,94,245,.22),inset 0 0 90px rgba(0,0,0,.2)}.arena.terrain-bg-misty{box-shadow:inset 0 -125px 150px rgba(220,244,255,.28),inset 0 0 90px rgba(0,0,0,.18)}
+@media(max-width:680px){.arena{min-height:640px}.fighter.enemy{top:22%;right:1%;width:49%}.fighter.player{left:0;bottom:2%;width:59%}.spritebox{height:260px}.enemy .spritebox{height:220px}.sprite.dynamax{transform:scale(1.42) translateY(-5px)}.enemy .sprite.dynamax{transform:scale(1.45) translateY(-6px)}.scene-horizon:before{background-size:22px 31px}.held-item{font-size:10px}}
 
 </style>
 </head>
 <body>
 <div class="shell">
   <header class="topbar">
-    <div class="brand"><h1>Pokémon RP Battle</h1><p>한국어 기술명 / 교체·가방 / Showdown 검증 / 온라인 매치</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">SHEET: 연결 중</span><span class="badge" id="dexBadge">DEX: 연결 중</span><span class="badge" id="firebaseBadge">ONLINE: 설정 확인</span><span class="badge">SPRITES: SHOWDOWN</span><span class="badge">V3 · SWITCH/BAG/KO</span></div>
+    <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2 · 교체/가방/한글화</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
     <div class="lobby-card">
       <h2>트레이너 접속</h2>
-      <p class="muted">Google Sheet의 <b>Trainers.nickname</b>과 일치하는 닉네임만 엔트리를 불러옵니다.</p>
+      <p class="muted">Google 시트의 <b>Trainers 탭 nickname 열</b>과 일치하는 닉네임의 엔트리를 불러옵니다.</p>
       <div class="fieldrow"><input id="nicknameInput" autocomplete="off" placeholder="트레이너 닉네임"><button class="btn primary" id="loginBtn">엔트리 불러오기</button><button class="btn" id="demoBtn">데모 배틀</button></div>
       <div class="statusbox" id="loginStatus">시트 데이터를 준비하고 있습니다.</div>
       <div id="entryPreview" class="teamlist" style="margin-top:10px"></div>
@@ -127,15 +149,15 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
         <div class="scene-horizon"></div><div class="scene-floor"></div><div class="scene-lines"></div>
         <div id="terrainGlow" class="terrain-glow"></div>
         <div class="fighter enemy" id="enemyFighter">
-          <div class="pokehud" id="enemyHud"></div><div class="spritebox"><div class="platform"></div><img id="enemySprite" class="sprite" alt="opponent Pokémon"><img id="enemyTeraOverlay" class="tera-overlay-img hidden" alt="Terastal overlay"></div>
+          <div class="pokehud" id="enemyHud"></div><div class="spritebox"><div class="platform"></div><img id="enemySprite" class="sprite" alt="상대 포켓몬"><img id="enemyTeraOverlay" class="tera-overlay-img hidden" alt="상대 테라스탈 오버레이"></div>
         </div>
         <div class="fighter player" id="playerFighter">
-          <div class="spritebox"><div class="platform"></div><img id="playerSprite" class="sprite" alt="player Pokémon"><img id="playerTeraOverlay" class="tera-overlay-img hidden" alt="Terastal overlay"></div><div class="pokehud" id="playerHud"></div>
+          <div class="spritebox"><div class="platform"></div><img id="playerSprite" class="sprite" alt="내 포켓몬"><img id="playerTeraOverlay" class="tera-overlay-img hidden" alt="내 테라스탈 오버레이"></div><div class="pokehud" id="playerHud"></div>
         </div>
-        <div class="battle-message" id="battleMessage">BATTLE READY</div>
+        <div class="battle-message" id="battleMessage">배틀 준비 완료</div>
       </div>
       <div class="controls">
-        <div class="turnhead"><div><b id="turnLabel">TURN 1</b><div class="muted" id="modeLabel">LOCAL</div></div><div class="field-state"><div class="state-chip" id="weatherChip"><b>날씨</b><span>없음</span></div><div class="state-chip" id="terrainChip"><b>필드</b><span>없음</span></div></div></div>
+        <div class="turnhead"><div><b id="turnLabel">턴 1</b><div class="muted" id="modeLabel">로컬 시뮬레이션</div></div><div class="field-state"><div class="state-chip" id="weatherChip"><b>날씨</b><span>없음</span></div><div class="state-chip" id="terrainChip"><b>필드</b><span>없음</span></div></div></div>
         <div id="forceSwitchBox" class="hidden"></div>
         <div id="normalControls">
           <div class="command-shell">
@@ -150,8 +172,8 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
     <aside class="panel sidepanel">
       <div class="mini"><h3>내 엔트리</h3><div id="myTeam" class="teamlist"></div></div>
       <div class="mini"><h3>능력치</h3><div id="statBox" class="statline"></div></div>
+      <div class="mini"><h3>기믹 장비</h3><div id="gearBox" class="gear-list"></div></div>
       <div class="mini"><h3>전투 로그</h3><div id="battleLog" class="log"></div></div>
-      <div class="mini debugdetails"><details><summary>동기화 / 데이터 상태</summary><pre id="debugState"></pre></details></div>
       <button class="btn" id="backLobby">로비 표시</button>
     </aside>
   </section>
@@ -162,7 +184,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
   <button class="btn primary" id="musicPlay">▶ BGM 재생</button>
   <button class="btn" id="musicStop">■ BGM 정지</button>
 </div>
-<div id="megaOverlay" class="mega-overlay hidden"><canvas id="megaCanvas" aria-label="Mega Evolution"></canvas><img id="megaFallback" class="hidden" alt="Mega Evolution"></div>
+<div id="megaOverlay" class="mega-overlay hidden"><canvas id="megaCanvas" aria-label="메가진화 연출"></canvas><img id="megaFallback" class="hidden" alt="메가진화 연출"></div>
 <div id="toast" class="toast hidden"></div>
 
 <script src="./firebase-config.js"></script>
@@ -241,25 +263,29 @@ function canonicalItem(s){return toID(s)}
 function spriteIdFromDexId(dexId,species){const base=toID(species?.baseSpecies||species?.name||dexId);if(dexId===base)return dexId;if(dexId.startsWith(base)){const suffix=dexId.slice(base.length);return suffix?`${base}-${suffix}`:base}return dexId}
 function typePill(t){const id=norm(t);return `<span class="type-pill type-${esc(id)}">${esc(TYPE_KO[id]||t)}</span>`}
 
-const dexStore={pokedex:null,moves:null,learnsets:null,ready:false,error:null};
+const dexStore={pokedex:null,moves:null,learnsets:null,items:null,abilities:null,ready:false,error:null};
 async function fetchJson(url){const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error(`${r.status} ${url}`);return r.json()}
 async function loadDex(){
-  qs("#dexBadge").textContent="DEX: 연결 중";
+  qs("#dexBadge").textContent="도감: 연결 중";
   try{
-    const [pokedex,moves,learnsets]=await Promise.all([
+    const [pokedex,moves,learnsets,items,abilities]=await Promise.all([
       fetchJson(`${CONFIG.showdownData}/pokedex.json`),
       fetchJson(`${CONFIG.showdownData}/moves.json`),
-      fetchJson(`${CONFIG.showdownData}/learnsets.json`)
+      fetchJson(`${CONFIG.showdownData}/learnsets.json`),
+      fetchJson(`${CONFIG.showdownData}/items.json`),
+      fetchJson(`${CONFIG.showdownData}/abilities.json`)
     ]);
-    dexStore.pokedex=pokedex;dexStore.moves=moves;dexStore.learnsets=learnsets;dexStore.ready=true;dexStore.error=null;
-    qs("#dexBadge").textContent=`DEX: SHOWDOWN · ${CONFIG.legalityMode==="anygen"?"NATDEX":"GEN "+CONFIG.generation}`;
+    dexStore.pokedex=pokedex;dexStore.moves=moves;dexStore.learnsets=learnsets;dexStore.items=items;dexStore.abilities=abilities;dexStore.ready=true;dexStore.error=null;
+    qs("#dexBadge").textContent=`도감: Showdown · ${CONFIG.legalityMode==="anygen"?"전국도감":"제"+CONFIG.generation+"세대"}`;
     return true;
   }catch(e){
-    dexStore.ready=false;dexStore.error=e;qs("#dexBadge").textContent="DEX: ERROR";console.error(e);return false;
+    dexStore.ready=false;dexStore.error=e;qs("#dexBadge").textContent="도감: 연결 오류";console.error(e);return false;
   }
 }
 function dexSpecies(id){return dexStore.pokedex?.[toID(id)]||null}
 function dexMove(id){return dexStore.moves?.[toID(id)]||null}
+function dexItem(id){return dexStore.items?.[toID(id)]||null}
+function dexAbility(id){return dexStore.abilities?.[toID(id)]||null}
 function speciesLearnset(showdownId){
   if(!dexStore.ready)return null;
   let id=toID(showdownId),guard=0;
@@ -280,7 +306,7 @@ function checkMoveLegality(showdownId,moveId){
   if(CONFIG.legalityMode==="anygen")return{ok:true,sources:src};
   const gen=String(CONFIG.generation);
   const current=src.some(x=>String(x).startsWith(gen));
-  return current?{ok:true,sources:src}:{ok:false,reason:`Gen ${CONFIG.generation} 습득 경로 없음`,sources:src};
+  return current?{ok:true,sources:src}:{ok:false,reason:`제${CONFIG.generation}세대 습득 경로 없음`,sources:src};
 }
 function mapBoosts(b){const out={};for(const [k,v] of Object.entries(b||{})){const kk=SHOWDOWN_STAT[k]||k;if(STAT_NAME[kk])out[kk]=num(v)}return out}
 function mapWeather(w){return({raindance:"rain",sunnyday:"sun",sandstorm:"sand",snow:"snow",hail:"snow"})[toID(w)]||null}
@@ -295,22 +321,34 @@ function showdownMoveData(moveId,displayOverride=""){
     secondaries:(m.secondaries||[]).map(mapSecondary).filter(Boolean),heal:Array.isArray(m.heal)?m.heal:null,recoil:Array.isArray(m.recoil)?m.recoil:null,
     drain:Array.isArray(m.drain)?m.drain:null,multihit:m.multihit??null,forceSwitch:!!m.forceSwitch,selfSwitch:!!m.selfSwitch,
     weather:mapWeather(m.weather),terrain:mapTerrain(m.terrain),protect:!!m.stallingMove&&toID(m.volatileStatus)==="protect",maxGuard:toID(m.volatileStatus)==="maxguard",
-    target:m.target||"normal",shortDesc:m.shortDesc||"",isNonstandard:m.isNonstandard||null
+    target:m.target||"normal",shortDesc:moveKoDescMap[id]||"",isNonstandard:m.isNonstandard||null
   };
 }
 const STRUGGLE={id:"struggle",name:"발버둥",type:"typeless",category:"physical",power:50,accuracy:999,maxPp:999,pp:999,priority:0,flags:{contact:1,protect:1},struggle:true};
 
 const sheetStore={trainers:[],pokemon:[],moves:[],items:[],loaded:false,error:null};
-const moveKoMap={};
+const moveKoMap={},moveKoDescMap={},itemKoMap={},abilityKoMap={},speciesKoMap={};
+const ITEM_KO_FALLBACK={
+  charizarditex:"리자몽나이트X",charizarditey:"리자몽나이트Y",mewtwonitex:"뮤츠나이트X",mewtwonitey:"뮤츠나이트Y",
+  lightball:"전기구슬",leftovers:"먹다남은음식",blacksludge:"검은진흙",lifeorb:"생명의구슬",choicescarf:"구애스카프",choiceband:"구애머리띠",choicespecs:"구애안경",focussash:"기합의띠",
+  normaliumz:"노말Z",firiumz:"불꽃Z",wateriumz:"물Z",electriumz:"전기Z",grassiumz:"풀Z",iciumz:"얼음Z",fightiniumz:"격투Z",poisoniumz:"독Z",groundiumz:"땅Z",flyiniumz:"비행Z",psychiumz:"에스퍼Z",buginiumz:"벌레Z",rockiumz:"바위Z",ghostiumz:"고스트Z",dragoniumz:"드래곤Z",darkiniumz:"악Z",steeliumz:"강철Z",fairiumz:"페어리Z"
+};
+function koNameFrom(data){return(data?.names||[]).find(x=>x.language?.name==="ko")?.name||""}
 async function fetchKoreanMoveName(moveId){
   const id=toID(moveId),m=dexMove(id);if(!m?.num||moveKoMap[id])return moveKoMap[id]||"";
-  try{const data=await fetchJson(`${CONFIG.pokeApi}/move/${m.num}/`);const ko=(data.names||[]).find(x=>x.language?.name==="ko")?.name||"";if(ko)moveKoMap[id]=ko;return ko}catch{return""}
+  try{const data=await fetchJson(`${CONFIG.pokeApi}/move/${m.num}/`);const ko=koNameFrom(data);const desc=[...(data.flavor_text_entries||[])].reverse().find(x=>x.language?.name==="ko")?.flavor_text?.replace(/[\n\f]/g," ")||"";if(ko)moveKoMap[id]=ko;if(desc)moveKoDescMap[id]=desc;return ko}catch{return""}
 }
+async function fetchKoreanItemName(itemName){const id=toID(itemName);if(!id||itemKoMap[id])return itemKoMap[id]||"";const d=dexItem(id);if(!d?.num){if(ITEM_KO_FALLBACK[id])itemKoMap[id]=ITEM_KO_FALLBACK[id];return itemKoMap[id]||""}try{const data=await fetchJson(`${CONFIG.pokeApi}/item/${d.num}/`);const ko=koNameFrom(data);if(ko)itemKoMap[id]=ko;else if(ITEM_KO_FALLBACK[id])itemKoMap[id]=ITEM_KO_FALLBACK[id];return itemKoMap[id]||""}catch{if(ITEM_KO_FALLBACK[id])itemKoMap[id]=ITEM_KO_FALLBACK[id];return itemKoMap[id]||""}}
+async function fetchKoreanAbilityName(abilityName){const id=toID(abilityName);if(!id||abilityKoMap[id])return abilityKoMap[id]||"";const d=dexAbility(id);if(!d?.num)return"";try{const data=await fetchJson(`${CONFIG.pokeApi}/ability/${d.num}/`);const ko=koNameFrom(data);if(ko)abilityKoMap[id]=ko;return ko}catch{return""}}
+async function fetchKoreanSpeciesName(showdownId){const id=toID(showdownId),sp=dexSpecies(id);if(!sp?.num)return"";const key=String(Math.abs(sp.num));if(speciesKoMap[key])return speciesKoMap[key];try{const data=await fetchJson(`${CONFIG.pokeApi}/pokemon-species/${Math.abs(sp.num)}/`);const ko=koNameFrom(data);if(ko)speciesKoMap[key]=ko;return ko}catch{return""}}
+function displayItemName(raw){if(!raw)return"없음";const id=toID(raw);return itemKoMap[id]||ITEM_KO_FALLBACK[id]||raw}
+function displayAbilityName(raw){if(!raw)return"없음";return abilityKoMap[toID(raw)]||raw}
+function displaySpeciesName(showdownId,fallback="포켓몬"){const sp=dexSpecies(showdownId),base=sp?.num?speciesKoMap[String(Math.abs(sp.num))]:"";if(!base)return fallback||sp?.name||showdownId;const f=norm(sp?.forme||"");if(f.startsWith("mega")){const suffix=/x$/.test(f)?"X":/y$/.test(f)?"Y":"";return`메가${base}${suffix}`}if(f.includes("gmax"))return`거다이맥스 ${base}`;if(f==="alola")return`알로라의 모습 ${base}`;if(f==="galar")return`가라르의 모습 ${base}`;if(f==="hisui")return`히스이의 모습 ${base}`;if(f==="paldea")return`팔데아의 모습 ${base}`;return base}
 async function primeKoreanMoveNames(nickname=null){
-  if(!dexStore.ready)return;const ids=new Set(),key=nickname?norm(nickname):null;
+  if(!dexStore.ready)return;const moves=new Set(),items=new Set(),abilities=new Set(),species=new Set(),key=nickname?norm(nickname):null;
   const rows=key?sheetStore.pokemon.filter(r=>norm(rowVal(r,"trainer_nickname","trainer","트레이너"))===key):(DEMO?.pokemon||[]);
-  for(const r of rows){for(let i=1;i<=4;i++){const v=rowVal(r,`move${i}`,`기술${i}`)||r[`move${i}`];if(v)ids.add(toID(v))}}
-  const list=[...ids];for(let i=0;i<list.length;i+=8)await Promise.all(list.slice(i,i+8).map(fetchKoreanMoveName));
+  for(const r of rows){const sid=rowVal(r,"showdown_id","sprite_id")||rowVal(r,"species","pokemon","포켓몬");if(sid){const did=toID(sid);species.add(did);const sp=dexSpecies(did);for(const a of Object.values(sp?.abilities||{}))abilities.add(toID(a));for(const formName of(sp?.otherFormes||[])){const fid=toID(formName),fd=dexSpecies(fid);if(fd&&/mega/.test(norm(fd.forme||fd.name))){species.add(fid);for(const a of Object.values(fd.abilities||{}))abilities.add(toID(a));if(fd.requiredItem)items.add(toID(fd.requiredItem))}}}const it=rowVal(r,"item","도구");if(it)items.add(toID(it));const ab=rowVal(r,"ability","특성");if(ab)abilities.add(toID(ab));for(let i=1;i<=4;i++){const v=rowVal(r,`move${i}`,`기술${i}`)||r[`move${i}`];if(v)moves.add(toID(v))}}
+  const tasks=[...moves].map(fetchKoreanMoveName).concat([...items].map(fetchKoreanItemName),[...abilities].map(fetchKoreanAbilityName),[...species].map(fetchKoreanSpeciesName));for(let i=0;i<tasks.length;i+=12)await Promise.all(tasks.slice(i,i+12));
 }
 function parseInlineBag(v){const out={};for(const part of String(v||"").split(/[|,]/)){const [rawId,rawQty]=part.split(/[:*x×]/);const id=toID(rawId);if(!id)continue;out[id]=(out[id]||0)+Math.max(0,num(rawQty,1))}return out}
 function trainerBag(key,tr,source=sheetStore){const bag=parseInlineBag(rowVal(tr,"bag","items","가방"));for(const r of(source.items||[])){if(norm(rowVal(r,"trainer_nickname","trainer","트레이너"))!==key)continue;const id=toID(rowVal(r,"item_id","item","아이템id","아이템"));if(!id)continue;bag[id]=(bag[id]||0)+Math.max(0,num(rowVal(r,"quantity","qty","수량"),1))}return bag}
@@ -318,14 +356,14 @@ function trainerBag(key,tr,source=sheetStore){const bag=parseInlineBag(rowVal(tr
 function gvizTab(tab){return new Promise((resolve,reject)=>{const cb="__gviz_"+Math.random().toString(36).slice(2);const script=document.createElement("script");const timer=setTimeout(()=>done(new Error(`시트 '${tab}' 응답 시간 초과`)),12000);function done(err,data){clearTimeout(timer);delete window[cb];script.remove();err?reject(err):resolve(data)}window[cb]=res=>{if(res?.status==="error")return done(new Error(res.errors?.[0]?.detailed_message||res.errors?.[0]?.message||`${tab} 로딩 실패`));done(null,res)};script.onerror=()=>done(new Error(`${tab} 탭을 불러오지 못했습니다.`));script.src=`https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?headers=1&sheet=${encodeURIComponent(tab)}&tqx=${encodeURIComponent("responseHandler:"+cb)}`;document.head.appendChild(script)})}
 function gvizObjects(res){const cols=(res.table?.cols||[]).map((c,i)=>String(c.label||c.id||`col${i}`).trim());return(res.table?.rows||[]).map(r=>{const o={};cols.forEach((k,i)=>{if(k)o[k]=r.c?.[i]?.v??r.c?.[i]?.f??""});return o})}
 async function loadSheets(){
-  qs("#sheetBadge").textContent="SHEET: 연결 중";
+  qs("#sheetBadge").textContent="시트: 연결 중";
   try{
     const [t,p]=await Promise.all([gvizTab(CONFIG.sheetTabs.trainers),gvizTab(CONFIG.sheetTabs.pokemon)]);
     let m=[],items=[];try{m=gvizObjects(await gvizTab(CONFIG.sheetTabs.moves))}catch{m=[]}try{items=gvizObjects(await gvizTab(CONFIG.sheetTabs.items))}catch{items=[]}
     sheetStore.trainers=gvizObjects(t);sheetStore.pokemon=gvizObjects(p);sheetStore.moves=m;sheetStore.items=items;sheetStore.loaded=true;sheetStore.error=null;
-    qs("#sheetBadge").textContent=`SHEET: ${sheetStore.trainers.length} TRAINERS`;
-    qs("#loginStatus").textContent=dexStore.ready?"데이터 준비 완료. 닉네임을 입력하세요.":"Google Sheet는 준비됐지만 Showdown Dex 연결을 확인 중입니다.";
-  }catch(e){sheetStore.loaded=false;sheetStore.error=e;qs("#sheetBadge").textContent="SHEET: 가이드 확인";qs("#loginStatus").innerHTML=`<span class="warn">시트 자동 로딩 실패:</span> ${esc(e.message)}<br>데모 배틀은 사용할 수 있습니다.`}
+    qs("#sheetBadge").textContent=`시트: 트레이너 ${sheetStore.trainers.length}명`;
+    qs("#loginStatus").textContent=dexStore.ready?"데이터 준비 완료. 닉네임을 입력하세요.":"Google 시트는 준비됐지만 Showdown 도감 연결을 확인 중입니다.";
+  }catch(e){sheetStore.loaded=false;sheetStore.error=e;qs("#sheetBadge").textContent="시트: 가이드 확인";qs("#loginStatus").innerHTML=`<span class="warn">시트 자동 불러오기 실패:</span> ${esc(e.message)}<br>데모 배틀은 사용할 수 있습니다.`}
 }
 function displayMoveName(id){const key=toID(id),r=sheetStore.moves.find(x=>toID(rowVal(x,"move_id","id","기술id"))===key);return (r?rowVal(r,"display_name","name","기술명"):"")||moveKoMap[key]||""}
 function autoMegaData(baseId,item,manualId="",variant=""){
@@ -338,7 +376,7 @@ function autoMegaData(baseId,item,manualId="",variant=""){
   if(!chosen&&wanted)chosen=forms.find(x=>norm(x.data.forme||x.data.name).replace(/[^a-z]/g,"").endsWith(wanted));
   if(!chosen&&forms.length===1)chosen=forms[0];
   if(!chosen)return{ambiguous:true,options:forms.map(x=>({showdownId:spriteIdFromDexId(x.id,x.data),name:x.data.name,stone:x.data.requiredItem||null}))};
-  const d=chosen.data;return{showdownId:spriteIdFromDexId(chosen.id,d),name:d.name,types:(d.types||[]).map(norm),ability:Object.values(d.abilities||{})[0]||"",stone:d.requiredItem||null,statsMode:"base",stats:{hp:d.baseStats.hp,attack:d.baseStats.atk,defense:d.baseStats.def,specialAttack:d.baseStats.spa,specialDefense:d.baseStats.spd,speed:d.baseStats.spe}};
+  const d=chosen.data;return{showdownId:spriteIdFromDexId(chosen.id,d),name:displaySpeciesName(chosen.id,d.name),types:(d.types||[]).map(norm),ability:Object.values(d.abilities||{})[0]||"",stone:d.requiredItem||null,requiredMove:toID(d.requiredMove||""),statsMode:"base",stats:{hp:d.baseStats.hp,attack:d.baseStats.atk,defense:d.baseStats.def,specialAttack:d.baseStats.spa,specialDefense:d.baseStats.spd,speed:d.baseStats.spe}};
 }
 function autoGmaxId(baseId,manualId=""){
   if(manualId)return manualId;
@@ -350,44 +388,46 @@ function buildPokemonData(r){
   const rawSprite=rowVal(r,"showdown_id","sprite_id")||rowVal(r,"species","pokemon","포켓몬");
   const dexId=toID(rawSprite);const sp=dexSpecies(dexId);const errors=[],warnings=[];
   if(!sp)return{errors:[`알 수 없는 포켓몬/폼: ${rawSprite}`]};
-  if(sp.battleOnly)errors.push(`${sp.name}은(는) 전투 시작 형태로 직접 등록할 수 없습니다. 기본 형태를 등록하세요.`);
+  const speciesKo=displaySpeciesName(dexId,sp.name);
+  if(sp.battleOnly)errors.push(`${speciesKo}은(는) 전투 시작 형태로 직접 등록할 수 없습니다. 기본 형태를 등록하세요.`);
   const spriteId=rowVal(r,"showdown_id","sprite_id")||spriteIdFromDexId(dexId,sp);
   const allowedAbilities=Object.values(sp.abilities||{});let ability=rowVal(r,"ability","특성")||allowedAbilities[0]||"";
-  if(ability&&!allowedAbilities.some(a=>toID(a)===toID(ability))){warnings.push(`특성 '${ability}'은 ${sp.name}의 일반 특성이 아니므로 '${allowedAbilities[0]||"없음"}'으로 교체됨.`);ability=allowedAbilities[0]||ability}
+  if(ability&&!allowedAbilities.some(a=>toID(a)===toID(ability))){warnings.push(`특성 '${displayAbilityName(ability)}'은 ${speciesKo}의 일반 특성이 아니므로 '${displayAbilityName(allowedAbilities[0]||"없음")}'으로 교체됨.`);ability=allowedAbilities[0]||ability}
   const moveIds=[1,2,3,4].map(i=>rowVal(r,`move${i}`,`기술${i}`)).filter(Boolean);
   const moves=[];
   for(const raw of moveIds){
     const m=showdownMoveData(raw,displayMoveName(raw));
     if(!m){errors.push(`존재하지 않는 기술: ${raw}`);continue}
     const legal=checkMoveLegality(dexId,m.id);
-    if(!legal.ok){errors.push(`${sp.name} → ${m.name}: ${legal.reason}`);continue}
-    if(m.isNonstandard&&m.isNonstandard!=="Unobtainable")warnings.push(`${m.name}: Showdown 분류 ${m.isNonstandard}`);
+    if(!legal.ok){errors.push(`${speciesKo} → ${m.name}: ${legal.reason}`);continue}
+    if(m.isNonstandard&&m.isNonstandard!=="Unobtainable")warnings.push(`${m.name}: 현재 규칙에서 일반적으로 사용할 수 없는 기술로 분류됩니다.`);
     moves.push(m);
   }
-  if(!moves.length)errors.push(`${sp.name}: 사용할 수 있는 기술이 없습니다.`);
+  if(!moves.length)errors.push(`${speciesKo}: 사용할 수 있는 기술이 없습니다.`);
   const base={hp:sp.baseStats.hp,attack:sp.baseStats.atk,defense:sp.baseStats.def,specialAttack:sp.baseStats.spa,specialDefense:sp.baseStats.spd,speed:sp.baseStats.spe};
   const statMode=norm(rowVal(r,"stat_mode"))||"base";
   const finalStats={hp:num(rowVal(r,"hp"),base.hp),attack:num(rowVal(r,"attack","atk"),base.attack),defense:num(rowVal(r,"defense","def"),base.defense),specialAttack:num(rowVal(r,"special_attack","spa"),base.specialAttack),specialDefense:num(rowVal(r,"special_defense","spd"),base.specialDefense),speed:num(rowVal(r,"speed","spe"),base.speed)};
   const ivs={hp:statField(r,"iv","hp","hp"),attack:statField(r,"iv","attack","atk"),defense:statField(r,"iv","defense","def"),specialAttack:statField(r,"iv","special_attack","spa"),specialDefense:statField(r,"iv","special_defense","spd"),speed:statField(r,"iv","speed","spe")};
   const evs={hp:statField(r,"ev","hp","hp"),attack:statField(r,"ev","attack","atk"),defense:statField(r,"ev","defense","def"),specialAttack:statField(r,"ev","special_attack","spa"),specialDefense:statField(r,"ev","special_defense","spd"),speed:statField(r,"ev","speed","spe")};
-  if(Object.values(evs).some(v=>v>252)||Object.values(evs).reduce((a,b)=>a+b,0)>510)warnings.push(`${sp.name}: EV가 일반 한도(개별 252 / 합계 510)를 넘습니다.`);
+  if(Object.values(evs).some(v=>v>252)||Object.values(evs).reduce((a,b)=>a+b,0)>510)warnings.push(`${speciesKo}: EV가 일반 한도(개별 252 / 합계 510)를 넘습니다.`);
   const item=rowVal(r,"item","도구")||null;
-  const teraType=norm(rowVal(r,"tera_type","tera","테라타입"))||norm(sp.types?.[0])||"normal";if(!TYPE_KO[teraType])errors.push(`${sp.name}: 알 수 없는 테라타입 '${teraType}'`);
+  const teraType=norm(rowVal(r,"tera_type","tera","테라타입"))||norm(sp.types?.[0])||"normal";if(!TYPE_KO[teraType])errors.push(`${speciesKo}: 알 수 없는 테라타입 '${teraType}'`);
   const megaData=autoMegaData(dexId,item,rowVal(r,"mega_showdown_id"),rowVal(r,"mega_variant","메가분기"));
-  if(megaData?.ambiguous)errors.push(`${sp.name}: 메가진화가 X/Y 등 여러 형태입니다. item에 정확한 메가스톤을 넣거나 mega_variant(X/Y) 또는 mega_showdown_id를 지정하세요.`);
+  if(megaData?.ambiguous)errors.push(`${speciesKo}: 메가진화 형태가 여러 개입니다. 지닌물건에 정확한 메가스톤을 넣거나 mega_variant(X/Y) 또는 mega_showdown_id를 지정하세요.`);
   const gmaxShowdownId=autoGmaxId(dexId,rowVal(r,"gmax_showdown_id"));
-  return{errors,warnings,data:{species:rowVal(r,"species","pokemon","포켓몬")||sp.name,dexName:sp.name,nickname:rowVal(r,"nickname","별명")||rowVal(r,"species")||sp.name,showdownId:spriteId,dexId,shiny:bool(rowVal(r,"shiny","이로치")),level:num(rowVal(r,"level","레벨"),50),types:(sp.types||["Normal"]).map(norm),ability,item,teraType,statsMode:statMode,stats:statMode==="final"&&CONFIG.allowCustomFinalStats?finalStats:base,baseStats:base,ivs,evs,nature:norm(rowVal(r,"nature","성격"))||"serious",moves,dynamaxLevel:Math.max(0,Math.min(10,num(rowVal(r,"dynamax_level"),10))),megaData,gmaxShowdownId,cannotDynamax:!!sp.cannotDynamax}};
+  return{errors,warnings,data:{species:speciesKo,dexName:speciesKo,nickname:rowVal(r,"nickname","별명")||speciesKo,showdownId:spriteId,dexId,shiny:bool(rowVal(r,"shiny","이로치")),level:num(rowVal(r,"level","레벨"),50),types:(sp.types||["Normal"]).map(norm),ability,item,teraType,statsMode:statMode,stats:statMode==="final"&&CONFIG.allowCustomFinalStats?finalStats:base,baseStats:base,ivs,evs,nature:norm(rowVal(r,"nature","성격"))||"serious",moves,dynamaxLevel:Math.max(0,Math.min(10,num(rowVal(r,"dynamax_level"),10))),megaData,gmaxShowdownId,cannotDynamax:!!sp.cannotDynamax}};
 }
 function getTrainerData(nickname,source=sheetStore){
   const key=norm(nickname);const tr=(source.trainers||[]).find(r=>norm(rowVal(r,"nickname","닉네임"))===key);if(!tr)return null;
   const rows=(source.pokemon||[]).filter(r=>norm(rowVal(r,"trainer_nickname","trainer","트레이너"))===key).sort((a,b)=>num(rowVal(a,"slot"),999)-num(rowVal(b,"slot"),999)).slice(0,6);
   const partyData=[],errors=[],warnings=[];
   for(const r of rows){const x=buildPokemonData(r);errors.push(...(x.errors||[]));warnings.push(...(x.warnings||[]));if(x.data)partyData.push(x.data)}
-  return{id:key,name:rowVal(tr,"display_name","name","표시이름")||rowVal(tr,"nickname","닉네임"),money:num(rowVal(tr,"money","소지금"),0),bag:trainerBag(key,tr,source),partyData,errors,warnings};
+  const gear={keyStone:bool(rowVal(tr,"key_stone","keystone","키스톤")),zRing:bool(rowVal(tr,"z_ring","zring","Z링","제트링")),dynamaxBand:bool(rowVal(tr,"dynamax_band","dynamaxband","다이맥스밴드")),teraOrb:bool(rowVal(tr,"tera_orb","teraorb","테라스탈오브","테라오브"))};
+  return{id:key,name:rowVal(tr,"display_name","name","표시이름")||rowVal(tr,"nickname","닉네임"),money:num(rowVal(tr,"money","소지금"),0),bag:trainerBag(key,tr,source),gear,partyData,errors,warnings};
 }
 
 const DEMO={
-  trainers:[{nickname:"demo",display_name:"준",money:3000},{nickname:"rival",display_name:"라이벌",money:5000}],
+  trainers:[{nickname:"demo",display_name:"게스트",money:3000,key_stone:true,z_ring:true,dynamax_band:true,tera_orb:true},{nickname:"rival",display_name:"라이벌",money:5000,key_stone:true,z_ring:true,dynamax_band:true,tera_orb:true}],
   pokemon:[
     {trainer_nickname:"demo",slot:1,species:"리자몽",showdown_id:"charizard",level:50,ability:"Blaze",item:"Charizardite X",tera_type:"dragon",nature:"timid",move1:"flamethrower",move2:"airslash",move3:"dragonpulse",move4:"protect"},
     {trainer_nickname:"demo",slot:2,species:"피카츄",showdown_id:"pikachu",level:50,ability:"Static",item:"Light Ball",tera_type:"electric",nature:"jolly",move1:"thunderbolt",move2:"quickattack",move3:"thunderwave",move4:"protect"},
@@ -417,6 +457,20 @@ const ITEM_DEFS={
 };
 function itemDef(id){return ITEM_DEFS[toID(id)]||null}
 
+const Z_CRYSTAL_BY_TYPE={normal:"normaliumz",fire:"firiumz",water:"wateriumz",electric:"electriumz",grass:"grassiumz",ice:"iciumz",fighting:"fightiniumz",poison:"poisoniumz",ground:"groundiumz",flying:"flyiniumz",psychic:"psychiumz",bug:"buginiumz",rock:"rockiumz",ghost:"ghostiumz",dragon:"dragoniumz",dark:"darkiniumz",steel:"steeliumz",fairy:"fairiumz"};
+const MECHANIC_KO={mega:"메가진화",z:"Z기술",dynamax:"다이맥스",gmax:"거다이맥스",tera:"테라스탈"};
+function zCrystalMatches(p,move){if(!p||!move||move.category==="status")return false;return canonicalItem(p.item)===Z_CRYSTAL_BY_TYPE[move.type]}
+function hasMegaRequirement(p){if(!p?.megaData)return false;if(p.megaData.stone)return canonicalItem(p.item)===canonicalItem(p.megaData.stone);if(p.megaData.requiredMove)return p.moves.some(m=>m.id===p.megaData.requiredMove);return false}
+function mechanicReason(k,t,p,move=null){
+  if(k==="mega"){if(t.megaUsed)return"이미 이번 배틀에서 메가진화를 사용했습니다.";if(!t.gear?.keyStone)return"트레이너에게 키스톤이 없습니다.";if(!p.megaData)return"이 포켓몬은 메가진화할 수 없습니다.";if(!hasMegaRequirement(p))return p.megaData.stone?`${displayItemName(p.megaData.stone)}을(를) 지니고 있어야 합니다.`:"필요한 메가진화 조건을 만족하지 못했습니다.";if(p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
+  if(k==="z"){if(t.zUsed)return"이미 이번 배틀에서 Z기술을 사용했습니다.";if(!t.gear?.zRing)return"트레이너에게 Z링이 없습니다.";if(!move)return"먼저 기술을 선택하세요.";if(move.category==="status")return"현재 엔진은 공격 기술의 Z기술만 지원합니다.";const need=Z_CRYSTAL_BY_TYPE[move.type];if(!need)return"이 기술 타입에 대응하는 Z크리스탈을 찾을 수 없습니다.";if(canonicalItem(p.item)!==need)return`${displayItemName(need)}을(를) 지니고 있어야 합니다.`;if(p.isMega||p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
+  if(k==="dynamax"){if(t.dynamaxUsed)return"이미 이번 배틀에서 다이맥스를 사용했습니다.";if(!t.gear?.dynamaxBand)return"트레이너에게 다이맥스밴드가 없습니다.";if(p.cannotDynamax)return"이 포켓몬은 다이맥스할 수 없습니다.";if(p.isMega||p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
+  if(k==="gmax"){if(t.dynamaxUsed)return"이미 이번 배틀에서 다이맥스 계열을 사용했습니다.";if(!t.gear?.dynamaxBand)return"트레이너에게 다이맥스밴드가 없습니다.";if(!p.gmaxShowdownId)return"이 포켓몬은 거다이맥스할 수 없습니다.";if(p.isMega||p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
+  if(k==="tera"){if(t.terastalUsed)return"이미 이번 배틀에서 테라스탈을 사용했습니다.";if(!t.gear?.teraOrb)return"트레이너에게 테라스탈오브가 없습니다.";if(p.isMega||p.isDynamaxed)return"현재 다른 기믹이 적용 중입니다.";return""}
+  return"사용할 수 없습니다."
+}
+function mechanicAvailable(k,t,p,move=null){return!mechanicReason(k,t,p,move)}
+
 class Pokemon{
   constructor(d){
     this.species=d.species;this.dexName=d.dexName||d.species;this.dexId=d.dexId||toID(d.showdownId);this.nickname=d.nickname||d.species;this.showdownId=d.showdownId;this.shiny=!!d.shiny;this.level=d.level||50;
@@ -440,7 +494,7 @@ class Pokemon{
   spriteId(){if(this.isGigantamaxed&&this.gmaxShowdownId)return this.gmaxShowdownId;if(this.isMega&&this.megaData?.showdownId)return this.megaData.showdownId;return this.showdownId}
 }
 class Trainer{
-  constructor(d){this.id=d.id;this.name=d.name;this.money=d.money||0;this.bag={...(d.bag||{})};this.party=(d.partyData||[]).map(x=>new Pokemon(x));this.activeIndex=0;this.megaUsed=false;this.zUsed=false;this.dynamaxUsed=false;this.terastalUsed=false;this.pending=null}
+  constructor(d){this.id=d.id;this.name=d.name;this.money=d.money||0;this.bag={...(d.bag||{})};this.gear={keyStone:false,zRing:false,dynamaxBand:false,teraOrb:false,...(d.gear||{})};this.party=(d.partyData||[]).map(x=>new Pokemon(x));this.activeIndex=0;this.megaUsed=false;this.zUsed=false;this.dynamaxUsed=false;this.terastalUsed=false;this.pending=null}
   get active(){return this.party[this.activeIndex]}usable(){return this.party.filter(p=>!p.isFainted())}hasUsable(){return this.usable().length>0}
 }
 
@@ -461,16 +515,13 @@ class Battle{
   setTerrain(t,turns=5,source=""){if(this.terrain===t){this.log(`${TERRAIN_KO[t]||t}은(는) 이미 펼쳐져 있다.`);return false}this.terrain=t;this.terrainTurns=t?turns:0;this.log(t?`${source?source+"의 효과로 ":""}${TERRAIN_KO[t]||t}가 펼쳐졌다!`:"필드 효과가 사라졌다.","field");return true}
   applyInitialAbilities(){const pair=[["A",this.trainerA.active],["B",this.trainerB.active]].sort((x,y)=>this.effectiveStat(y[1],"speed")-this.effectiveStat(x[1],"speed"));for(const[,p]of pair)this.applyEntryAbility(p)}
   applyEntryAbility(p){
-    const a=toID(p.ability);const source=`${p.nickname}의 ${p.ability}`;
+    const a=toID(p.ability);const source=`${p.nickname}의 ${displayAbilityName(p.ability)}`;
     if(a==="drizzle")this.setWeather("rain",this.weatherDuration(p,"rain"),source);else if(a==="drought"||a==="orichalcumpulse")this.setWeather("sun",this.weatherDuration(p,"sun"),source);else if(a==="sandstream")this.setWeather("sand",this.weatherDuration(p,"sand"),source);else if(a==="snowwarning")this.setWeather("snow",this.weatherDuration(p,"snow"),source);
     else if(a==="electricsurge"||a==="hadronengine")this.setTerrain("electric",this.terrainDuration(p),source);else if(a==="grassysurge")this.setTerrain("grassy",this.terrainDuration(p),source);else if(a==="mistysurge")this.setTerrain("misty",this.terrainDuration(p),source);else if(a==="psychicsurge")this.setTerrain("psychic",this.terrainDuration(p),source);
   }
-  queue(side,kind){
+  queue(side,kind,moveIndex=null){
     const t=this.trainer(side),p=t.active;if(t.pending===kind){t.pending=null;return}
-    if(kind==="mega"){if(t.megaUsed||p.isMega||p.isDynamaxed||p.isTerastallized||!p.megaData||(p.megaData.stone&&canonicalItem(p.item)!==canonicalItem(p.megaData.stone))){this.log(`${t.name}: 메가진화 조건을 만족하지 못했다.`);return}}
-    if(kind==="z"){if(t.zUsed||p.isMega||p.isDynamaxed||p.isTerastallized){this.log(`${t.name}: Z기술 사용 불가.`);return}}
-    if(kind==="dynamax"||kind==="gmax"){if(t.dynamaxUsed||p.cannotDynamax||p.isMega||p.isDynamaxed||p.isTerastallized||(kind==="gmax"&&!p.gmaxShowdownId)){this.log(`${t.name}: ${kind==="gmax"?"거다이맥스":"다이맥스"} 사용 불가.`);return}}
-    if(kind==="tera"){if(t.terastalUsed||p.isMega||p.isDynamaxed){this.log(`${t.name}: 테라스탈 사용 불가.`);return}}
+    const move=moveIndex==null?null:p.moves[moveIndex];const reason=mechanicReason(kind,t,p,move);if(reason){this.log(`${t.name}: ${MECHANIC_KO[kind]||kind} 사용 불가 — ${reason}`);return}
     t.pending=kind;
   }
   activateBeforeOrder(t){
@@ -501,7 +552,7 @@ class Battle{
   prepareMove(t,index){
     const p=t.active;let base=p.moves[index];if(!base||p.allPpDepleted())return{...STRUGGLE};if(base.pp<=0){this.log(`${base.name}의 PP가 없다!`);return{id:"noaction",name:"행동 실패",category:"status",priority:-99,failed:true}}
     if(p.isDynamaxed){base.pp--;if(base.category==="status")return{id:`maxguard${base.id}`,name:"다이월",type:"normal",category:"status",power:0,accuracy:999,priority:4,maxGuard:true,flags:{}};return{...base,name:`다이${base.name}`,power:maxPower(base.power,base.type),accuracy:999,priority:0,isMaxMove:true,weather:({fire:"sun",water:"rain",rock:"sand",ice:"snow"})[base.type]||null,terrain:({electric:"electric",grass:"grassy",psychic:"psychic",fairy:"misty"})[base.type]||null}}
-    if(t.pending==="z"){t.pending=null;const crystals={water:"wateriumz",electric:"electriumz",fire:"firiumz",dragon:"dragoniumz",normal:"normaliumz",grass:"grassiumz",ice:"iciumz",fighting:"fightiniumz",poison:"poisoniumz",ground:"groundiumz",flying:"flyiniumz",psychic:"psychiumz",bug:"buginiumz",rock:"rockiumz",ghost:"ghostiumz",dark:"darkiniumz",steel:"steeliumz",fairy:"fairiumz"};if(!t.zUsed&&canonicalItem(p.item)===crystals[base.type]&&base.category!=="status"){t.zUsed=true;base.pp--;return{...base,name:`Z-${base.name}`,power:zPower(base.power),accuracy:999,priority:0,isZMove:true}}this.log(`${t.name}: 선택한 기술은 현재 Z기술 조건을 만족하지 않는다.`)}
+    if(t.pending==="z"){t.pending=null;if(!t.zUsed&&t.gear?.zRing&&zCrystalMatches(p,base)){t.zUsed=true;base.pp--;return{...base,name:`Z기술 · ${base.name}`,power:zPower(base.power),accuracy:999,priority:0,isZMove:true}}this.log(`${t.name}: 선택한 기술은 Z기술 조건을 만족하지 않는다.`)}
     base.pp--;let m={...base};if(m.id==="terablast"&&p.isTerastallized){m={...m,type:p.teraType,category:this.effectiveStat(p,"attack")>this.effectiveStat(p,"specialAttack")?"physical":"special"};if(p.teraType==="stellar"){m.power=100;m.selfBoosts={attack:-1,specialAttack:-1}}}return m;
   }
   getOrder(a,b){if(a.priority!==b.priority)return a.priority>b.priority?["A","B"]:["B","A"];const sa=this.effectiveStat(this.trainerA.active,"speed"),sb=this.effectiveStat(this.trainerB.active,"speed");if(sa!==sb)return sa>sb?["A","B"]:["B","A"];return Math.random()<.5?["A","B"]:["B","A"]}
@@ -554,8 +605,8 @@ class Battle{
   actionSpeedOrder(){const sa=this.effectiveStat(this.trainerA.active,"speed"),sb=this.effectiveStat(this.trainerB.active,"speed");if(sa!==sb)return sa>sb?["A","B"]:["B","A"];return Math.random()<.5?["A","B"]:["B","A"]}
   executeActions(actionA,actionB){
     if(this.finished)return;if(this.forceSwitch.A||this.forceSwitch.B){this.log("강제 교체를 먼저 완료해야 한다.");return}
-    const actions={A:actionA||{kind:"move",moveIndex:0},B:actionB||{kind:"move",moveIndex:0}};this.log(`TURN ${this.turn}`);
-    for(const side of["A","B"]){const t=this.trainer(side),a=actions[side];t.pending=null;if(a.kind==="move"&&a.mechanic)this.queue(side,a.mechanic)}
+    const actions={A:actionA||{kind:"move",moveIndex:0},B:actionB||{kind:"move",moveIndex:0}};this.log(`턴 ${this.turn}`);
+    for(const side of["A","B"]){const t=this.trainer(side),a=actions[side];t.pending=null;if(a.kind==="move"&&a.mechanic)this.queue(side,a.mechanic,a.moveIndex)}
     const specialOrder=this.actionSpeedOrder();
     for(const side of specialOrder){const a=actions[side];if(a.kind!=="switch")continue;const ok=this.switch(side,num(a.switchIndex,-1),false);if(!ok)this.log(`${this.trainer(side).name}: 교체에 실패했다.`)}
     for(const side of specialOrder){const a=actions[side];if(a.kind!=="item")continue;this.useItem(side,a.itemId,a.targetIndex)}
@@ -573,21 +624,21 @@ class Battle{
 
 let battle=null,mySide="A",selectedMove=0,selectedActionKind="move",selectedSwitchIndex=null,selectedItemId=null,selectedItemTarget=null,lastControlTurn=null,mode="local",myTrainerData=null,lastVisual=null,lastVisualEventId=0,hitSequence=Promise.resolve(),visualLockDepth=0;
 function spriteUrl(p,isMine){const folder=isMine?(p.shiny?"ani-back-shiny":"ani-back"):(p.shiny?"ani-shiny":"ani");return`${CONFIG.showdownBase}/${folder}/${encodeURIComponent(p.spriteId())}.gif`}
-function setSprite(img,p,isMine){const exact=spriteUrl(p,isMine);img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`Sprite missing: ${p.spriteId()}`};img.style.opacity="";img.src=exact}
+function setSprite(img,p,isMine){const exact=spriteUrl(p,isMine);img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`};img.style.opacity="";img.src=exact}
 function trainerByPerspective(mine=true){return battle.trainer(mine?mySide:(mySide==="A"?"B":"A"))}
-function hud(t){const p=t.active,pct=Math.max(0,Math.min(100,p.currentHp/p.stats.hp*100));const mechs=[p.isMega?"MEGA":"",p.isDynamaxed?(p.isGigantamaxed?"G-MAX":"D-MAX"):"",p.isTerastallized?`TERA ${TYPE_KO[p.teraType]||p.teraType}`:""].filter(Boolean);return`<div class="title"><h3>${esc(p.nickname)}</h3><small>Lv.${p.level}</small></div><div class="hud-meta"><span>${esc(t.name)}</span><span class="type-row">${p.types.map(typePill).join("")}</span>${p.status?`<span class="status-pill">${esc(STATUS_KO[p.status]||p.status)}</span>`:""}</div><div class="hptext"><b>HP</b><span>${p.currentHp}/${p.stats.hp}</span></div><div class="hp"><div class="hpbar" style="width:${pct}%"></div></div><div class="party-dots">${t.party.map((x,i)=>`<span class="dot ${x.isFainted()?"fainted":""} ${i===t.activeIndex?"active":""}"></span>`).join("")}</div>${mechs.length?`<div class="mechanic-tags">${mechs.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}`}
-function renderTeam(t){return t.party.map((p,i)=>`<div class="teamrow"><img src="${spriteUrl(p,false)}" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · ${p.currentHp}/${p.stats.hp}</small></div><span>${i===t.activeIndex?"●":""}</span></div>`).join("")}
-function setTeraOverlay(base,overlay,p,isMine){if(!p.isTerastallized){overlay.classList.add("hidden");base.closest(".spritebox")?.classList.remove("tera-active");return}overlay.classList.remove("hidden");overlay.src=spriteUrl(p,isMine);overlay.className=`tera-overlay-img tera-${p.teraType}`;base.closest(".spritebox")?.classList.add("tera-active");base.closest(".spritebox")?.style.setProperty("--tera-label",`'TERA · ${String(TYPE_KO[p.teraType]||p.teraType).toUpperCase()}'`)}
+function hud(t){const p=t.active,pct=Math.max(0,Math.min(100,p.currentHp/p.stats.hp*100));const mechs=[p.isMega?"메가진화":"",p.isDynamaxed?(p.isGigantamaxed?"거다이맥스":"다이맥스"):"",p.isTerastallized?`테라스탈 · ${TYPE_KO[p.teraType]||p.teraType}`:""].filter(Boolean);return`<div class="title"><h3>${esc(p.nickname)}</h3><small>레벨 ${p.level}</small></div><div class="hud-meta"><span>${esc(t.name)}</span><span class="type-row">${p.types.map(typePill).join("")}</span>${p.status?`<span class="status-pill">${esc(STATUS_KO[p.status]||p.status)}</span>`:""}</div><div class="held-item">지닌물건 · <b>${esc(displayItemName(p.item))}</b></div><div class="hptext"><b>HP</b><span>${p.currentHp}/${p.stats.hp}</span></div><div class="hp"><div class="hpbar" style="width:${pct}%"></div></div><div class="party-dots">${t.party.map((x,i)=>`<span class="dot ${x.isFainted()?"fainted":""} ${i===t.activeIndex?"active":""}"></span>`).join("")}</div>${mechs.length?`<div class="mechanic-tags">${mechs.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}`}
+function renderTeam(t){return t.party.map((p,i)=>`<div class="teamrow"><img src="${spriteUrl(p,false)}" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · HP ${p.currentHp}/${p.stats.hp} · ${esc(displayItemName(p.item))}</small></div><span>${i===t.activeIndex?"●":""}</span></div>`).join("")}
+function renderGear(t){const g=t.gear||{};return[["키스톤",g.keyStone],["Z링",g.zRing],["다이맥스밴드",g.dynamaxBand],["테라스탈오브",g.teraOrb]].map(([name,on])=>`<span class="gear-chip ${on?"on":"off"}">${on?"✓":"×"} ${name}</span>`).join("")}
+function setTeraOverlay(base,overlay,p,isMine){if(!p.isTerastallized){overlay.classList.add("hidden");base.closest(".spritebox")?.classList.remove("tera-active");return}overlay.classList.remove("hidden");overlay.src=spriteUrl(p,isMine);overlay.className=`tera-overlay-img tera-${p.teraType}`;base.closest(".spritebox")?.classList.add("tera-active");base.closest(".spritebox")?.style.setProperty("--tera-label",`'테라스탈 · ${String(TYPE_KO[p.teraType]||p.teraType)}'`)}
 function renderBattle(){
   if(!battle)return;const mine=trainerByPerspective(true),enemy=trainerByPerspective(false),mp=mine.active,ep=enemy.active;qs("#battleSection").classList.remove("hidden");qs("#playerHud").innerHTML=hud(mine);qs("#enemyHud").innerHTML=hud(enemy);setSprite(qs("#playerSprite"),mp,true);setSprite(qs("#enemySprite"),ep,false);setTeraOverlay(qs("#playerSprite"),qs("#playerTeraOverlay"),mp,true);setTeraOverlay(qs("#enemySprite"),qs("#enemyTeraOverlay"),ep,false);
-  qs("#playerSprite").className=`sprite ${mp.isDynamaxed?"dynamax":""} ${mp.isFainted()?"faint":""}`;qs("#enemySprite").className=`sprite ${ep.isDynamaxed?"dynamax":""} ${ep.isFainted()?"faint":""}`;qs("#turnLabel").textContent=`TURN ${battle.turn}`;qs("#modeLabel").textContent=mode==="online"?`ONLINE · YOU ARE ${mySide}`:"LOCAL SIMULATION";qs("#myTeam").innerHTML=renderTeam(mine);qs("#statBox").innerHTML=[["공격",battle.effectiveStat(mp,"attack")],["방어",battle.effectiveStat(mp,"defense")],["특공",battle.effectiveStat(mp,"specialAttack")],["특방",battle.effectiveStat(mp,"specialDefense")],["스피드",battle.effectiveStat(mp,"speed")],["도구",mp.item||"-"]].map(x=>`<div class="stat"><small>${x[0]}</small>${esc(x[1])}</div>`).join("");qs("#battleLog").innerHTML=battle.logs.length?battle.logs.slice(-50).reverse().map(x=>`<div class="entry ${x.kind||""}">${esc(x.text)}</div>`).join(""):`<div class="muted">로그 없음</div>`;qs("#debugState").textContent=JSON.stringify(battle.snapshot(),null,2);renderArenaEffects();renderControls();visualDiff();if(battle.logs.length)qs("#battleMessage").textContent=battle.logs.at(-1).text;if(battle.finished){qs("#submitAction").disabled=true;stopBgm()}
+  qs("#playerSprite").className=`sprite ${mp.isDynamaxed?"dynamax":""} ${mp.isFainted()?"faint":""}`;qs("#enemySprite").className=`sprite ${ep.isDynamaxed?"dynamax":""} ${ep.isFainted()?"faint":""}`;qs("#turnLabel").textContent=`턴 ${battle.turn}`;qs("#modeLabel").textContent=mode==="online"?`온라인 배틀 · 내 진영 ${mySide}`:"로컬 시뮬레이션";qs("#myTeam").innerHTML=renderTeam(mine);qs("#gearBox").innerHTML=renderGear(mine);qs("#statBox").innerHTML=[["공격",battle.effectiveStat(mp,"attack")],["방어",battle.effectiveStat(mp,"defense")],["특공",battle.effectiveStat(mp,"specialAttack")],["특방",battle.effectiveStat(mp,"specialDefense")],["스피드",battle.effectiveStat(mp,"speed")],["지닌물건",displayItemName(mp.item)],["특성",displayAbilityName(mp.ability)]].map(x=>`<div class="stat"><small>${x[0]}</small>${esc(x[1])}</div>`).join("");qs("#battleLog").innerHTML=battle.logs.length?battle.logs.slice(-50).reverse().map(x=>`<div class="entry ${x.kind||""}">${esc(x.text)}</div>`).join(""):`<div class="muted">로그 없음</div>`;const debug=qs("#debugState");if(debug)debug.textContent=JSON.stringify(battle.snapshot(),null,2);renderArenaEffects();renderControls();visualDiff();if(battle.logs.length)qs("#battleMessage").textContent=battle.logs.at(-1).text;if(battle.finished){qs("#submitAction").disabled=true;stopBgm(false)}
 }
 function renderArenaEffects(){const a=qs("#arena");a.className=`arena ${battle.weather?`weather-${battle.weather}`:""} ${battle.terrain?`has-terrain terrain-bg-${battle.terrain}`:""}`;const tg=qs("#terrainGlow");tg.className=`terrain-glow ${battle.terrain?`terrain-${battle.terrain}`:""}`;qs("#weatherChip").innerHTML=`<b>날씨</b><span>${battle.weather?`${WEATHER_KO[battle.weather]} · ${battle.weatherTurns}턴`:"없음"}</span>`;qs("#terrainChip").innerHTML=`<b>필드</b><span>${battle.terrain?`${TERRAIN_KO[battle.terrain]} · ${battle.terrainTurns}턴`:"없음"}</span>`}
-function mechanicAvailable(k,t,p){if(k==="mega")return!t.megaUsed&&!!p.megaData&&(!p.megaData.stone||canonicalItem(p.item)===canonicalItem(p.megaData.stone))&&!p.isDynamaxed&&!p.isTerastallized;if(k==="z")return!t.zUsed&&!p.isMega&&!p.isDynamaxed&&!p.isTerastallized;if(k==="dynamax")return!t.dynamaxUsed&&!p.cannotDynamax&&!p.isMega&&!p.isDynamaxed&&!p.isTerastallized;if(k==="gmax")return!t.dynamaxUsed&&!!p.gmaxShowdownId&&!p.isMega&&!p.isDynamaxed&&!p.isTerastallized;if(k==="tera")return!t.terastalUsed&&!p.isMega&&!p.isDynamaxed;return false}
 function resetActionSelection(){selectedActionKind="move";selectedMove=0;selectedSwitchIndex=null;selectedItemId=null;selectedItemTarget=null}
 function selectedAction(){const t=trainerByPerspective(true);if(selectedActionKind==="switch")return{kind:"switch",switchIndex:selectedSwitchIndex};if(selectedActionKind==="item")return{kind:"item",itemId:selectedItemId,targetIndex:selectedItemTarget};return{kind:"move",moveIndex:selectedMove,mechanic:t.pending||null}}
-function actionSummaryText(){const mine=trainerByPerspective(true),p=mine.active;if(selectedActionKind==="switch"){const x=mine.party[selectedSwitchIndex];return x?`${p.nickname}을(를) 불러들이고 ${x.nickname}으로 교체`:"교체할 포켓몬을 선택하세요."}if(selectedActionKind==="item"){const d=itemDef(selectedItemId),x=mine.party[selectedItemTarget];return d&&x?`${d.name} → ${x.nickname}`:"사용할 아이템과 대상을 선택하세요."}const m=p.moves[selectedMove];return m?`${p.nickname} → ${m.name}${mine.pending?` · ${mine.pending.toUpperCase()}`:""}`:"기술을 선택하세요."}
-function renderMovePane(mine,p){qs("#actionPane").innerHTML=`<div class="movegrid">${p.moves.map((m,i)=>`<button class="movebtn type-${m.type} ${selectedMove===i?"selected":""}" data-move="${i}" ${m.pp<=0?"disabled":""}><span class="move-top"><strong>${esc(m.name)}</strong>${typePill(m.type)}</span><small>${m.category==="physical"?"물리":m.category==="special"?"특수":"변화"} · 위력 ${m.power||"—"} · 명중 ${m.accuracy>=999?"—":m.accuracy} · PP ${m.pp}/${m.maxPp}</small>${m.shortDesc?`<em>${esc(m.shortDesc)}</em>`:""}</button>`).join("")}</div>`;qsa("[data-move]").forEach(b=>b.onclick=()=>{selectedMove=Number(b.dataset.move);startBgm();renderControls()});const ms=[["mega","메가진화"],["z","Z기술"],["dynamax","다이맥스"],["gmax","거다이맥스"],["tera","테라스탈"]];qs("#mechanics").innerHTML=ms.map(([k,l])=>{const ok=mechanicAvailable(k,mine,p);return`<button class="btn ${mine.pending===k?"active":""}" data-mech="${k}" ${ok?"":"disabled"}>${l}</button>`}).join("");qsa("[data-mech]").forEach(b=>b.onclick=()=>{battle.queue(mySide,b.dataset.mech);renderControls()})}
+function actionSummaryText(){const mine=trainerByPerspective(true),p=mine.active;if(selectedActionKind==="switch"){const x=mine.party[selectedSwitchIndex];return x?`${p.nickname}을(를) 불러들이고 ${x.nickname}으로 교체`:"교체할 포켓몬을 선택하세요."}if(selectedActionKind==="item"){const d=itemDef(selectedItemId),x=mine.party[selectedItemTarget];return d&&x?`${d.name} → ${x.nickname}`:"사용할 아이템과 대상을 선택하세요."}const m=p.moves[selectedMove];return m?`${p.nickname} → ${m.name}${mine.pending?` · ${MECHANIC_KO[mine.pending]||mine.pending}`:""}`:"기술을 선택하세요."}
+function renderMovePane(mine,p){qs("#actionPane").innerHTML=`<div class="movegrid">${p.moves.map((m,i)=>`<button class="movebtn type-${m.type} ${selectedMove===i?"selected":""}" data-move="${i}" ${m.pp<=0?"disabled":""}><span class="move-top"><strong>${esc(m.name)}</strong>${typePill(m.type)}</span><small>${m.category==="physical"?"물리":m.category==="special"?"특수":"변화"} · 위력 ${m.power||"—"} · 명중 ${m.accuracy>=999?"—":m.accuracy} · PP ${m.pp}/${m.maxPp}</small>${m.shortDesc?`<em>${esc(m.shortDesc)}</em>`:""}</button>`).join("")}</div>`;qsa("[data-move]").forEach(b=>b.onclick=()=>{selectedMove=Number(b.dataset.move);startBgm();renderControls()});const ms=[["mega","메가진화"],["z","Z기술"],["dynamax","다이맥스"],["gmax","거다이맥스"],["tera","테라스탈"]],move=p.moves[selectedMove];qs("#mechanics").innerHTML=ms.map(([k,l])=>{const reason=mechanicReason(k,mine,p,move),ok=!reason;return`<button class="btn ${mine.pending===k?"active":""}" data-mech="${k}" title="${esc(reason||l+" 사용 가능")}" ${ok?"":"disabled"}>${l}</button>`}).join("");qsa("[data-mech]").forEach(b=>b.onclick=()=>{battle.queue(mySide,b.dataset.mech,selectedMove);renderControls()})}
 function renderSwitchPane(mine){mine.pending=null;const valid=mine.party.findIndex((x,i)=>i!==mine.activeIndex&&!x.isFainted());if(selectedSwitchIndex==null||selectedSwitchIndex===mine.activeIndex||mine.party[selectedSwitchIndex]?.isFainted())selectedSwitchIndex=valid>=0?valid:null;qs("#actionPane").innerHTML=`<div class="switch-grid">${mine.party.map((x,i)=>`<button class="switch-card ${selectedSwitchIndex===i?"selected":""}" data-switch-choice="${i}" ${i===mine.activeIndex||x.isFainted()?"disabled":""}><img src="${spriteUrl(x,false)}" onerror="this.style.visibility='hidden'"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp} · ${x.types.map(t=>TYPE_KO[t]||t).join("/")}</small></span><span>${i===mine.activeIndex?"배틀 중":x.isFainted()?"기절":"교체"}</span></button>`).join("")}</div>`;qsa("[data-switch-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.switchChoice);renderControls()});qs("#mechanics").innerHTML=""}
 function itemTargets(mine,def){if(def?.activeOnly)return[[mine.activeIndex,mine.active]];return mine.party.map((p,i)=>[i,p]).filter(([,p])=>def?.kind==="revive"?p.isFainted():!p.isFainted())}
 function renderItemPane(mine){mine.pending=null;const entries=Object.entries(mine.bag||{}).filter(([id,q])=>q>0&&itemDef(id));if(!selectedItemId||!mine.bag[selectedItemId])selectedItemId=entries[0]?.[0]||null;const def=itemDef(selectedItemId),targets=itemTargets(mine,def);if(selectedItemTarget==null||!targets.some(([i])=>i===selectedItemTarget))selectedItemTarget=targets[0]?.[0]??null;qs("#actionPane").innerHTML=`<div class="bag-grid">${entries.length?entries.map(([id,q])=>{const d=itemDef(id);return`<button class="bag-card ${selectedItemId===id?"selected":""}" data-item-choice="${id}"><span><b>${esc(d.name)}</b><small>${esc(d.desc)}</small></span><span class="qty">×${q}</span></button>`}).join(""):`<div class="statusbox">사용 가능한 배틀 아이템이 없습니다.</div>`}</div>${def?`<div class="target-picker"><b>대상</b><select id="itemTargetSelect">${targets.map(([i,p])=>`<option value="${i}" ${selectedItemTarget===i?"selected":""}>${esc(p.nickname)} · HP ${p.currentHp}/${p.stats.hp}${p.status?` · ${STATUS_KO[p.status]||p.status}`:""}</option>`).join("")}</select></div>`:""}`;qsa("[data-item-choice]").forEach(b=>b.onclick=()=>{selectedItemId=b.dataset.itemChoice;selectedItemTarget=null;renderControls()});const sel=qs("#itemTargetSelect");if(sel)sel.onchange=()=>{selectedItemTarget=Number(sel.value);renderControls()};qs("#mechanics").innerHTML=""}
@@ -626,40 +677,42 @@ async function playMegaFx(){
   ov.classList.add("hidden");megaFxPlaying=false
 }
 function validationHtml(d){if(!d)return"";const errs=(d.errors||[]).map(x=>`<div class="validation-error">✕ ${esc(x)}</div>`).join("");const warns=(d.warnings||[]).map(x=>`<div class="validation-warn">△ ${esc(x)}</div>`).join("");return errs+warns}
-function previewEntry(data){if(!data?.partyData?.length){qs("#entryPreview").innerHTML=`<div class="bad">이 트레이너의 Pokémon 행을 찾지 못했습니다.</div>${validationHtml(data)}`;return}qs("#entryPreview").innerHTML=`${validationHtml(data)}${data.partyData.map(p=>`<div class="teamrow"><img src="${CONFIG.showdownBase}/${p.shiny?"ani-shiny":"ani"}/${encodeURIComponent(p.showdownId)}.gif" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · ${esc(p.showdownId)}</small></div><span>Lv.${p.level}</span></div>`).join("")}`}
+function previewEntry(data){if(!data?.partyData?.length){qs("#entryPreview").innerHTML=`<div class="bad">이 트레이너의 포켓몬 정보를 찾지 못했습니다.</div>${validationHtml(data)}`;return}qs("#entryPreview").innerHTML=`${validationHtml(data)}${data.partyData.map(p=>`<div class="teamrow"><img src="${CONFIG.showdownBase}/${p.shiny?"ani-shiny":"ani"}/${encodeURIComponent(p.showdownId)}.gif" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · 지닌물건 ${esc(displayItemName(p.item))}</small></div><span>레벨 ${p.level}</span></div>`).join("")}`}
 function startLocal(a,b){if(!a||!b||a.errors?.length||b.errors?.length){toast("엔트리 검증 오류가 있어 배틀을 시작할 수 없습니다.","bad");return}mode="local";mySide="A";battle=new Battle(a,b);resetActionSelection();lastControlTurn=null;lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;qs("#lobby").classList.add("hidden");renderBattle();startBgm();scrollTo({top:0,behavior:"smooth"})}
-function chooseEnemyAction(t){const p=t.active,alive=t.party.map((x,i)=>({x,i})).filter(o=>o.i!==t.activeIndex&&!o.x.isFainted());const heal=Object.keys(t.bag||{}).find(id=>["potion","superpotion","hyperpotion","maxpotion","fullrestore"].includes(id)&&t.bag[id]>0);if(heal&&p.currentHp/p.stats.hp<.32&&Math.random()<.7)return{kind:"item",itemId:heal,targetIndex:t.activeIndex};if(alive.length&&p.currentHp/p.stats.hp<.23&&Math.random()<.4)return{kind:"switch",switchIndex:alive[Math.floor(Math.random()*alive.length)].i};const legal=p.moves.map((m,i)=>({m,i})).filter(x=>x.m.pp>0),move=(legal[Math.floor(Math.random()*legal.length)]||{i:0}).i;let mechanic=null;const choices=[];for(const k of["mega","dynamax","gmax","tera"])if(mechanicAvailable(k,t,p))choices.push(k);if(Math.random()<.12&&choices.length)mechanic=choices[Math.floor(Math.random()*choices.length)];return{kind:"move",moveIndex:move,mechanic}}
+function chooseEnemyAction(t){const p=t.active,alive=t.party.map((x,i)=>({x,i})).filter(o=>o.i!==t.activeIndex&&!o.x.isFainted());const heal=Object.keys(t.bag||{}).find(id=>["potion","superpotion","hyperpotion","maxpotion","fullrestore"].includes(id)&&t.bag[id]>0);if(heal&&p.currentHp/p.stats.hp<.32&&Math.random()<.7)return{kind:"item",itemId:heal,targetIndex:t.activeIndex};if(alive.length&&p.currentHp/p.stats.hp<.23&&Math.random()<.4)return{kind:"switch",switchIndex:alive[Math.floor(Math.random()*alive.length)].i};const legal=p.moves.map((m,i)=>({m,i})).filter(x=>x.m.pp>0),move=(legal[Math.floor(Math.random()*legal.length)]||{i:0}).i;let mechanic=null;const choices=[];for(const k of["mega","z","dynamax","gmax","tera"])if(mechanicAvailable(k,t,p,p.moves[move]))choices.push(k);if(Math.random()<.12&&choices.length)mechanic=choices[Math.floor(Math.random()*choices.length)];return{kind:"move",moveIndex:move,mechanic}}
 async function localSubmit(){if(!battle||mode!=="local")return;startBgm();const myAction=selectedAction(),enemyAction=chooseEnemyAction(battle.trainerB);battle.executeActions(myAction,enemyAction);resetActionSelection();lastControlTurn=null;renderBattle()}
 function localSwitch(){const idx=Number(selectedSwitchIndex);battle.switch("A",idx,true);if(battle.forceSwitch.B){const t=battle.trainerB,i=t.party.findIndex((p,x)=>x!==t.activeIndex&&!p.isFainted());if(i>=0)battle.switch("B",i,true)}resetActionSelection();lastControlTurn=null;renderBattle()}
 
-let scWidget=null,bgmPlaying=false;
+let scWidget=null,bgmPlaying=false,bgmManuallyStopped=false;
 function syncBgmButtons(){const play=qs("#musicPlay"),stop=qs("#musicStop");if(play)play.disabled=bgmPlaying;if(stop)stop.disabled=!bgmPlaying}
-function initSound(){try{scWidget=SC.Widget(qs("#soundcloudPlayer"));scWidget.bind(SC.Widget.Events.READY,()=>syncBgmButtons());scWidget.bind(SC.Widget.Events.PLAY,()=>{bgmPlaying=true;syncBgmButtons()});scWidget.bind(SC.Widget.Events.PAUSE,()=>{bgmPlaying=false;syncBgmButtons()});scWidget.bind(SC.Widget.Events.FINISH,()=>{try{scWidget.seekTo(0);scWidget.play()}catch{}});syncBgmButtons()}catch{syncBgmButtons()}}
-function startBgm(){try{scWidget?.play()}catch{}}function stopBgm(){try{scWidget?.pause()}catch{}}
+function initSound(){try{scWidget=SC.Widget(qs("#soundcloudPlayer"));scWidget.bind(SC.Widget.Events.READY,()=>syncBgmButtons());scWidget.bind(SC.Widget.Events.PLAY,()=>{bgmPlaying=true;syncBgmButtons()});scWidget.bind(SC.Widget.Events.PAUSE,()=>{bgmPlaying=false;syncBgmButtons()});scWidget.bind(SC.Widget.Events.FINISH,()=>{if(bgmManuallyStopped)return;try{scWidget.seekTo(0);scWidget.play()}catch{}});syncBgmButtons()}catch{syncBgmButtons()}}
+function startBgm(force=false){if(bgmManuallyStopped&&!force)return;try{scWidget?.play()}catch{}}
+function userStartBgm(){bgmManuallyStopped=false;startBgm(true)}
+function stopBgm(manual=true){if(manual)bgmManuallyStopped=true;try{scWidget?.pause()}catch{}}
 
 let fb=null,authUser=null,myNick=null,presenceRef=null,onlineUsers={},currentRoomId=null,roomRef=null,roomListener=null,outgoingRefs=[];
 function firebaseReady(){return!!(window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey&&window.FIREBASE_CONFIG.databaseURL)}
-async function initFirebase(){if(!firebaseReady()){qs("#firebaseBadge").textContent="ONLINE: CONFIG 필요";return false}try{if(!firebase.apps.length)firebase.initializeApp(window.FIREBASE_CONFIG);fb={auth:firebase.auth(),db:firebase.database()};const cred=await fb.auth.signInAnonymously();authUser=cred.user;qs("#firebaseBadge").textContent="ONLINE: READY";return true}catch(e){qs("#firebaseBadge").textContent="ONLINE: ERROR";console.error(e);return false}}
+async function initFirebase(){if(!firebaseReady()){qs("#firebaseBadge").textContent="온라인: 설정 필요";return false}try{if(!firebase.apps.length)firebase.initializeApp(window.FIREBASE_CONFIG);fb={auth:firebase.auth(),db:firebase.database()};const cred=await fb.auth.signInAnonymously();authUser=cred.user;qs("#firebaseBadge").textContent="온라인: 준비 완료";return true}catch(e){qs("#firebaseBadge").textContent="온라인: 연결 오류";console.error(e);return false}}
 async function onlineLogin(nickname,data){if(!fb&&!(await initFirebase())){qs("#loginStatus").innerHTML=`<span class="warn">엔트리는 확인됐지만 Firebase 설정이 없어 온라인 목록/매칭은 비활성화됩니다.</span>`;return}myNick=norm(nickname);presenceRef=fb.db.ref(`presence/${authUser.uid}`);await presenceRef.onDisconnect().remove();await presenceRef.set({nickname:myNick,displayName:data.name,status:"online",joinedAt:firebase.database.ServerValue.TIMESTAMP});fb.db.ref("presence").on("value",snap=>{onlineUsers=snap.val()||{};renderOnline()});fb.db.ref(`challenges/${authUser.uid}`).on("value",snap=>renderChallenges(snap.val()||{}));qs("#loginStatus").innerHTML=`<span class="good">온라인 접속 완료:</span> ${esc(data.name)} · ${data.partyData.length}마리`}
 function renderOnline(){const q=norm(qs("#onlineSearch").value);const arr=Object.entries(onlineUsers).filter(([uid,u])=>uid!==authUser?.uid&&(!q||norm(u.nickname).includes(q)||norm(u.displayName).includes(q)));qs("#onlineList").innerHTML=arr.length?arr.map(([uid,u])=>`<div class="person"><div><strong>${esc(u.displayName||u.nickname)}</strong><small>@${esc(u.nickname)}</small></div><button class="btn" data-challenge="${esc(uid)}">도전</button></div>`).join(""):`<div class="muted">조건에 맞는 접속자가 없습니다.</div>`;qsa("[data-challenge]").forEach(b=>b.onclick=()=>sendChallenge(b.dataset.challenge))}
 async function sendChallenge(targetUid){if(!authUser||!myTrainerData)return;const target=onlineUsers[targetUid];if(!target)return;const ref=fb.db.ref(`challenges/${targetUid}/${authUser.uid}`);await ref.set({fromUid:authUser.uid,fromNickname:myNick,fromDisplayName:myTrainerData.name,toUid:targetUid,status:"pending",createdAt:firebase.database.ServerValue.TIMESTAMP});toast(`${target.displayName||target.nickname}에게 도전했습니다.`);ref.on("value",snap=>{const c=snap.val();if(c?.status==="accepted"&&c.roomId){ref.off();joinRoom(c.roomId)}});outgoingRefs.push(ref)}
 function renderChallenges(obj){const arr=Object.entries(obj).filter(([,c])=>c?.status==="pending");qs("#challengeList").innerHTML=arr.length?arr.map(([sourceUid,c])=>`<div class="person"><div><strong>${esc(c.fromDisplayName||c.fromNickname)}</strong><small>배틀 신청</small></div><div class="fieldrow"><button class="btn primary" data-accept="${esc(sourceUid)}">수락</button><button class="btn" data-reject="${esc(sourceUid)}">거절</button></div></div>`).join(""):`<div class="muted">도전 없음</div>`;qsa("[data-accept]").forEach(b=>b.onclick=()=>acceptChallenge(b.dataset.accept,obj[b.dataset.accept]));qsa("[data-reject]").forEach(b=>b.onclick=()=>fb.db.ref(`challenges/${authUser.uid}/${b.dataset.reject}`).update({status:"rejected"}))}
 async function acceptChallenge(sourceUid,c){const roomId="room_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7);const room={hostUid:sourceUid,status:"waiting-host",createdAt:firebase.database.ServerValue.TIMESTAMP,participants:{[sourceUid]:{uid:sourceUid,nickname:c.fromNickname,displayName:c.fromDisplayName,side:"A"},[authUser.uid]:{uid:authUser.uid,nickname:myNick,displayName:myTrainerData.name,side:"B"}}};await fb.db.ref(`rooms/${roomId}`).set(room);await fb.db.ref(`challenges/${authUser.uid}/${sourceUid}`).update({status:"accepted",roomId});joinRoom(roomId)}
 async function joinRoom(roomId){if(currentRoomId===roomId)return;currentRoomId=roomId;mode="online";lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;lastControlTurn=null;resetActionSelection();roomRef=fb.db.ref(`rooms/${roomId}`);roomListener=roomRef.on("value",async snap=>{const room=snap.val();if(!room)return;const me=room.participants?.[authUser.uid];if(!me)return;mySide=me.side;if(!room.state&&room.hostUid===authUser.uid){await hostInitRoom(room);return}if(room.state){battle=Battle.hydrate(room.state);qs("#lobby").classList.add("hidden");renderBattle();startBgm();if(room.hostUid===authUser.uid)hostResolveIfReady(room)}})}
-async function hostInitRoom(room){const A=Object.values(room.participants).find(x=>x.side==="A"),B=Object.values(room.participants).find(x=>x.side==="B");await Promise.all([primeKoreanMoveNames(A.nickname),primeKoreanMoveNames(B.nickname)]);const a=getTrainerData(A.nickname),b=getTrainerData(B.nickname);if(!a||!b||a.errors?.length||b.errors?.length){toast("상대 엔트리가 Showdown 데이터 검증을 통과하지 못했습니다.","bad");return}const init=new Battle(a,b);await roomRef.child("state").set(init.snapshot());await roomRef.child("status").set("battle")}
+async function hostInitRoom(room){const A=Object.values(room.participants).find(x=>x.side==="A"),B=Object.values(room.participants).find(x=>x.side==="B");await Promise.all([primeKoreanMoveNames(A.nickname),primeKoreanMoveNames(B.nickname)]);const a=getTrainerData(A.nickname),b=getTrainerData(B.nickname);if(!a||!b||a.errors?.length||b.errors?.length){toast("상대 엔트리가 포켓몬 데이터 검증을 통과하지 못했습니다.","bad");return}const init=new Battle(a,b);await roomRef.child("state").set(init.snapshot());await roomRef.child("status").set("battle")}
 async function submitOnlineAction(){if(!roomRef||!battle)return;startBgm();const action=selectedAction();await roomRef.child(`actions/${battle.turn}/${authUser.uid}`).set({...action,at:firebase.database.ServerValue.TIMESTAMP});qs("#submitAction").disabled=true;toast("행동을 제출했습니다. 상대를 기다립니다.")}
 async function submitOnlineSwitch(){const idx=Number(selectedSwitchIndex);await roomRef.child(`switches/${battle.turn}/${authUser.uid}`).set({index:idx,at:firebase.database.ServerValue.TIMESTAMP});toast("교체 선택을 제출했습니다.")}
 let resolving=false;
 async function hostResolveIfReady(room){if(resolving||!room.state)return;const b=Battle.hydrate(room.state);const entries=Object.entries(room.participants||{});if(b.forceSwitch.A||b.forceSwitch.B){const needed=entries.filter(([,p])=>b.forceSwitch[p.side]);const sw=room.switches?.[b.turn]||{};if(!needed.every(([uid])=>sw[uid]))return;resolving=true;for(const[uid,p]of needed)b.switch(p.side,num(sw[uid].index),true);await roomRef.child("state").set(b.snapshot());resolving=false;return}const acts=room.actions?.[b.turn]||{};if(!entries.every(([uid])=>acts[uid]))return;if(room.resolvedTurn===b.turn)return;resolving=true;const getSide=s=>entries.find(([,p])=>p.side===s)?.[0];const a=acts[getSide("A")],c=acts[getSide("B")];b.executeActions(a,c);await roomRef.update({state:b.snapshot(),resolvedTurn:b.turn-1,status:b.finished?"finished":"battle"});resolving=false}
 function submitSwitch(){return mode==="online"?submitOnlineSwitch():localSwitch()}
 
-qs("#loginBtn").onclick=async()=>{const nick=norm(qs("#nicknameInput").value);if(!nick)return toast("닉네임을 입력하세요.");if(!sheetStore.loaded)return toast("Google Sheet가 아직 준비되지 않았습니다.","warn");if(!dexStore.ready)return toast("Pokémon Showdown Dex를 불러오지 못했습니다.","bad");await primeKoreanMoveNames(nick);const d=getTrainerData(nick);if(!d){qs("#loginStatus").innerHTML=`<span class="bad">Trainers.nickname에서 '${esc(nick)}'을 찾지 못했습니다.</span>`;qs("#entryPreview").innerHTML="";return}myTrainerData=d;previewEntry(d);if(d.errors.length){qs("#loginStatus").innerHTML=`<span class="bad">엔트리 검증 실패:</span> ${d.errors.length}개 오류. 아래 항목을 시트에서 수정하세요.`;return}qs("#loginStatus").innerHTML=`<span class="good">엔트리 검증 완료:</span> ${esc(d.name)} · ${d.partyData.length}마리${d.warnings.length?` · 경고 ${d.warnings.length}개`:""}`;await onlineLogin(nick,d)};
-qs("#demoBtn").onclick=async()=>{if(!dexStore.ready)return toast("Showdown Dex 연결 후 데모를 사용할 수 있습니다.","warn");await primeKoreanMoveNames();startLocal(demoTrainerData("demo"),demoTrainerData("rival"))};
+qs("#loginBtn").onclick=async()=>{const nick=norm(qs("#nicknameInput").value);if(!nick)return toast("닉네임을 입력하세요.");if(!sheetStore.loaded)return toast("Google 시트가 아직 준비되지 않았습니다.","warn");if(!dexStore.ready)return toast("Pokémon Showdown 도감을 불러오지 못했습니다.","bad");await primeKoreanMoveNames(nick);const d=getTrainerData(nick);if(!d){qs("#loginStatus").innerHTML=`<span class="bad">Trainers 탭의 nickname 열에서 '${esc(nick)}'을 찾지 못했습니다.</span>`;qs("#entryPreview").innerHTML="";return}myTrainerData=d;previewEntry(d);if(d.errors.length){qs("#loginStatus").innerHTML=`<span class="bad">엔트리 검증 실패:</span> ${d.errors.length}개 오류. 아래 항목을 시트에서 수정하세요.`;return}qs("#loginStatus").innerHTML=`<span class="good">엔트리 검증 완료:</span> ${esc(d.name)} · ${d.partyData.length}마리${d.warnings.length?` · 경고 ${d.warnings.length}개`:""}`;await onlineLogin(nick,d)};
+qs("#demoBtn").onclick=async()=>{if(!dexStore.ready)return toast("Showdown 도감 연결 후 데모를 사용할 수 있습니다.","warn");await primeKoreanMoveNames();startLocal(demoTrainerData("demo"),demoTrainerData("rival"))};
 qs("#onlineSearch").oninput=renderOnline;
 qs("#submitAction").onclick=()=>mode==="online"?submitOnlineAction():localSubmit();
 qs("#resetBattle").onclick=()=>startLocal(demoTrainerData("demo"),demoTrainerData("rival"));
-qs("#musicPlay").onclick=startBgm;
-qs("#musicStop").onclick=stopBgm;
+qs("#musicPlay").onclick=userStartBgm;
+qs("#musicStop").onclick=()=>stopBgm(true);
 qs("#backLobby").onclick=()=>qs("#lobby").classList.remove("hidden");
 window.addEventListener("load",async()=>{initSound();await Promise.all([loadDex(),loadSheets()]);initFirebase()});
 
