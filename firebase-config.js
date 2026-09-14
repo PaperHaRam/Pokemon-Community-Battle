@@ -1,3 +1,9 @@
-// Firebase 프로젝트를 만든 뒤 이 객체를 실제 Web App 설정값으로 교체하세요.
-// apiKey는 브라우저용 Firebase 식별 설정이며, 보안은 Realtime Database Rules로 제어합니다.
-window.FIREBASE_CONFIG = null;
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBxJu9-s2ASD0EbS8Z0BAzEau-cdv1_22k",
+  authDomain: "pokemon-community-battle.firebaseapp.com",
+  databaseURL: "https://pokemon-community-battle-default-rtdb.firebaseio.com/",
+  projectId: "pokemon-community-battle",
+  storageBucket: "pokemon-community-battle.firebasestorage.app",
+  messagingSenderId: "906380323268",
+  appId: "1:906380323268:web:5fe5775512576270349c91"
+};
