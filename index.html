@@ -573,7 +573,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 <div class="shell">
   <header class="topbar">
     <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.17 · Firebase 연결 포함</span></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.18 · 온라인 기술 표시 수정</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
@@ -867,7 +867,7 @@ function buildPokemonData(r){
   const megaData=autoMegaData(dexId,item,rowVal(r,"mega_showdown_id"),rowVal(r,"mega_variant","메가분기"));
   if(megaData?.ambiguous)errors.push(`${speciesKo}: 메가진화 형태가 여러 개입니다. 지닌물건에 정확한 메가스톤을 넣거나 mega_variant(X/Y) 또는 mega_showdown_id를 지정하세요.`);
   const gmaxShowdownId=autoGmaxId(dexId,rowVal(r,"gmax_showdown_id"));
-  return{errors,warnings,data:{species:speciesKo,dexName:speciesKo,nickname:rowVal(r,"nickname","별명")||speciesKo,showdownId:spriteId,dexId,shiny:bool(rowVal(r,"shiny","이로치")),level:num(rowVal(r,"level","레벨"),50),types:(sp.types||["Normal"]).map(norm),ability,item,teraType,statsMode:statMode,stats:statMode==="final"&&CONFIG.allowCustomFinalStats?finalStats:base,baseStats:base,ivs,evs,nature:norm(rowVal(r,"nature","성격"))||"serious",moves,dynamaxLevel:Math.max(0,Math.min(10,num(rowVal(r,"dynamax_level"),10))),megaData,gmaxShowdownId,cannotDynamax:!!sp.cannotDynamax}};
+  return{errors,warnings,data:{species:speciesKo,dexName:speciesKo,nickname:rowVal(r,"nickname","별명")||speciesKo,showdownId:spriteId,dexId,shiny:bool(rowVal(r,"shiny","이로치")),level:num(rowVal(r,"level","레벨"),50),types:(sp.types||["Normal"]).map(norm),ability,item,teraType,statsMode:statMode,stats:statMode==="final"&&CONFIG.allowCustomFinalStats?finalStats:base,baseStats:base,ivs,evs,nature:norm(rowVal(r,"nature","성격"))||"serious",moveIds:moveIds.map(toID),moves,dynamaxLevel:Math.max(0,Math.min(10,num(rowVal(r,"dynamax_level"),10))),megaData,gmaxShowdownId,cannotDynamax:!!sp.cannotDynamax}};
 }
 function getTrainerData(nickname,source=sheetStore){
   const key=norm(nickname);const tr=(source.trainers||[]).find(r=>norm(rowVal(r,"nickname","닉네임"))===key);if(!tr)return null;
@@ -892,7 +892,12 @@ const DEMO={
 };
 function demoTrainerData(nickname){const old={trainers:sheetStore.trainers,pokemon:sheetStore.pokemon,moves:sheetStore.moves,items:sheetStore.items};sheetStore.trainers=DEMO.trainers;sheetStore.pokemon=DEMO.pokemon;sheetStore.moves=[];sheetStore.items=DEMO.items;const x=getTrainerData(nickname,sheetStore);Object.assign(sheetStore,old);return x}
 
-function deepMove(m){const x=JSON.parse(JSON.stringify(m));x.pp=num(x.maxPp,10);return x}
+function firebaseArray(v){
+  if(Array.isArray(v))return v;
+  if(!v||typeof v!=="object")return[];
+  return Object.keys(v).sort((a,b)=>{const na=Number(a),nb=Number(b);return Number.isFinite(na)&&Number.isFinite(nb)?na-nb:String(a).localeCompare(String(b))}).map(k=>v[k]).filter(x=>x!=null);
+}
+function deepMove(m){const x=JSON.parse(JSON.stringify(m||{}));x.pp=num(x.pp,num(x.maxPp,10));return x}
 function clampStage(s){return Math.max(-6,Math.min(6,s))}
 function statStageMul(s){s=clampStage(s);return s>=0?(2+s)/2:2/(2-s)}
 function accStageMul(s){s=clampStage(s);return s>=0?(3+s)/3:3/(3-s)}
@@ -912,7 +917,7 @@ function itemDef(id){return ITEM_DEFS[toID(id)]||null}
 const Z_CRYSTAL_BY_TYPE={normal:"normaliumz",fire:"firiumz",water:"wateriumz",electric:"electriumz",grass:"grassiumz",ice:"iciumz",fighting:"fightiniumz",poison:"poisoniumz",ground:"groundiumz",flying:"flyiniumz",psychic:"psychiumz",bug:"buginiumz",rock:"rockiumz",ghost:"ghostiumz",dragon:"dragoniumz",dark:"darkiniumz",steel:"steeliumz",fairy:"fairiumz"};
 const MECHANIC_KO={mega:"메가진화",z:"Z기술",dynamax:"다이맥스",gmax:"거다이맥스",tera:"테라스탈"};
 function zCrystalMatches(p,move){if(!p||!move||move.category==="status")return false;return canonicalItem(p.item)===Z_CRYSTAL_BY_TYPE[move.type]}
-function hasMegaRequirement(p){if(!p?.megaData)return false;if(p.megaData.stone)return canonicalItem(p.item)===canonicalItem(p.megaData.stone);if(p.megaData.requiredMove)return p.moves.some(m=>m.id===p.megaData.requiredMove);return false}
+function hasMegaRequirement(p){if(!p?.megaData)return false;if(p.megaData.stone)return canonicalItem(p.item)===canonicalItem(p.megaData.stone);if(p.megaData.requiredMove)return firebaseArray(p.moves).some(m=>m.id===p.megaData.requiredMove);return false}
 function mechanicReason(k,t,p,move=null){
   if(k==="mega"){if(t.megaUsed)return"이미 이번 배틀에서 메가진화를 사용했습니다.";if(!t.gear?.keyStone)return"트레이너에게 키스톤이 없습니다.";if(!p.megaData)return"이 포켓몬은 메가진화할 수 없습니다.";if(!hasMegaRequirement(p))return p.megaData.stone?`${displayItemName(p.megaData.stone)}을(를) 지니고 있어야 합니다.`:"필요한 메가진화 조건을 만족하지 못했습니다.";if(p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
   if(k==="z"){if(t.zUsed)return"이미 이번 배틀에서 Z기술을 사용했습니다.";if(!t.gear?.zRing)return"트레이너에게 Z링이 없습니다.";if(!move)return"먼저 기술을 선택하세요.";if(move.category==="status")return"현재 엔진은 공격 기술의 Z기술만 지원합니다.";const need=Z_CRYSTAL_BY_TYPE[move.type];if(!need)return"이 기술 타입에 대응하는 Z크리스탈을 찾을 수 없습니다.";if(canonicalItem(p.item)!==need)return`${displayItemName(need)}을(를) 지니고 있어야 합니다.`;if(p.isMega||p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
@@ -929,7 +934,7 @@ class Pokemon{
     this.species=d.species;this.dexName=d.dexName||d.species;this.dexId=d.dexId||toID(d.showdownId);this.nickname=d.nickname||d.species;this.showdownId=d.showdownId;this.shiny=!!d.shiny;this.level=d.level||50;
     this.types=d.types?.length?[...d.types]:["normal"];this.originalTypes=[...this.types];this.ability=d.ability||"";this.item=d.item||null;this.teraType=d.teraType||"normal";this.statsMode=d.statsMode||"base";
     this.sourceStats={...(d.stats||d.baseStats)};this.ivs={hp:31,attack:31,defense:31,specialAttack:31,specialDefense:31,speed:31,...d.ivs};this.evs={hp:0,attack:0,defense:0,specialAttack:0,specialDefense:0,speed:0,...d.evs};this.nature=d.nature||"serious";
-    this.moves=(d.moves||[]).map(deepMove);this.megaData=d.megaData?JSON.parse(JSON.stringify(d.megaData)):null;this.gmaxShowdownId=d.gmaxShowdownId||null;this.cannotDynamax=!!d.cannotDynamax;this.dynamaxLevel=d.dynamaxLevel??10;
+    this.moveIds=firebaseArray(d.moveIds).map(toID);this.moves=firebaseArray(d.moves).map(deepMove);this.megaData=d.megaData?JSON.parse(JSON.stringify(d.megaData)):null;this.gmaxShowdownId=d.gmaxShowdownId||null;this.cannotDynamax=!!d.cannotDynamax;this.dynamaxLevel=d.dynamaxLevel??10;
     this.isMega=false;this.isDynamaxed=false;this.isGigantamaxed=false;this.isTerastallized=false;this.dynamaxTurnsLeft=0;this.status=null;this.statusTurns=0;this.toxicCounter=0;
     // 변신/괴짜/일루전용 전투 상태. JSON 스냅샷에도 그대로 저장된다.
     this.isTransformed=false;this.transformBackup=null;this.transformedSpriteId=null;this.transformedShiny=null;this.transformedIntoName=null;
@@ -946,14 +951,14 @@ class Pokemon{
   takeDamage(n){const d=Math.min(this.currentHp,Math.max(0,Math.floor(n)));this.currentHp-=d;return d}
   heal(n){const old=this.currentHp;this.currentHp=Math.min(this.stats.hp,this.currentHp+Math.max(0,Math.floor(n)));return this.currentHp-old}
   resetVolatile(){for(const k in this.statStages)this.statStages[k]=0;this.protectChain=0;this.protected=false;this.maxGuarded=false}
-  allPpDepleted(){return this.moves.every(m=>m.pp<=0)}
+  allPpDepleted(){const moves=firebaseArray(this.moves);return moves.length===0||moves.every(m=>num(m.pp,0)<=0)}
   actualSpriteId(){if(this.isTransformed&&this.transformedSpriteId)return this.transformedSpriteId;if(this.isGigantamaxed&&this.gmaxShowdownId)return this.gmaxShowdownId;if(this.isMega&&this.megaData?.showdownId)return this.megaData.showdownId;return this.showdownId}
   spriteId(){if(this.illusionActive&&this.illusionData?.showdownId)return this.illusionData.showdownId;return this.actualSpriteId()}
   spriteShiny(){if(this.illusionActive&&this.illusionData&&typeof this.illusionData.shiny==="boolean")return this.illusionData.shiny;if(this.isTransformed&&typeof this.transformedShiny==="boolean")return this.transformedShiny;return !!this.shiny}
   displayName(){return this.illusionActive&&this.illusionData?.nickname?this.illusionData.nickname:this.nickname}
 }
 class Trainer{
-  constructor(d){this.id=d.id;this.name=d.name;this.money=d.money||0;this.bag={...(d.bag||{})};this.gear={keyStone:false,zRing:false,dynamaxBand:false,teraOrb:false,...(d.gear||{})};this.party=(d.partyData||[]).map(x=>new Pokemon(x));this.activeIndex=0;this.megaUsed=false;this.zUsed=false;this.dynamaxUsed=false;this.terastalUsed=false;this.pending=null}
+  constructor(d){this.id=d.id;this.name=d.name;this.money=d.money||0;this.bag={...(d.bag||{})};this.gear={keyStone:false,zRing:false,dynamaxBand:false,teraOrb:false,...(d.gear||{})};this.party=firebaseArray(d.partyData).map(x=>new Pokemon(x));this.activeIndex=0;this.megaUsed=false;this.zUsed=false;this.dynamaxUsed=false;this.terastalUsed=false;this.pending=null}
   get active(){return this.party[this.activeIndex]}usable(){return this.party.filter(p=>!p.isFainted())}hasUsable(){return this.usable().length>0}
 }
 
@@ -988,10 +993,10 @@ class Battle{
   transformPokemon(user,target,source="move"){
     if(!user||!target||user===target||user.isTransformed||target.isFainted())return false;
     const keepHp=user.currentHp,keepMax=user.stats.hp;
-    user.transformBackup={types:[...user.types],originalTypes:[...user.originalTypes],ability:user.ability,stats:{...user.stats},moves:JSON.parse(JSON.stringify(user.moves))};
+    user.transformBackup={types:[...user.types],originalTypes:[...user.originalTypes],ability:user.ability,stats:{...user.stats},moves:JSON.parse(JSON.stringify(firebaseArray(user.moves)))};
     user.types=[...target.types];user.originalTypes=[...(target.originalTypesBeforeTera??target.originalTypes??target.types)];user.ability=target.ability;
     user.stats={...target.stats,hp:keepMax};user.currentHp=Math.min(keepMax,keepHp);
-    user.moves=(target.moves||[]).map(m=>{const x=JSON.parse(JSON.stringify(m));x.pp=Math.min(5,Math.max(1,num(x.maxPp,5)));return x});
+    user.moves=firebaseArray(target.moves).map(m=>{const x=JSON.parse(JSON.stringify(m));x.pp=Math.min(5,Math.max(1,num(x.maxPp,5)));return x});
     user.statStages={...target.statStages};
     user.isTransformed=true;user.transformedSpriteId=target.actualSpriteId?target.actualSpriteId():target.spriteId();user.transformedShiny=target.spriteShiny?target.spriteShiny():!!target.shiny;user.transformedIntoName=target.nickname;
     this.breakIllusion(user,false);
@@ -1000,7 +1005,7 @@ class Battle{
   }
   revertTransform(p){
     if(!p?.isTransformed)return false;const b=p.transformBackup;
-    if(b){p.types=[...b.types];p.originalTypes=[...b.originalTypes];p.ability=b.ability;p.stats={...b.stats};p.moves=JSON.parse(JSON.stringify(b.moves));p.currentHp=Math.min(p.currentHp,p.stats.hp)}
+    if(b){p.types=[...b.types];p.originalTypes=[...b.originalTypes];p.ability=b.ability;p.stats={...b.stats};p.moves=JSON.parse(JSON.stringify(firebaseArray(b.moves)));p.currentHp=Math.min(p.currentHp,p.stats.hp)}
     p.isTransformed=false;p.transformBackup=null;p.transformedSpriteId=null;p.transformedShiny=null;p.transformedIntoName=null;
     return true;
   }
@@ -1013,7 +1018,7 @@ class Battle{
   }
   queue(side,kind,moveIndex=null){
     const t=this.trainer(side),p=t.active;if(t.pending===kind){t.pending=null;return}
-    const move=moveIndex==null?null:p.moves[moveIndex];const reason=mechanicReason(kind,t,p,move);if(reason){this.log(`${t.name}: ${MECHANIC_KO[kind]||kind} 사용 불가 — ${reason}`);return}
+    p.moves=firebaseArray(p.moves);const move=moveIndex==null?null:p.moves[moveIndex];const reason=mechanicReason(kind,t,p,move);if(reason){this.log(`${t.name}: ${MECHANIC_KO[kind]||kind} 사용 불가 — ${reason}`);return}
     t.pending=kind;
   }
   activateBeforeOrder(t){
@@ -1042,7 +1047,7 @@ class Battle{
   protectSuccess(p){const chance=1/Math.pow(3,p.protectChain);return Math.random()<chance}
   canAct(p){if(p.status==="sleep"){if(p.statusTurns>0){p.statusTurns--;this.log(`${p.nickname}은(는) 깊이 잠들어 있다.`);return false}p.status=null;this.log(`${p.nickname}이(가) 잠에서 깨어났다!`)}if(p.status==="freeze"){if(Math.random()<.2){p.status=null;this.log(`${p.nickname}의 얼음이 녹았다!`)}else{this.log(`${p.nickname}은(는) 얼어붙어 움직일 수 없다.`);return false}}if(p.status==="paralysis"&&Math.random()<.25){this.log(`${p.nickname}은(는) 몸이 저려 움직일 수 없다!`);return false}return true}
   prepareMove(t,index){
-    const p=t.active;let base=p.moves[index];if(!base||p.allPpDepleted())return{...STRUGGLE};if(base.pp<=0){this.log(`${base.name}의 PP가 없다!`);return{id:"noaction",name:"행동 실패",category:"status",priority:-99,failed:true}}
+    const p=t.active;p.moves=firebaseArray(p.moves);let base=p.moves[index];if(!base||p.allPpDepleted())return{...STRUGGLE};if(base.pp<=0){this.log(`${base.name}의 PP가 없다!`);return{id:"noaction",name:"행동 실패",category:"status",priority:-99,failed:true}}
     if(p.isDynamaxed){base.pp--;if(base.category==="status")return{id:`maxguard${base.id}`,name:"다이월",type:"normal",category:"status",power:0,accuracy:999,priority:4,maxGuard:true,flags:{}};return{...base,name:`다이${base.name}`,power:maxPower(base.power,base.type),accuracy:999,priority:0,isMaxMove:true,weather:({fire:"sun",water:"rain",rock:"sand",ice:"snow"})[base.type]||null,terrain:({electric:"electric",grass:"grassy",psychic:"psychic",fairy:"misty"})[base.type]||null}}
     if(t.pending==="z"){t.pending=null;if(!t.zUsed&&t.gear?.zRing&&zCrystalMatches(p,base)){t.zUsed=true;base.pp--;return{...base,name:`Z기술 · ${base.name}`,power:zPower(base.power),accuracy:999,priority:0,isZMove:true}}this.log(`${t.name}: 선택한 기술은 Z기술 조건을 만족하지 않는다.`)}
     base.pp--;let m={...base};if(m.id==="terablast"&&p.isTerastallized){m={...m,type:p.teraType,category:this.effectiveStat(p,"attack")>this.effectiveStat(p,"specialAttack")?"physical":"special"};if(p.teraType==="stellar"){m.power=100;m.selfBoosts={attack:-1,specialAttack:-1}}}return m;
@@ -1112,7 +1117,16 @@ class Battle{
   executeTurn(ia,ib){return this.executeActions({kind:"move",moveIndex:ia},{kind:"move",moveIndex:ib})}
   finish(w,l){if(this.finished)return;this.finished=true;const prize=Math.floor(l.money*.1);l.money-=prize;w.money+=prize;this.log(`${w.name}의 승리!`);this.log(`${l.name}은(는) ${prize.toLocaleString()}원을 지급했다.`)}
   snapshot(){return JSON.parse(JSON.stringify(this))}
-  static hydrate(s){const b=Object.create(Battle.prototype);Object.assign(b,s);b.visualEvents=Array.isArray(b.visualEvents)?b.visualEvents:[];b.visualSeq=Number.isFinite(b.visualSeq)?b.visualSeq:(b.visualEvents.at(-1)?.id||0);for(const key of["trainerA","trainerB"]){const t=Object.create(Trainer.prototype);Object.assign(t,s[key]);t.party=(s[key].party||[]).map(p=>{const x=Object.create(Pokemon.prototype);Object.assign(x,p);if(typeof x.isTransformed!=="boolean")x.isTransformed=false;if(!("transformBackup" in x))x.transformBackup=null;if(typeof x.illusionActive!=="boolean")x.illusionActive=false;if(!("illusionData" in x))x.illusionData=null;return x});b[key]=t}return b}
+  static hydrate(s){
+    const b=Object.create(Battle.prototype);Object.assign(b,s);
+    b.logs=firebaseArray(b.logs);b.debug=firebaseArray(b.debug);b.visualEvents=firebaseArray(b.visualEvents);b.visualSeq=Number.isFinite(b.visualSeq)?b.visualSeq:(b.visualEvents.at(-1)?.id||0);
+    for(const key of["trainerA","trainerB"]){
+      const raw=s[key]||{},t=Object.create(Trainer.prototype);Object.assign(t,raw);
+      t.party=firebaseArray(raw.party).map(p=>{const x=Object.create(Pokemon.prototype);Object.assign(x,p);x.moveIds=firebaseArray(x.moveIds).map(toID);x.moves=firebaseArray(x.moves).map(m=>JSON.parse(JSON.stringify(m)));if(x.transformBackup?.moves)x.transformBackup.moves=firebaseArray(x.transformBackup.moves).map(m=>JSON.parse(JSON.stringify(m)));if(typeof x.isTransformed!=="boolean")x.isTransformed=false;if(!("transformBackup" in x))x.transformBackup=null;if(typeof x.illusionActive!=="boolean")x.illusionActive=false;if(!("illusionData" in x))x.illusionData=null;return x});
+      b[key]=t;
+    }
+    return b;
+  }
 }
 
 let battle=null,mySide="A",selectedMove=0,selectedActionKind="move",selectedSwitchIndex=null,selectedItemId=null,selectedItemTarget=null,lastControlTurn=null,mode="local",myTrainerData=null,lastVisual=null,lastVisualEventId=0,hitSequence=Promise.resolve(),visualLockDepth=0;
@@ -1138,8 +1152,17 @@ function renderBattle(){
 function renderArenaEffects(){const a=qs("#arena");a.className=`arena ${battle.weather?`weather-${battle.weather}`:""} ${battle.terrain?`has-terrain terrain-bg-${battle.terrain}`:""}`;const tg=qs("#terrainGlow");tg.className=`terrain-glow ${battle.terrain?`terrain-${battle.terrain}`:""}`;qs("#weatherChip").innerHTML=`<b>날씨</b><span>${battle.weather?`${WEATHER_KO[battle.weather]} · ${battle.weatherTurns}턴`:"없음"}</span>`;qs("#terrainChip").innerHTML=`<b>필드</b><span>${battle.terrain?`${TERRAIN_KO[battle.terrain]} · ${battle.terrainTurns}턴`:"없음"}</span>`}
 function resetActionSelection(){selectedActionKind="move";selectedMove=0;selectedSwitchIndex=null;selectedItemId=null;selectedItemTarget=null}
 function selectedAction(){const t=trainerByPerspective(true);if(selectedActionKind==="switch")return{kind:"switch",switchIndex:selectedSwitchIndex};if(selectedActionKind==="item")return{kind:"item",itemId:selectedItemId,targetIndex:selectedItemTarget};return{kind:"move",moveIndex:selectedMove,mechanic:t.pending||null}}
-function actionSummaryText(){const mine=trainerByPerspective(true),p=mine.active;if(selectedActionKind==="switch"){const x=mine.party[selectedSwitchIndex];return x?`${p.nickname}을(를) 불러들이고 ${x.nickname}으로 교체`:"교체할 포켓몬을 선택하세요."}if(selectedActionKind==="item"){const d=itemDef(selectedItemId),x=mine.party[selectedItemTarget];return d&&x?`${d.name} → ${x.nickname}`:"사용할 아이템과 대상을 선택하세요."}const m=p.moves[selectedMove];return m?`${p.nickname} → ${m.name}${mine.pending?` · ${MECHANIC_KO[mine.pending]||mine.pending}`:""}`:"기술을 선택하세요."}
-function renderMovePane(mine,p){qs("#actionPane").innerHTML=`<div class="movegrid">${p.moves.map((m,i)=>`<button class="movebtn type-${m.type} ${selectedMove===i?"selected":""}" data-move="${i}" ${m.pp<=0?"disabled":""}><span class="move-top"><strong>${esc(m.name)}</strong>${typePill(m.type)}</span><small>${m.category==="physical"?"물리":m.category==="special"?"특수":"변화"} · 위력 ${m.power||"—"} · 명중 ${m.accuracy>=999?"—":m.accuracy} · PP ${m.pp}/${m.maxPp}</small>${m.shortDesc?`<em>${esc(m.shortDesc)}</em>`:""}</button>`).join("")}</div>`;qsa("[data-move]").forEach(b=>b.onclick=()=>{selectedMove=Number(b.dataset.move);startBgm();renderControls()});const ms=[["mega","메가진화"],["z","Z기술"],["dynamax","다이맥스"],["gmax","거다이맥스"],["tera","테라스탈"]],move=p.moves[selectedMove];qs("#mechanics").innerHTML=ms.map(([k,l])=>{const reason=mechanicReason(k,mine,p,move),ok=!reason;return`<button class="btn ${mine.pending===k?"active":""}" data-mech="${k}" title="${esc(reason||l+" 사용 가능")}" ${ok?"":"disabled"}>${l}</button>`}).join("");qsa("[data-mech]").forEach(b=>b.onclick=()=>{battle.queue(mySide,b.dataset.mech,selectedMove);renderControls()})}
+function actionSummaryText(){const mine=trainerByPerspective(true),p=mine.active;if(selectedActionKind==="switch"){const x=mine.party[selectedSwitchIndex];return x?`${p.nickname}을(를) 불러들이고 ${x.nickname}으로 교체`:"교체할 포켓몬을 선택하세요."}if(selectedActionKind==="item"){const d=itemDef(selectedItemId),x=mine.party[selectedItemTarget];return d&&x?`${d.name} → ${x.nickname}`:"사용할 아이템과 대상을 선택하세요."}p.moves=firebaseArray(p.moves);const m=p.moves[selectedMove];return m?`${p.nickname} → ${m.name}${mine.pending?` · ${MECHANIC_KO[mine.pending]||mine.pending}`:""}`:"기술을 선택하세요."}
+function renderMovePane(mine,p){
+  p.moves=firebaseArray(p.moves);
+  const moves=p.moves;
+  if(selectedMove>=moves.length)selectedMove=0;
+  qs("#actionPane").innerHTML=moves.length?`<div class="movegrid">${moves.map((m,i)=>`<button class="movebtn type-${m.type||"normal"} ${selectedMove===i?"selected":""}" data-move="${i}" ${num(m.pp,0)<=0?"disabled":""}><span class="move-top"><strong>${esc(m.name||m.englishName||m.id||"기술")}</strong>${typePill(m.type||"normal")}</span><small>${m.category==="physical"?"물리":m.category==="special"?"특수":"변화"} · 위력 ${m.power||"—"} · 명중 ${m.accuracy>=999?"—":m.accuracy} · PP ${num(m.pp,0)}/${num(m.maxPp,0)}</small>${m.shortDesc?`<em>${esc(m.shortDesc)}</em>`:""}</button>`).join("")}</div>`:`<div class="statusbox"><b>기술 데이터를 불러오지 못했습니다.</b><br><span class="muted">온라인 동기화 데이터를 다시 읽은 뒤에도 비어 있으면 새 배틀을 시작해 주세요.</span></div>`;
+  qsa("[data-move]").forEach(b=>b.onclick=()=>{selectedMove=Number(b.dataset.move);startBgm();renderControls()});
+  const ms=[["mega","메가진화"],["z","Z기술"],["dynamax","다이맥스"],["gmax","거다이맥스"],["tera","테라스탈"]],move=moves[selectedMove];
+  qs("#mechanics").innerHTML=ms.map(([k,l])=>{const reason=mechanicReason(k,mine,p,move),ok=!reason&&!!move;return`<button class="btn ${mine.pending===k?"active":""}" data-mech="${k}" title="${esc(reason||l+" 사용 가능")}" ${ok?"":"disabled"}>${l}</button>`}).join("");
+  qsa("[data-mech]").forEach(b=>b.onclick=()=>{battle.queue(mySide,b.dataset.mech,selectedMove);renderControls()})
+}
 function renderSwitchPane(mine){mine.pending=null;const valid=mine.party.findIndex((x,i)=>i!==mine.activeIndex&&!x.isFainted());if(selectedSwitchIndex==null||selectedSwitchIndex===mine.activeIndex||mine.party[selectedSwitchIndex]?.isFainted())selectedSwitchIndex=valid>=0?valid:null;qs("#actionPane").innerHTML=`<div class="switch-grid">${mine.party.map((x,i)=>`<button class="switch-card ${selectedSwitchIndex===i?"selected":""}" data-switch-choice="${i}" ${i===mine.activeIndex||x.isFainted()?"disabled":""}><img src="${spriteUrl(x,false)}" onerror="this.style.visibility='hidden'"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp} · ${x.types.map(t=>TYPE_KO[t]||t).join("/")}</small></span><span>${i===mine.activeIndex?"배틀 중":x.isFainted()?"기절":"교체"}</span></button>`).join("")}</div>`;qsa("[data-switch-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.switchChoice);renderControls()});qs("#mechanics").innerHTML=""}
 function itemTargets(mine,def){
   if(!def)return[];
@@ -1160,7 +1183,7 @@ function renderControls(){
   const mine=trainerByPerspective(true),p=mine.active,forced=battle.forceSwitch[mySide];if(lastControlTurn!==battle.turn){lastControlTurn=battle.turn;resetActionSelection()}qs("#forceSwitchBox").classList.toggle("hidden",!forced);qs("#normalControls").classList.toggle("hidden",forced);
   if(forced){qs("#forceSwitchBox").innerHTML=`<div class="statusbox"><b>포켓몬이 쓰러졌습니다. 다음 포켓몬을 선택하세요.</b><div class="switch-grid" style="margin-top:10px">${mine.party.map((x,i)=>!x.isFainted()&&i!==mine.activeIndex?`<button class="switch-card" data-force-choice="${i}"><img src="${spriteUrl(x,false)}"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp}</small></span><span>선택</span></button>`:"").join("")}</div></div>`;qsa("[data-force-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.forceChoice);submitSwitch()});return}
   qsa("[data-action-tab]").forEach(b=>{b.classList.toggle("active",b.dataset.actionTab===selectedActionKind);b.onclick=()=>{selectedActionKind=b.dataset.actionTab;if(selectedActionKind!=="move")mine.pending=null;renderControls()}});if(selectedActionKind==="switch")renderSwitchPane(mine);else if(selectedActionKind==="item")renderItemPane(mine);else renderMovePane(mine,p);
-  qs("#actionSummary").textContent=actionSummaryText();const valid=selectedActionKind==="move"?!!p.moves[selectedMove]:selectedActionKind==="switch"?selectedSwitchIndex!=null:!!(selectedItemId&&selectedItemTarget!=null);qs("#submitAction").disabled=battle.finished||!valid;qs("#resetBattle").classList.toggle("hidden",mode==="online")
+  qs("#actionSummary").textContent=actionSummaryText();p.moves=firebaseArray(p.moves);const valid=selectedActionKind==="move"?!!p.moves[selectedMove]:selectedActionKind==="switch"?selectedSwitchIndex!=null:!!(selectedItemId&&selectedItemTarget!=null);qs("#submitAction").disabled=battle.finished||!valid;qs("#resetBattle").classList.toggle("hidden",mode==="online")
 }
 function setVisualLock(on){visualLockDepth=Math.max(0,visualLockDepth+(on?1:-1));qs("#battleSection")?.classList.toggle("visual-lock",visualLockDepth>0)}
 function playHitSfxOnce(){try{const a=new Audio(CONFIG.hitSfx);a.preload="auto";a.loop=false;a.currentTime=0;a.play().catch(()=>{});return a}catch{return null}}
@@ -1215,7 +1238,7 @@ async function playMegaFx(){
 function validationHtml(d){if(!d)return"";const errs=(d.errors||[]).map(x=>`<div class="validation-error">✕ ${esc(x)}</div>`).join("");const warns=(d.warnings||[]).map(x=>`<div class="validation-warn">△ ${esc(x)}</div>`).join("");return errs+warns}
 function previewEntry(data){if(!data?.partyData?.length){qs("#entryPreview").innerHTML=`<div class="bad">이 트레이너의 포켓몬 정보를 찾지 못했습니다.</div>${validationHtml(data)}`;return}qs("#entryPreview").innerHTML=`${validationHtml(data)}${data.partyData.map(p=>`<div class="teamrow"><img src="${CONFIG.showdownBase}/${p.shiny?"ani-shiny":"ani"}/${encodeURIComponent(p.showdownId)}.gif" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · 지닌물건 ${esc(displayItemName(p.item))}</small></div><span>레벨 ${p.level}</span></div>`).join("")}`}
 function startLocal(a,b){if(!a||!b||a.errors?.length||b.errors?.length){toast("엔트리 검증 오류가 있어 배틀을 시작할 수 없습니다.","bad");return}mode="local";mySide="A";battle=new Battle(a,b);resetActionSelection();lastControlTurn=null;lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;qs("#lobby").classList.add("hidden");renderBattle();startBgm();scrollTo({top:0,behavior:"smooth"})}
-function chooseEnemyAction(t){const p=t.active,alive=t.party.map((x,i)=>({x,i})).filter(o=>o.i!==t.activeIndex&&!o.x.isFainted());const heal=Object.keys(t.bag||{}).find(id=>["potion","superpotion","hyperpotion","maxpotion","fullrestore"].includes(id)&&t.bag[id]>0);if(heal&&p.currentHp/p.stats.hp<.32&&Math.random()<.7)return{kind:"item",itemId:heal,targetIndex:t.activeIndex};if(alive.length&&p.currentHp/p.stats.hp<.23&&Math.random()<.4)return{kind:"switch",switchIndex:alive[Math.floor(Math.random()*alive.length)].i};const legal=p.moves.map((m,i)=>({m,i})).filter(x=>x.m.pp>0),move=(legal[Math.floor(Math.random()*legal.length)]||{i:0}).i;let mechanic=null;const choices=[];for(const k of["mega","z","dynamax","gmax","tera"])if(mechanicAvailable(k,t,p,p.moves[move]))choices.push(k);if(Math.random()<.12&&choices.length)mechanic=choices[Math.floor(Math.random()*choices.length)];return{kind:"move",moveIndex:move,mechanic}}
+function chooseEnemyAction(t){const p=t.active;p.moves=firebaseArray(p.moves);const alive=t.party.map((x,i)=>({x,i})).filter(o=>o.i!==t.activeIndex&&!o.x.isFainted());const heal=Object.keys(t.bag||{}).find(id=>["potion","superpotion","hyperpotion","maxpotion","fullrestore"].includes(id)&&t.bag[id]>0);if(heal&&p.currentHp/p.stats.hp<.32&&Math.random()<.7)return{kind:"item",itemId:heal,targetIndex:t.activeIndex};if(alive.length&&p.currentHp/p.stats.hp<.23&&Math.random()<.4)return{kind:"switch",switchIndex:alive[Math.floor(Math.random()*alive.length)].i};const legal=p.moves.map((m,i)=>({m,i})).filter(x=>x.m.pp>0),move=(legal[Math.floor(Math.random()*legal.length)]||{i:0}).i;let mechanic=null;const choices=[];for(const k of["mega","z","dynamax","gmax","tera"])if(mechanicAvailable(k,t,p,p.moves[move]))choices.push(k);if(Math.random()<.12&&choices.length)mechanic=choices[Math.floor(Math.random()*choices.length)];return{kind:"move",moveIndex:move,mechanic}}
 function autoLocalEnemyForcedSwitch(){
   if(!battle||mode!=="local"||!battle.forceSwitch.B)return false;
   const t=battle.trainerB;
