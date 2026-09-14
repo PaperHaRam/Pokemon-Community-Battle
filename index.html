@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pokémon RP Battle — Visual Online V2</title>
-<meta name="description" content="Pokémon RP visual battle simulator with Google Sheets teams, Pokémon Showdown sprites, SoundCloud BGM, and optional Firebase matchmaking.">
+<title>Pokémon RP Battle — Visual Online V3</title>
+<meta name="description" content="Pokémon RP visual battle simulator with Korean move names, mid-battle switching, trainer bag items, Pokémon Showdown sprites, SoundCloud BGM, and Firebase matchmaking.">
 <style>
 :root{
   --bg:#08101c;--panel:#101a2a;--panel2:#17243a;--line:#2b3d57;--text:#f7fbff;--muted:#9db0c7;
@@ -37,7 +37,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 @keyframes rain{to{transform:translate(-30px,50px)}}@keyframes snow{from{transform:translateY(-60px)}to{transform:translateY(620px)}}
 .terrain-glow{position:absolute;left:0;right:0;bottom:0;height:46%;opacity:.28;pointer-events:none}.terrain-electric{background:radial-gradient(ellipse at 50% 100%,#f7e64b,transparent 68%)}.terrain-grassy{background:radial-gradient(ellipse at 50% 100%,#45ff79,transparent 68%)}.terrain-psychic{background:radial-gradient(ellipse at 50% 100%,#f47cff,transparent 68%)}.terrain-misty{background:radial-gradient(ellipse at 50% 100%,#d9efff,transparent 68%)}
 .fighter{position:absolute;width:44%;max-width:470px}.fighter.enemy{right:4%;top:4%}.fighter.player{left:3%;bottom:2%}.platform{position:absolute;width:78%;height:22%;left:11%;bottom:2%;background:radial-gradient(ellipse,#476d4b 0 48%,rgba(33,72,42,.7) 49% 62%,transparent 63%);transform:perspective(450px) rotateX(60deg);filter:blur(.2px)}.enemy .platform{bottom:10%}
-.spritebox{position:relative;height:290px;display:flex;align-items:flex-end;justify-content:center}.enemy .spritebox{height:260px}.sprite{max-width:95%;max-height:95%;image-rendering:auto;transform-origin:center bottom;filter:drop-shadow(0 16px 10px rgba(0,0,0,.25));transition:filter .25s,transform .25s,opacity .4s}.sprite.dynamax{transform:scale(1.27);filter:drop-shadow(0 0 20px rgba(235,77,255,.65)) drop-shadow(0 18px 12px rgba(0,0,0,.3))}.sprite.tera{filter:saturate(.68) brightness(1.18) contrast(.9) drop-shadow(0 0 11px rgba(255,220,255,.92)) drop-shadow(0 0 24px rgba(150,232,255,.8))}.sprite.hit{animation:hit .35s ease}.sprite.faint{opacity:0;transform:translateY(45px) scale(.82)}@keyframes hit{0%,100%{transform:translateX(0)}25%{transform:translateX(-15px);filter:brightness(2)}55%{transform:translateX(12px)}}
+.spritebox{position:relative;height:290px;display:flex;align-items:flex-end;justify-content:center}.enemy .spritebox{height:260px}.sprite{max-width:95%;max-height:95%;image-rendering:auto;transform-origin:center bottom;filter:drop-shadow(0 16px 10px rgba(0,0,0,.25));transition:filter .25s,transform .25s,opacity .4s}.sprite.dynamax{transform:scale(1.27);filter:drop-shadow(0 0 20px rgba(235,77,255,.65)) drop-shadow(0 18px 12px rgba(0,0,0,.3))}.sprite.tera{filter:saturate(.68) brightness(1.18) contrast(.9) drop-shadow(0 0 11px rgba(255,220,255,.92)) drop-shadow(0 0 24px rgba(150,232,255,.8))}.sprite.hit{animation:hit .52s cubic-bezier(.2,.75,.25,1)}.sprite.faint{opacity:0;transform:translateY(45px) scale(.82)}@keyframes hit{0%,100%{transform:translateX(0)}25%{transform:translateX(-15px);filter:brightness(2)}55%{transform:translateX(12px)}}
 .pokehud{position:relative;z-index:3;background:rgba(6,15,26,.9);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);padding:10px 12px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,.28)}.pokehud .title{display:flex;justify-content:space-between;gap:8px;align-items:center}.pokehud h3{margin:0;font-size:19px}.pokehud small{color:#c5d8ed}.hptext{display:flex;justify-content:space-between;font-size:12px;margin-top:8px}.hp{height:10px;background:#26374b;border-radius:999px;overflow:hidden;margin-top:4px}.hpbar{height:100%;background:linear-gradient(90deg,#56e795,#9cf879);transition:width .5s}.party-dots{display:flex;gap:4px;margin-top:7px}.dot{width:10px;height:10px;border-radius:50%;background:#e8f3ff;border:1px solid rgba(0,0,0,.4)}.dot.fainted{background:#4e5968}.dot.active{box-shadow:0 0 0 2px var(--yellow)}
 .battle-message{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%);z-index:5;padding:9px 14px;border-radius:999px;background:rgba(5,13,25,.72);border:1px solid rgba(255,255,255,.2);font-weight:800;text-align:center;pointer-events:none;max-width:80%}
 
@@ -53,7 +53,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 @media(max-width:1100px){.battle-layout{grid-template-columns:1fr}.sidepanel{grid-template-columns:1fr 1fr}.lobby{grid-template-columns:1fr}}
 @media(max-width:720px){.shell{width:min(100% - 10px,1500px);margin-top:6px}.topbar{align-items:flex-start;flex-direction:column}.badges{justify-content:flex-start}.arena{min-height:580px}.fighter{width:58%}.fighter.enemy{right:1%}.fighter.player{left:0}.spritebox{height:245px}.enemy .spritebox{height:210px}.mechanics{grid-template-columns:repeat(3,1fr)}.sidepanel{grid-template-columns:1fr}.musicbar{left:5px;right:5px}.musicbar iframe{min-width:0}.musicbar .musicmeta{display:none}}
 
-/* ===== V2 visual + rules patch ===== */
+/* ===== V3 visual + rules patch ===== */
 #dexBadge{border-color:#35527a;color:#bfe0ff}
 .arena{min-height:690px;background:linear-gradient(#5b91c8 0 42%,#b9d8eb 42% 47%,#79ad6b 47% 67%,#4b7848 67% 100%);overflow:hidden}
 .arena:before{background:radial-gradient(circle at 50% 8%,rgba(255,255,255,.48),transparent 22%),linear-gradient(180deg,rgba(9,24,48,.08),transparent 38%)}
@@ -75,13 +75,34 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 .terrain-glow{height:48%;opacity:.22}.arena.terrain-bg-electric{box-shadow:inset 0 -80px 100px rgba(238,226,72,.12)}.arena.terrain-bg-grassy{box-shadow:inset 0 -90px 100px rgba(78,238,108,.12)}.arena.terrain-bg-psychic{box-shadow:inset 0 -90px 100px rgba(210,98,245,.13)}.arena.terrain-bg-misty{box-shadow:inset 0 -100px 100px rgba(220,241,255,.18)}
 @media(max-width:720px){.field-state{justify-content:flex-start}.state-chip{min-width:0;flex:1}.mechanics{grid-template-columns:repeat(2,1fr)}.arena{min-height:620px}}
 
+
+/* ===== V3 battle presentation ===== */
+:root{--glass:rgba(7,15,27,.78);--glass2:rgba(13,26,44,.9);--accent:#79b8ff;--accent2:#86ffe8;--ink:#06111f}
+.battle-layout{grid-template-columns:minmax(0,1fr) 350px;gap:18px}.battle-wrap{border-radius:28px;overflow:hidden;border:1px solid rgba(177,215,255,.2);box-shadow:0 28px 90px rgba(0,0,0,.5)}
+.arena{min-height:690px;background:linear-gradient(180deg,#8ed7ff 0 36%,#eaf8ff 36% 39%,#75ba7c 39% 62%,#42784e 62% 100%);overflow:hidden;perspective:1000px}
+.arena:before{z-index:0;background:radial-gradient(circle at 16% 12%,rgba(255,255,255,.88),transparent 8%),radial-gradient(circle at 78% 18%,rgba(255,255,255,.42),transparent 13%),linear-gradient(180deg,transparent 0 62%,rgba(3,30,16,.2) 100%)}
+.scene-horizon{position:absolute;left:-6%;right:-6%;top:34%;height:24%;z-index:0;background:linear-gradient(135deg,transparent 0 6%,rgba(56,99,112,.2) 6% 15%,transparent 15% 20%,rgba(45,96,70,.28) 20% 32%,transparent 32% 40%,rgba(43,88,74,.32) 40% 55%,transparent 55% 62%,rgba(47,99,82,.26) 62% 75%,transparent 75%);filter:blur(1px)}
+.scene-floor{position:absolute;left:-12%;right:-12%;bottom:-18%;height:62%;z-index:0;background:radial-gradient(ellipse at 50% 8%,rgba(170,235,171,.75) 0 18%,rgba(76,137,78,.72) 39%,rgba(30,79,47,.9) 72%);transform:rotateX(63deg);transform-origin:50% 0;box-shadow:inset 0 18px 40px rgba(255,255,255,.15)}
+.scene-lines{position:absolute;left:0;right:0;bottom:0;height:43%;z-index:1;opacity:.28;background:repeating-linear-gradient(90deg,transparent 0 88px,rgba(255,255,255,.2) 89px 91px),linear-gradient(180deg,transparent,rgba(255,255,255,.08));clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}
+.fighter{z-index:3}.fighter.enemy{right:6%;top:5%;width:40%}.fighter.player{left:4%;bottom:4%;width:46%}.spritebox{height:310px}.enemy .spritebox{height:285px}.sprite{filter:drop-shadow(0 22px 10px rgba(0,0,0,.28));max-width:100%;max-height:100%}.platform{width:88%;left:6%;height:19%;bottom:1%;background:radial-gradient(ellipse,rgba(32,70,39,.78) 0 48%,rgba(255,255,255,.12) 49% 53%,rgba(28,63,35,.36) 54% 64%,transparent 65%);filter:blur(.3px)}
+.pokehud{border-radius:18px 18px 8px 18px;background:linear-gradient(145deg,rgba(252,255,255,.93),rgba(218,236,247,.92));color:#112238;border:2px solid rgba(255,255,255,.78);box-shadow:0 13px 30px rgba(4,20,34,.28),inset 0 0 0 1px rgba(39,75,105,.12)}.enemy .pokehud{border-radius:18px 18px 18px 8px}.pokehud small,.pokehud .hud-meta>span:first-child{color:#4c657c}.pokehud .hptext{color:#263a4c}.hp{height:12px;background:#b9c5cc;border:1px solid rgba(29,54,73,.2)}.hpbar{background:linear-gradient(90deg,#42c86d,#8eea70)}
+.battle-message{left:3%;right:3%;top:auto;bottom:1.5%;transform:none;max-width:none;border-radius:18px;padding:14px 18px;text-align:left;background:linear-gradient(90deg,rgba(6,16,30,.94),rgba(14,35,57,.92));border:1px solid rgba(167,213,255,.35);box-shadow:0 8px 30px rgba(0,0,0,.3);font-size:15px;letter-spacing:.01em}
+.controls{position:relative;padding:16px 18px 18px;background:linear-gradient(180deg,#0a1727,#07111e);border-top:1px solid rgba(175,216,255,.16)}.command-shell{display:grid;grid-template-columns:190px minmax(0,1fr);gap:12px}.command-prompt{padding:14px;border-radius:16px;background:linear-gradient(145deg,#182f4c,#102138);border:1px solid #315173;align-self:start}.command-prompt strong{font-size:16px;display:block}.command-prompt small{display:block;margin-top:5px;color:#9eb5ca}.action-tabs{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}.action-tab{min-height:48px;border-radius:14px;border:1px solid #314b68;background:#0e2036;color:#eaf6ff;font-weight:900;text-align:left;padding:0 14px;transition:.15s}.action-tab:hover{transform:translateX(2px);border-color:#6ca7d9}.action-tab.active{background:linear-gradient(135deg,#69a8ff,#72e7d6);color:#071423;border-color:transparent;box-shadow:0 7px 22px rgba(71,170,255,.2)}
+.action-pane{min-height:235px;padding:4px}.movegrid{grid-template-columns:1fr 1fr}.movebtn{min-height:102px;border-radius:16px;padding:13px 14px;background:linear-gradient(145deg,#142a45,#0d1c31);border:1px solid #294664}.movebtn strong{font-size:15px}.movebtn small{font-size:11px}.movebtn em{font-size:10px}.movebtn.selected{outline:2px solid #82ffe7;box-shadow:0 0 0 4px rgba(130,255,231,.1)}
+.switch-grid,.bag-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.switch-card,.bag-card{position:relative;display:grid;grid-template-columns:58px 1fr auto;gap:10px;align-items:center;min-height:78px;padding:10px;border:1px solid #2d4763;border-radius:15px;background:linear-gradient(145deg,#122741,#0b1b2f);color:#edf7ff;text-align:left}.switch-card img{width:54px;height:54px;object-fit:contain}.switch-card small,.bag-card small{display:block;color:#9eb4c9;margin-top:3px}.switch-card.selected,.bag-card.selected{outline:2px solid #82ffe7;background:#16334b}.switch-card:disabled{opacity:.4}.bag-card{grid-template-columns:1fr auto}.bag-card .qty{font-weight:900;color:#ffe087}.target-picker{display:flex;gap:8px;align-items:center;margin-top:10px;padding:10px;border-radius:13px;background:#0a182a;border:1px dashed #31506f}.target-picker select{flex:1}
+.mechanics{margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px}.mechanics:empty{display:none}.submitrow{margin-top:12px}.submitrow .btn.primary{font-size:15px;min-height:48px}.action-summary{margin-top:9px;padding:8px 10px;border-radius:10px;background:#091626;color:#a9bed1;font-size:12px;border:1px solid #223b55}
+.sidepanel{border-radius:24px;padding:16px;background:linear-gradient(180deg,rgba(13,26,44,.96),rgba(7,16,29,.97))}.mini{border-radius:16px;background:rgba(7,17,30,.7)}.teamrow{background:linear-gradient(145deg,#10233a,#0b1a2c)}
+.mega-overlay{background:#000}.mega-overlay img{object-fit:cover;width:100vw;height:100vh}.mega-overlay canvas{position:absolute;inset:0;width:100vw;height:100vh;display:block}.musicbar{backdrop-filter:blur(10px)}.entry.item{border-color:#8ff0b5}.battle.visual-lock .controls{pointer-events:none;opacity:.78}.battle.visual-lock .battle-message::after{content:" · HIT";color:#ffd36e;font-weight:900}
+@media(max-width:980px){.command-shell{grid-template-columns:1fr}.action-tabs{grid-template-columns:repeat(3,1fr)}.action-tab{text-align:center}.battle-layout{grid-template-columns:1fr}.sidepanel{grid-template-columns:1fr 1fr}}
+@media(max-width:680px){.arena{min-height:620px}.fighter.enemy{width:52%;right:0}.fighter.player{width:58%;left:0}.spritebox{height:245px}.enemy .spritebox{height:220px}.switch-grid,.bag-grid,.movegrid{grid-template-columns:1fr}.action-tabs{grid-template-columns:1fr 1fr 1fr}.command-prompt{padding:10px}.battle-message{font-size:13px}.sidepanel{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
 <div class="shell">
   <header class="topbar">
-    <div class="brand"><h1>Pokémon RP Battle</h1><p>Showdown-validated teams / visual field / Google Sheets / online match</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">SHEET: 연결 중</span><span class="badge" id="dexBadge">DEX: 연결 중</span><span class="badge" id="firebaseBadge">ONLINE: 설정 확인</span><span class="badge">SPRITES: SHOWDOWN</span></div>
+    <div class="brand"><h1>Pokémon RP Battle</h1><p>한국어 기술명 / 교체·가방 / Showdown 검증 / 온라인 매치</p></div>
+    <div class="badges"><span class="badge" id="sheetBadge">SHEET: 연결 중</span><span class="badge" id="dexBadge">DEX: 연결 중</span><span class="badge" id="firebaseBadge">ONLINE: 설정 확인</span><span class="badge">SPRITES: SHOWDOWN</span><span class="badge">V3 · SWITCH/BAG/KO</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
@@ -103,6 +124,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
   <section id="battleSection" class="battle-layout hidden">
     <div class="panel battle-wrap">
       <div class="arena" id="arena">
+        <div class="scene-horizon"></div><div class="scene-floor"></div><div class="scene-lines"></div>
         <div id="terrainGlow" class="terrain-glow"></div>
         <div class="fighter enemy" id="enemyFighter">
           <div class="pokehud" id="enemyHud"></div><div class="spritebox"><div class="platform"></div><img id="enemySprite" class="sprite" alt="opponent Pokémon"><img id="enemyTeraOverlay" class="tera-overlay-img hidden" alt="Terastal overlay"></div>
@@ -115,7 +137,13 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
       <div class="controls">
         <div class="turnhead"><div><b id="turnLabel">TURN 1</b><div class="muted" id="modeLabel">LOCAL</div></div><div class="field-state"><div class="state-chip" id="weatherChip"><b>날씨</b><span>없음</span></div><div class="state-chip" id="terrainChip"><b>필드</b><span>없음</span></div></div></div>
         <div id="forceSwitchBox" class="hidden"></div>
-        <div id="normalControls"><div class="movegrid" id="moveGrid"></div><div class="mechanics" id="mechanics"></div><div class="submitrow"><button class="btn primary" id="submitAction">행동 확정</button><button class="btn" id="resetBattle">로컬 리셋</button></div></div>
+        <div id="normalControls">
+          <div class="command-shell">
+            <div class="command-prompt"><strong id="commandQuestion">무엇을 할까?</strong><small>행동 하나를 선택하면 한 턴을 사용합니다.</small><div class="action-tabs"><button class="action-tab active" data-action-tab="move">⚔ 싸운다</button><button class="action-tab" data-action-tab="switch">◉ 포켓몬</button><button class="action-tab" data-action-tab="item">▣ 가방</button></div></div>
+            <div><div id="actionPane" class="action-pane"></div><div class="mechanics" id="mechanics"></div><div id="actionSummary" class="action-summary"></div></div>
+          </div>
+          <div class="submitrow"><button class="btn primary" id="submitAction">이 행동으로 결정</button><button class="btn" id="resetBattle">로컬 리셋</button></div>
+        </div>
       </div>
     </div>
 
@@ -134,7 +162,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
   <button class="btn primary" id="musicPlay">▶ BGM 재생</button>
   <button class="btn" id="musicStop">■ BGM 정지</button>
 </div>
-<div id="megaOverlay" class="mega-overlay hidden"><img src="./mega-evolution.gif" alt="Mega Evolution"></div>
+<div id="megaOverlay" class="mega-overlay hidden"><canvas id="megaCanvas" aria-label="Mega Evolution"></canvas><img id="megaFallback" class="hidden" alt="Mega Evolution"></div>
 <div id="toast" class="toast hidden"></div>
 
 <script src="./firebase-config.js"></script>
@@ -147,12 +175,16 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 
 const CONFIG = {
   sheetId: "1f0x52RfSWOWJRjeqthimmLADL4VOwUvLQi7wzjel_FY",
-  sheetTabs: { trainers: "Trainers", pokemon: "Pokemon", moves: "Moves" },
+  sheetTabs: { trainers: "Trainers", pokemon: "Pokemon", moves: "Moves", items: "Items" },
   showdownBase: "https://play.pokemonshowdown.com/sprites",
   showdownData: "https://play.pokemonshowdown.com/data",
+  pokeApi: "https://pokeapi.co/api/v2",
   generation: 9,
   legalityMode: "anygen", // mixed RP mechanics: species must have learned the move in at least one documented generation
   megaFx: "./mega-evolution.gif",
+  megaFxDurationMs: 5000, // ImageDecoder 미지원 브라우저용 폴백 시간
+  hitSfx: "./Hit-Normal-Damage.mp3",
+  hitReactionMs: 520, // 직접 공격 적중 후 시각적 피격 정지 시간
   bgmUrl: "https://soundcloud.com/sol64/sets/pokemon-battle-music",
   allowCustomFinalStats: true,
 };
@@ -257,7 +289,7 @@ function mapSecondary(s){if(!s)return null;return{chance:num(s.chance,100),statu
 function showdownMoveData(moveId,displayOverride=""){
   const id=toID(moveId),m=dexMove(id);if(!m)return null;
   return{
-    id,name:displayOverride||m.name||id,type:norm(m.type)||"normal",category:norm(m.category)||"status",power:num(m.basePower,0),
+    id,num:num(m.num,0),englishName:m.name||id,name:displayOverride||moveKoMap[id]||m.name||id,type:norm(m.type)||"normal",category:norm(m.category)||"status",power:num(m.basePower,0),
     accuracy:m.accuracy===true?999:num(m.accuracy,100),maxPp:num(m.pp,1),priority:num(m.priority,0),flags:{...(m.flags||{})},
     status:SHOWDOWN_STATUS[m.status]||null,boosts:mapBoosts(m.boosts),selfBoosts:mapBoosts(m.self?.boosts),secondary:mapSecondary(m.secondary),
     secondaries:(m.secondaries||[]).map(mapSecondary).filter(Boolean),heal:Array.isArray(m.heal)?m.heal:null,recoil:Array.isArray(m.recoil)?m.recoil:null,
@@ -268,30 +300,45 @@ function showdownMoveData(moveId,displayOverride=""){
 }
 const STRUGGLE={id:"struggle",name:"발버둥",type:"typeless",category:"physical",power:50,accuracy:999,maxPp:999,pp:999,priority:0,flags:{contact:1,protect:1},struggle:true};
 
-const sheetStore={trainers:[],pokemon:[],moves:[],loaded:false,error:null};
+const sheetStore={trainers:[],pokemon:[],moves:[],items:[],loaded:false,error:null};
+const moveKoMap={};
+async function fetchKoreanMoveName(moveId){
+  const id=toID(moveId),m=dexMove(id);if(!m?.num||moveKoMap[id])return moveKoMap[id]||"";
+  try{const data=await fetchJson(`${CONFIG.pokeApi}/move/${m.num}/`);const ko=(data.names||[]).find(x=>x.language?.name==="ko")?.name||"";if(ko)moveKoMap[id]=ko;return ko}catch{return""}
+}
+async function primeKoreanMoveNames(nickname=null){
+  if(!dexStore.ready)return;const ids=new Set(),key=nickname?norm(nickname):null;
+  const rows=key?sheetStore.pokemon.filter(r=>norm(rowVal(r,"trainer_nickname","trainer","트레이너"))===key):(DEMO?.pokemon||[]);
+  for(const r of rows){for(let i=1;i<=4;i++){const v=rowVal(r,`move${i}`,`기술${i}`)||r[`move${i}`];if(v)ids.add(toID(v))}}
+  const list=[...ids];for(let i=0;i<list.length;i+=8)await Promise.all(list.slice(i,i+8).map(fetchKoreanMoveName));
+}
+function parseInlineBag(v){const out={};for(const part of String(v||"").split(/[|,]/)){const [rawId,rawQty]=part.split(/[:*x×]/);const id=toID(rawId);if(!id)continue;out[id]=(out[id]||0)+Math.max(0,num(rawQty,1))}return out}
+function trainerBag(key,tr,source=sheetStore){const bag=parseInlineBag(rowVal(tr,"bag","items","가방"));for(const r of(source.items||[])){if(norm(rowVal(r,"trainer_nickname","trainer","트레이너"))!==key)continue;const id=toID(rowVal(r,"item_id","item","아이템id","아이템"));if(!id)continue;bag[id]=(bag[id]||0)+Math.max(0,num(rowVal(r,"quantity","qty","수량"),1))}return bag}
+
 function gvizTab(tab){return new Promise((resolve,reject)=>{const cb="__gviz_"+Math.random().toString(36).slice(2);const script=document.createElement("script");const timer=setTimeout(()=>done(new Error(`시트 '${tab}' 응답 시간 초과`)),12000);function done(err,data){clearTimeout(timer);delete window[cb];script.remove();err?reject(err):resolve(data)}window[cb]=res=>{if(res?.status==="error")return done(new Error(res.errors?.[0]?.detailed_message||res.errors?.[0]?.message||`${tab} 로딩 실패`));done(null,res)};script.onerror=()=>done(new Error(`${tab} 탭을 불러오지 못했습니다.`));script.src=`https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?headers=1&sheet=${encodeURIComponent(tab)}&tqx=${encodeURIComponent("responseHandler:"+cb)}`;document.head.appendChild(script)})}
 function gvizObjects(res){const cols=(res.table?.cols||[]).map((c,i)=>String(c.label||c.id||`col${i}`).trim());return(res.table?.rows||[]).map(r=>{const o={};cols.forEach((k,i)=>{if(k)o[k]=r.c?.[i]?.v??r.c?.[i]?.f??""});return o})}
 async function loadSheets(){
   qs("#sheetBadge").textContent="SHEET: 연결 중";
   try{
     const [t,p]=await Promise.all([gvizTab(CONFIG.sheetTabs.trainers),gvizTab(CONFIG.sheetTabs.pokemon)]);
-    let m=[];try{m=gvizObjects(await gvizTab(CONFIG.sheetTabs.moves))}catch{m=[]}
-    sheetStore.trainers=gvizObjects(t);sheetStore.pokemon=gvizObjects(p);sheetStore.moves=m;sheetStore.loaded=true;sheetStore.error=null;
+    let m=[],items=[];try{m=gvizObjects(await gvizTab(CONFIG.sheetTabs.moves))}catch{m=[]}try{items=gvizObjects(await gvizTab(CONFIG.sheetTabs.items))}catch{items=[]}
+    sheetStore.trainers=gvizObjects(t);sheetStore.pokemon=gvizObjects(p);sheetStore.moves=m;sheetStore.items=items;sheetStore.loaded=true;sheetStore.error=null;
     qs("#sheetBadge").textContent=`SHEET: ${sheetStore.trainers.length} TRAINERS`;
     qs("#loginStatus").textContent=dexStore.ready?"데이터 준비 완료. 닉네임을 입력하세요.":"Google Sheet는 준비됐지만 Showdown Dex 연결을 확인 중입니다.";
   }catch(e){sheetStore.loaded=false;sheetStore.error=e;qs("#sheetBadge").textContent="SHEET: 가이드 확인";qs("#loginStatus").innerHTML=`<span class="warn">시트 자동 로딩 실패:</span> ${esc(e.message)}<br>데모 배틀은 사용할 수 있습니다.`}
 }
-function displayMoveName(id){const r=sheetStore.moves.find(x=>toID(rowVal(x,"move_id","id","기술id"))===toID(id));return r?rowVal(r,"display_name","name","기술명"):""}
-function autoMegaData(baseId,item,manualId=""){
+function displayMoveName(id){const key=toID(id),r=sheetStore.moves.find(x=>toID(rowVal(x,"move_id","id","기술id"))===key);return (r?rowVal(r,"display_name","name","기술명"):"")||moveKoMap[key]||""}
+function autoMegaData(baseId,item,manualId="",variant=""){
   const base=dexSpecies(baseId);if(!base)return null;
-  let ids=[];
-  if(manualId)ids=[toID(manualId)];
-  else ids=(base.otherFormes||[]).map(toID).filter(id=>/mega/.test(norm(dexSpecies(id)?.forme||dexSpecies(id)?.name)));
-  const forms=ids.map(id=>({id,data:dexSpecies(id)})).filter(x=>x.data);
-  const held=canonicalItem(item);
-  const chosen=forms.find(x=>!x.data.requiredItem||canonicalItem(x.data.requiredItem)===held)||forms[0];
-  if(!chosen)return null;
-  const d=chosen.data;return{showdownId:manualId||spriteIdFromDexId(chosen.id,d),name:d.name,types:(d.types||[]).map(norm),ability:Object.values(d.abilities||{})[0]||"",stone:d.requiredItem||null,statsMode:"base",stats:{hp:d.baseStats.hp,attack:d.baseStats.atk,defense:d.baseStats.def,specialAttack:d.baseStats.spa,specialDefense:d.baseStats.spd,speed:d.baseStats.spe}};
+  const ids=(base.otherFormes||[]).map(toID).filter(id=>/mega/.test(norm(dexSpecies(id)?.forme||dexSpecies(id)?.name)));
+  const forms=ids.map(id=>({id,data:dexSpecies(id)})).filter(x=>x.data);if(!forms.length)return null;
+  const held=canonicalItem(item),wanted=norm(variant).replace(/[^xy]/g,"");let chosen=null;
+  if(manualId){const mid=toID(manualId);const d=dexSpecies(mid);if(d)chosen={id:mid,data:d}}
+  if(!chosen&&held)chosen=forms.find(x=>canonicalItem(x.data.requiredItem||"")===held);
+  if(!chosen&&wanted)chosen=forms.find(x=>norm(x.data.forme||x.data.name).replace(/[^a-z]/g,"").endsWith(wanted));
+  if(!chosen&&forms.length===1)chosen=forms[0];
+  if(!chosen)return{ambiguous:true,options:forms.map(x=>({showdownId:spriteIdFromDexId(x.id,x.data),name:x.data.name,stone:x.data.requiredItem||null}))};
+  const d=chosen.data;return{showdownId:spriteIdFromDexId(chosen.id,d),name:d.name,types:(d.types||[]).map(norm),ability:Object.values(d.abilities||{})[0]||"",stone:d.requiredItem||null,statsMode:"base",stats:{hp:d.baseStats.hp,attack:d.baseStats.atk,defense:d.baseStats.def,specialAttack:d.baseStats.spa,specialDefense:d.baseStats.spd,speed:d.baseStats.spe}};
 }
 function autoGmaxId(baseId,manualId=""){
   if(manualId)return manualId;
@@ -326,7 +373,8 @@ function buildPokemonData(r){
   if(Object.values(evs).some(v=>v>252)||Object.values(evs).reduce((a,b)=>a+b,0)>510)warnings.push(`${sp.name}: EV가 일반 한도(개별 252 / 합계 510)를 넘습니다.`);
   const item=rowVal(r,"item","도구")||null;
   const teraType=norm(rowVal(r,"tera_type","tera","테라타입"))||norm(sp.types?.[0])||"normal";if(!TYPE_KO[teraType])errors.push(`${sp.name}: 알 수 없는 테라타입 '${teraType}'`);
-  const megaData=autoMegaData(dexId,item,rowVal(r,"mega_showdown_id"));
+  const megaData=autoMegaData(dexId,item,rowVal(r,"mega_showdown_id"),rowVal(r,"mega_variant","메가분기"));
+  if(megaData?.ambiguous)errors.push(`${sp.name}: 메가진화가 X/Y 등 여러 형태입니다. item에 정확한 메가스톤을 넣거나 mega_variant(X/Y) 또는 mega_showdown_id를 지정하세요.`);
   const gmaxShowdownId=autoGmaxId(dexId,rowVal(r,"gmax_showdown_id"));
   return{errors,warnings,data:{species:rowVal(r,"species","pokemon","포켓몬")||sp.name,dexName:sp.name,nickname:rowVal(r,"nickname","별명")||rowVal(r,"species")||sp.name,showdownId:spriteId,dexId,shiny:bool(rowVal(r,"shiny","이로치")),level:num(rowVal(r,"level","레벨"),50),types:(sp.types||["Normal"]).map(norm),ability,item,teraType,statsMode:statMode,stats:statMode==="final"&&CONFIG.allowCustomFinalStats?finalStats:base,baseStats:base,ivs,evs,nature:norm(rowVal(r,"nature","성격"))||"serious",moves,dynamaxLevel:Math.max(0,Math.min(10,num(rowVal(r,"dynamax_level"),10))),megaData,gmaxShowdownId,cannotDynamax:!!sp.cannotDynamax}};
 }
@@ -335,7 +383,7 @@ function getTrainerData(nickname,source=sheetStore){
   const rows=(source.pokemon||[]).filter(r=>norm(rowVal(r,"trainer_nickname","trainer","트레이너"))===key).sort((a,b)=>num(rowVal(a,"slot"),999)-num(rowVal(b,"slot"),999)).slice(0,6);
   const partyData=[],errors=[],warnings=[];
   for(const r of rows){const x=buildPokemonData(r);errors.push(...(x.errors||[]));warnings.push(...(x.warnings||[]));if(x.data)partyData.push(x.data)}
-  return{id:key,name:rowVal(tr,"display_name","name","표시이름")||rowVal(tr,"nickname","닉네임"),money:num(rowVal(tr,"money","소지금"),0),partyData,errors,warnings};
+  return{id:key,name:rowVal(tr,"display_name","name","표시이름")||rowVal(tr,"nickname","닉네임"),money:num(rowVal(tr,"money","소지금"),0),bag:trainerBag(key,tr,source),partyData,errors,warnings};
 }
 
 const DEMO={
@@ -345,9 +393,12 @@ const DEMO={
     {trainer_nickname:"demo",slot:2,species:"피카츄",showdown_id:"pikachu",level:50,ability:"Static",item:"Light Ball",tera_type:"electric",nature:"jolly",move1:"thunderbolt",move2:"quickattack",move3:"thunderwave",move4:"protect"},
     {trainer_nickname:"rival",slot:1,species:"거북왕",showdown_id:"blastoise",level:50,ability:"Torrent",item:"Leftovers",tera_type:"steel",nature:"modest",move1:"surf",move2:"icebeam",move3:"darkpulse",move4:"protect"},
     {trainer_nickname:"rival",slot:2,species:"이상해꽃",showdown_id:"venusaur",level:50,ability:"Overgrow",item:"Black Sludge",tera_type:"fairy",nature:"calm",move1:"gigadrain",move2:"sludgebomb",move3:"sleeppowder",move4:"protect"}
-  ],moves:[]
+  ],moves:[],items:[
+    {trainer_nickname:"demo",item_id:"potion",quantity:3},{trainer_nickname:"demo",item_id:"superpotion",quantity:1},{trainer_nickname:"demo",item_id:"fullheal",quantity:1},{trainer_nickname:"demo",item_id:"revive",quantity:1},{trainer_nickname:"demo",item_id:"xattack",quantity:1},
+    {trainer_nickname:"rival",item_id:"superpotion",quantity:2},{trainer_nickname:"rival",item_id:"fullheal",quantity:1}
+  ]
 };
-function demoTrainerData(nickname){const old={trainers:sheetStore.trainers,pokemon:sheetStore.pokemon,moves:sheetStore.moves};sheetStore.trainers=DEMO.trainers;sheetStore.pokemon=DEMO.pokemon;sheetStore.moves=[];const x=getTrainerData(nickname,sheetStore);Object.assign(sheetStore,old);return x}
+function demoTrainerData(nickname){const old={trainers:sheetStore.trainers,pokemon:sheetStore.pokemon,moves:sheetStore.moves,items:sheetStore.items};sheetStore.trainers=DEMO.trainers;sheetStore.pokemon=DEMO.pokemon;sheetStore.moves=[];sheetStore.items=DEMO.items;const x=getTrainerData(nickname,sheetStore);Object.assign(sheetStore,old);return x}
 
 function deepMove(m){const x=JSON.parse(JSON.stringify(m));x.pp=num(x.maxPp,10);return x}
 function clampStage(s){return Math.max(-6,Math.min(6,s))}
@@ -357,6 +408,14 @@ function zPower(p){if(p<=55)return 100;if(p<=65)return 120;if(p<=75)return 140;i
 function maxPower(p,t){const r=t==="fighting"||t==="poison";if(r){if(p<=40)return 70;if(p<=50)return 75;if(p<=60)return 80;if(p<=70)return 85;if(p<=100)return 90;if(p<=140)return 95;return 100}if(p<=40)return 90;if(p<=50)return 100;if(p<=60)return 110;if(p<=70)return 120;if(p<=100)return 130;if(p<=140)return 140;return 150}
 function typeMultiplier(type,target){if(type==="typeless")return 1;if(type==="stellar")return target.isTerastallized?2:1;return target.types.reduce((n,t)=>n*(TYPE_CHART[type]?.[t]??1),1)}
 function randomHits(m){if(typeof m.multihit==="number")return m.multihit;if(Array.isArray(m.multihit)){const[a,b]=m.multihit;if(a===2&&b===5){const r=Math.random();return r<.35?2:r<.70?3:r<.85?4:5}return a+Math.floor(Math.random()*(b-a+1))}return 1}
+
+const ITEM_DEFS={
+  potion:{name:"상처약",kind:"heal",amount:20,desc:"HP를 20 회복"},superpotion:{name:"좋은상처약",kind:"heal",amount:60,desc:"HP를 60 회복"},hyperpotion:{name:"고급상처약",kind:"heal",amount:120,desc:"HP를 120 회복"},maxpotion:{name:"풀회복약",kind:"healFull",desc:"HP를 전부 회복"},fullrestore:{name:"회복약",kind:"fullRestore",desc:"HP와 상태이상을 모두 회복"},
+  antidote:{name:"해독제",kind:"status",statuses:["poison","toxic"],desc:"독/맹독 회복"},burnheal:{name:"화상치료제",kind:"status",statuses:["burn"],desc:"화상 회복"},iceheal:{name:"얼음상태치료제",kind:"status",statuses:["freeze"],desc:"얼음 상태 회복"},awakening:{name:"잠깨는약",kind:"status",statuses:["sleep"],desc:"잠듦 회복"},paralyzeheal:{name:"마비치료제",kind:"status",statuses:["paralysis"],desc:"마비 회복"},fullheal:{name:"만병통치제",kind:"statusAll",desc:"모든 주요 상태이상 회복"},
+  revive:{name:"기력의조각",kind:"revive",ratio:.5,desc:"기절한 포켓몬 HP 절반으로 회복"},maxrevive:{name:"기력의덩어리",kind:"revive",ratio:1,desc:"기절한 포켓몬 HP 전부 회복"},
+  xattack:{name:"플러스파워",kind:"boost",stat:"attack",stages:2,activeOnly:true,desc:"공격을 2랭크 올림"},xdefense:{name:"디펜드업",kind:"boost",stat:"defense",stages:2,activeOnly:true,desc:"방어를 2랭크 올림"},xspatk:{name:"스페셜업",kind:"boost",stat:"specialAttack",stages:2,activeOnly:true,desc:"특공을 2랭크 올림"},xspdef:{name:"스페셜가드",kind:"boost",stat:"specialDefense",stages:2,activeOnly:true,desc:"특방을 2랭크 올림"},xspeed:{name:"스피드업",kind:"boost",stat:"speed",stages:2,activeOnly:true,desc:"스피드를 2랭크 올림"},xaccuracy:{name:"잘-맞히기",kind:"boost",stat:"accuracy",stages:2,activeOnly:true,desc:"명중률을 2랭크 올림"}
+};
+function itemDef(id){return ITEM_DEFS[toID(id)]||null}
 
 class Pokemon{
   constructor(d){
@@ -381,17 +440,18 @@ class Pokemon{
   spriteId(){if(this.isGigantamaxed&&this.gmaxShowdownId)return this.gmaxShowdownId;if(this.isMega&&this.megaData?.showdownId)return this.megaData.showdownId;return this.showdownId}
 }
 class Trainer{
-  constructor(d){this.id=d.id;this.name=d.name;this.money=d.money||0;this.party=(d.partyData||[]).map(x=>new Pokemon(x));this.activeIndex=0;this.megaUsed=false;this.zUsed=false;this.dynamaxUsed=false;this.terastalUsed=false;this.pending=null}
+  constructor(d){this.id=d.id;this.name=d.name;this.money=d.money||0;this.bag={...(d.bag||{})};this.party=(d.partyData||[]).map(x=>new Pokemon(x));this.activeIndex=0;this.megaUsed=false;this.zUsed=false;this.dynamaxUsed=false;this.terastalUsed=false;this.pending=null}
   get active(){return this.party[this.activeIndex]}usable(){return this.party.filter(p=>!p.isFainted())}hasUsable(){return this.usable().length>0}
 }
 
 class Battle{
   constructor(a,b){
-    this.trainerA=new Trainer({...a,id:"A"});this.trainerB=new Trainer({...b,id:"B"});this.turn=1;this.finished=false;this.logs=[];this.debug=[];this.weather=null;this.weatherTurns=0;this.terrain=null;this.terrainTurns=0;this.forceSwitch={A:false,B:false};
+    this.trainerA=new Trainer({...a,id:"A"});this.trainerB=new Trainer({...b,id:"B"});this.turn=1;this.finished=false;this.logs=[];this.debug=[];this.visualEvents=[];this.visualSeq=0;this.weather=null;this.weatherTurns=0;this.terrain=null;this.terrainTurns=0;this.forceSwitch={A:false,B:false};
     this.applyInitialAbilities();
   }
   trainer(side){return side==="A"?this.trainerA:this.trainerB}
   log(text,kind="normal"){this.logs.push({turn:this.turn,text,kind,at:Date.now()})}
+  emitVisual(type,data={}){const ev={id:++this.visualSeq,type,turn:this.turn,...data};this.visualEvents.push(ev);if(this.visualEvents.length>24)this.visualEvents.splice(0,this.visualEvents.length-24);return ev}
   dbg(text){this.debug.push(`[T${this.turn}] ${text}`)}
   grounded(p){return!p.types.includes("flying")&&toID(p.ability)!=="levitate"}
   effectiveStat(p,stat){let v=Math.floor(p.stats[stat]*statStageMul(p.statStages[stat]||0));if(stat==="speed"&&p.status==="paralysis")v=Math.floor(v*.5);if(stat==="defense"&&this.weather==="snow"&&p.types.includes("ice"))v=Math.floor(v*1.5);if(stat==="specialDefense"&&this.weather==="sand"&&p.types.includes("rock"))v=Math.floor(v*1.5);return Math.max(1,v)}
@@ -461,6 +521,7 @@ class Battle{
     if(target.maxGuarded){this.log(`${target.nickname}은(는) 다이월로 완전히 막았다!`);return}
     let protectMult=1;if(target.protected){if(m.isZMove||m.isMaxMove){protectMult=.25;this.log("방어를 뚫고 일부 피해를 입혔다!")}else{this.log(`${target.nickname}은(는) 공격을 막았다!`);return}}
     const hits=randomHits(m);let total=0,last=null;for(let i=0;i<hits&&!target.isFainted();i++){last=this.damage(u,target,m);total+=target.takeDamage(Math.floor(last.dmg*protectMult))}
+    if(total>0)this.emitVisual("hit",{sourceSide:t.id,targetSide:o.id,moveId:m.id,damage:total,hits});
     if(last?.crit)this.log("급소에 맞았다!");if(last?.eff===0)this.log("효과가 없는 것 같다…");else if(last?.eff>=2)this.log("효과가 굉장했다!");else if(last?.eff<1)this.log("효과가 별로인 듯하다…");this.log(`${target.nickname}에게 ${total}의 피해!${hits>1?` (${hits}회)` :""}`);
     if(m.drain&&total>0){const h=u.heal(Math.floor(total*m.drain[0]/m.drain[1]));if(h)this.log(`${u.nickname}이(가) ${h} 회복했다!`)}
     if(m.recoil&&total>0&&!u.isFainted()){const d=u.takeDamage(Math.max(1,Math.floor(total*m.recoil[0]/m.recoil[1])));this.log(`${u.nickname}은(는) 반동으로 ${d}의 피해!`)}
@@ -468,6 +529,19 @@ class Battle{
     if(!target.isFainted()){if(m.status)this.applyStatus(target,m.status,m);this.applyBoosts(target,m.boosts);this.applySecondary(u,target,m.secondary,m);for(const s of m.secondaries||[])this.applySecondary(u,target,s,m)}
     this.applyBoosts(u,m.selfBoosts);if(m.forceSwitch&&!target.isFainted())this.forceRandomSwitch(o);
     if(target.isFainted())this.log(`${target.nickname}은(는) 쓰러졌다!`);
+  }
+  useItem(side,itemId,targetIndex){
+    const t=this.trainer(side),id=toID(itemId),def=itemDef(id),qty=num(t.bag?.[id],0),target=t.party[num(targetIndex,t.activeIndex)];
+    if(!def||qty<=0||!target){this.log(`${t.name}: 아이템을 사용할 수 없다.`);return false}if(def.activeOnly&&target!==t.active){this.log(`${def.name}은(는) 현재 배틀 중인 포켓몬에게만 사용할 수 있다.`);return false}
+    let applied=false;
+    if(def.kind==="heal"&&!target.isFainted()&&target.currentHp<target.stats.hp){const h=target.heal(def.amount);this.log(`${t.name}은(는) ${target.nickname}에게 ${def.name}을 사용했다! HP가 ${h} 회복됐다.`,"item");applied=h>0}
+    else if(def.kind==="healFull"&&!target.isFainted()&&target.currentHp<target.stats.hp){const h=target.heal(target.stats.hp);this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 HP가 ${h} 회복됐다.`,"item");applied=h>0}
+    else if(def.kind==="fullRestore"&&!target.isFainted()&&(target.currentHp<target.stats.hp||target.status)){const h=target.heal(target.stats.hp),had=target.status;target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${target.nickname}에게 ${def.name}을 사용했다!${h?` HP ${h} 회복.`:""}${had?` ${STATUS_KO[had]||had} 회복.`:""}`,"item");applied=true}
+    else if(def.kind==="status"&&!target.isFainted()&&def.statuses.includes(target.status)){const old=target.status;target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 ${STATUS_KO[old]||old} 상태가 나았다.`,"item");applied=true}
+    else if(def.kind==="statusAll"&&!target.isFainted()&&target.status){const old=target.status;target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 ${STATUS_KO[old]||old} 상태가 나았다.`,"item");applied=true}
+    else if(def.kind==="revive"&&target.isFainted()){target.currentHp=Math.max(1,Math.ceil(target.stats.hp*def.ratio));target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}이(가) HP ${target.currentHp}로 일어났다.`,"item");applied=true}
+    else if(def.kind==="boost"&&!target.isFainted()){const before=target.statStages[def.stat]||0;target.statStages[def.stat]=clampStage(before+def.stages);applied=target.statStages[def.stat]!==before;if(applied)this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 ${STAT_NAME[def.stat]}이 크게 올랐다!`,"item")}
+    if(!applied){this.log(`${def.name}을 사용해도 효과가 없었다.`);return false}t.bag[id]=qty-1;if(t.bag[id]<=0)delete t.bag[id];return true
   }
   clearProtection(){for(const t of[this.trainerA,this.trainerB]){t.active.protected=false;t.active.maxGuarded=false}}
   endTurn(){
@@ -477,13 +551,27 @@ class Battle{
   endDynamax(p){const oldMax=p.stats.hp,base=p.preDynamaxMaxHp,ratio=base/oldMax;p.currentHp=Math.min(base,Math.ceil(p.currentHp*ratio));p.stats.hp=base;p.preDynamaxMaxHp=null;p.isDynamaxed=false;p.isGigantamaxed=false;p.dynamaxTurnsLeft=0}
   updateForcedSwitch(){for(const side of["A","B"]){const t=this.trainer(side);this.forceSwitch[side]=t.active.isFainted()&&t.hasUsable();if(this.forceSwitch[side])this.log(`${t.name}은(는) 다음 포켓몬을 내보내야 한다.`)}}
   switch(side,index,forced=false){const t=this.trainer(side),old=t.active,next=t.party[index];if(!next||next.isFainted()||next===old)return false;if(this.forceSwitch[side]&&!forced)return false;if(old.isDynamaxed)this.endDynamax(old);old.resetVolatile();t.activeIndex=index;this.forceSwitch[side]=false;this.log(`${t.name}: ${old.nickname} → ${next.nickname}`);this.applyEntryAbility(next);return true}
-  executeTurn(ia,ib){if(this.finished)return;if(this.forceSwitch.A||this.forceSwitch.B){this.log("강제 교체를 먼저 완료해야 한다.");return}this.log(`TURN ${this.turn}`);this.activateBeforeOrder(this.trainerA);this.activateBeforeOrder(this.trainerB);const ma=this.prepareMove(this.trainerA,ia),mb=this.prepareMove(this.trainerB,ib),order=this.getOrder(ma,mb);for(const side of order){const t=this.trainer(side),o=this.trainer(side==="A"?"B":"A"),m=side==="A"?ma:mb;if(t.active.isFainted()||o.active.isFainted())continue;this.executeMove(t,o,m);if(!o.hasUsable()){this.finish(t,o);break}}if(!this.finished){this.endTurn();this.turn++}}
+  actionSpeedOrder(){const sa=this.effectiveStat(this.trainerA.active,"speed"),sb=this.effectiveStat(this.trainerB.active,"speed");if(sa!==sb)return sa>sb?["A","B"]:["B","A"];return Math.random()<.5?["A","B"]:["B","A"]}
+  executeActions(actionA,actionB){
+    if(this.finished)return;if(this.forceSwitch.A||this.forceSwitch.B){this.log("강제 교체를 먼저 완료해야 한다.");return}
+    const actions={A:actionA||{kind:"move",moveIndex:0},B:actionB||{kind:"move",moveIndex:0}};this.log(`TURN ${this.turn}`);
+    for(const side of["A","B"]){const t=this.trainer(side),a=actions[side];t.pending=null;if(a.kind==="move"&&a.mechanic)this.queue(side,a.mechanic)}
+    const specialOrder=this.actionSpeedOrder();
+    for(const side of specialOrder){const a=actions[side];if(a.kind!=="switch")continue;const ok=this.switch(side,num(a.switchIndex,-1),false);if(!ok)this.log(`${this.trainer(side).name}: 교체에 실패했다.`)}
+    for(const side of specialOrder){const a=actions[side];if(a.kind!=="item")continue;this.useItem(side,a.itemId,a.targetIndex)}
+    for(const side of["A","B"]){if(actions[side].kind==="move")this.activateBeforeOrder(this.trainer(side));else this.trainer(side).pending=null}
+    const moves={};for(const side of["A","B"]){if(actions[side].kind==="move")moves[side]=this.prepareMove(this.trainer(side),num(actions[side].moveIndex,0))}
+    let order=[];if(moves.A&&moves.B)order=this.getOrder(moves.A,moves.B);else if(moves.A)order=["A"];else if(moves.B)order=["B"];
+    for(const side of order){const t=this.trainer(side),o=this.trainer(side==="A"?"B":"A"),mv=moves[side];if(t.active.isFainted()||o.active.isFainted())continue;this.executeMove(t,o,mv);if(!o.hasUsable()){this.finish(t,o);break}}
+    if(!this.finished){this.endTurn();this.turn++}
+  }
+  executeTurn(ia,ib){return this.executeActions({kind:"move",moveIndex:ia},{kind:"move",moveIndex:ib})}
   finish(w,l){if(this.finished)return;this.finished=true;const prize=Math.floor(l.money*.1);l.money-=prize;w.money+=prize;this.log(`${w.name}의 승리!`);this.log(`${l.name}은(는) ${prize.toLocaleString()}원을 지급했다.`)}
   snapshot(){return JSON.parse(JSON.stringify(this))}
-  static hydrate(s){const b=Object.create(Battle.prototype);Object.assign(b,s);for(const key of["trainerA","trainerB"]){const t=Object.create(Trainer.prototype);Object.assign(t,s[key]);t.party=(s[key].party||[]).map(p=>{const x=Object.create(Pokemon.prototype);Object.assign(x,p);return x});b[key]=t}return b}
+  static hydrate(s){const b=Object.create(Battle.prototype);Object.assign(b,s);b.visualEvents=Array.isArray(b.visualEvents)?b.visualEvents:[];b.visualSeq=Number.isFinite(b.visualSeq)?b.visualSeq:(b.visualEvents.at(-1)?.id||0);for(const key of["trainerA","trainerB"]){const t=Object.create(Trainer.prototype);Object.assign(t,s[key]);t.party=(s[key].party||[]).map(p=>{const x=Object.create(Pokemon.prototype);Object.assign(x,p);return x});b[key]=t}return b}
 }
 
-let battle=null,mySide="A",selectedMove=0,mode="local",myTrainerData=null,lastVisual=null;
+let battle=null,mySide="A",selectedMove=0,selectedActionKind="move",selectedSwitchIndex=null,selectedItemId=null,selectedItemTarget=null,lastControlTurn=null,mode="local",myTrainerData=null,lastVisual=null,lastVisualEventId=0,hitSequence=Promise.resolve(),visualLockDepth=0;
 function spriteUrl(p,isMine){const folder=isMine?(p.shiny?"ani-back-shiny":"ani-back"):(p.shiny?"ani-shiny":"ani");return`${CONFIG.showdownBase}/${folder}/${encodeURIComponent(p.spriteId())}.gif`}
 function setSprite(img,p,isMine){const exact=spriteUrl(p,isMine);img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`Sprite missing: ${p.spriteId()}`};img.style.opacity="";img.src=exact}
 function trainerByPerspective(mine=true){return battle.trainer(mine?mySide:(mySide==="A"?"B":"A"))}
@@ -496,20 +584,53 @@ function renderBattle(){
 }
 function renderArenaEffects(){const a=qs("#arena");a.className=`arena ${battle.weather?`weather-${battle.weather}`:""} ${battle.terrain?`has-terrain terrain-bg-${battle.terrain}`:""}`;const tg=qs("#terrainGlow");tg.className=`terrain-glow ${battle.terrain?`terrain-${battle.terrain}`:""}`;qs("#weatherChip").innerHTML=`<b>날씨</b><span>${battle.weather?`${WEATHER_KO[battle.weather]} · ${battle.weatherTurns}턴`:"없음"}</span>`;qs("#terrainChip").innerHTML=`<b>필드</b><span>${battle.terrain?`${TERRAIN_KO[battle.terrain]} · ${battle.terrainTurns}턴`:"없음"}</span>`}
 function mechanicAvailable(k,t,p){if(k==="mega")return!t.megaUsed&&!!p.megaData&&(!p.megaData.stone||canonicalItem(p.item)===canonicalItem(p.megaData.stone))&&!p.isDynamaxed&&!p.isTerastallized;if(k==="z")return!t.zUsed&&!p.isMega&&!p.isDynamaxed&&!p.isTerastallized;if(k==="dynamax")return!t.dynamaxUsed&&!p.cannotDynamax&&!p.isMega&&!p.isDynamaxed&&!p.isTerastallized;if(k==="gmax")return!t.dynamaxUsed&&!!p.gmaxShowdownId&&!p.isMega&&!p.isDynamaxed&&!p.isTerastallized;if(k==="tera")return!t.terastalUsed&&!p.isMega&&!p.isDynamaxed;return false}
+function resetActionSelection(){selectedActionKind="move";selectedMove=0;selectedSwitchIndex=null;selectedItemId=null;selectedItemTarget=null}
+function selectedAction(){const t=trainerByPerspective(true);if(selectedActionKind==="switch")return{kind:"switch",switchIndex:selectedSwitchIndex};if(selectedActionKind==="item")return{kind:"item",itemId:selectedItemId,targetIndex:selectedItemTarget};return{kind:"move",moveIndex:selectedMove,mechanic:t.pending||null}}
+function actionSummaryText(){const mine=trainerByPerspective(true),p=mine.active;if(selectedActionKind==="switch"){const x=mine.party[selectedSwitchIndex];return x?`${p.nickname}을(를) 불러들이고 ${x.nickname}으로 교체`:"교체할 포켓몬을 선택하세요."}if(selectedActionKind==="item"){const d=itemDef(selectedItemId),x=mine.party[selectedItemTarget];return d&&x?`${d.name} → ${x.nickname}`:"사용할 아이템과 대상을 선택하세요."}const m=p.moves[selectedMove];return m?`${p.nickname} → ${m.name}${mine.pending?` · ${mine.pending.toUpperCase()}`:""}`:"기술을 선택하세요."}
+function renderMovePane(mine,p){qs("#actionPane").innerHTML=`<div class="movegrid">${p.moves.map((m,i)=>`<button class="movebtn type-${m.type} ${selectedMove===i?"selected":""}" data-move="${i}" ${m.pp<=0?"disabled":""}><span class="move-top"><strong>${esc(m.name)}</strong>${typePill(m.type)}</span><small>${m.category==="physical"?"물리":m.category==="special"?"특수":"변화"} · 위력 ${m.power||"—"} · 명중 ${m.accuracy>=999?"—":m.accuracy} · PP ${m.pp}/${m.maxPp}</small>${m.shortDesc?`<em>${esc(m.shortDesc)}</em>`:""}</button>`).join("")}</div>`;qsa("[data-move]").forEach(b=>b.onclick=()=>{selectedMove=Number(b.dataset.move);startBgm();renderControls()});const ms=[["mega","메가진화"],["z","Z기술"],["dynamax","다이맥스"],["gmax","거다이맥스"],["tera","테라스탈"]];qs("#mechanics").innerHTML=ms.map(([k,l])=>{const ok=mechanicAvailable(k,mine,p);return`<button class="btn ${mine.pending===k?"active":""}" data-mech="${k}" ${ok?"":"disabled"}>${l}</button>`}).join("");qsa("[data-mech]").forEach(b=>b.onclick=()=>{battle.queue(mySide,b.dataset.mech);renderControls()})}
+function renderSwitchPane(mine){mine.pending=null;const valid=mine.party.findIndex((x,i)=>i!==mine.activeIndex&&!x.isFainted());if(selectedSwitchIndex==null||selectedSwitchIndex===mine.activeIndex||mine.party[selectedSwitchIndex]?.isFainted())selectedSwitchIndex=valid>=0?valid:null;qs("#actionPane").innerHTML=`<div class="switch-grid">${mine.party.map((x,i)=>`<button class="switch-card ${selectedSwitchIndex===i?"selected":""}" data-switch-choice="${i}" ${i===mine.activeIndex||x.isFainted()?"disabled":""}><img src="${spriteUrl(x,false)}" onerror="this.style.visibility='hidden'"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp} · ${x.types.map(t=>TYPE_KO[t]||t).join("/")}</small></span><span>${i===mine.activeIndex?"배틀 중":x.isFainted()?"기절":"교체"}</span></button>`).join("")}</div>`;qsa("[data-switch-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.switchChoice);renderControls()});qs("#mechanics").innerHTML=""}
+function itemTargets(mine,def){if(def?.activeOnly)return[[mine.activeIndex,mine.active]];return mine.party.map((p,i)=>[i,p]).filter(([,p])=>def?.kind==="revive"?p.isFainted():!p.isFainted())}
+function renderItemPane(mine){mine.pending=null;const entries=Object.entries(mine.bag||{}).filter(([id,q])=>q>0&&itemDef(id));if(!selectedItemId||!mine.bag[selectedItemId])selectedItemId=entries[0]?.[0]||null;const def=itemDef(selectedItemId),targets=itemTargets(mine,def);if(selectedItemTarget==null||!targets.some(([i])=>i===selectedItemTarget))selectedItemTarget=targets[0]?.[0]??null;qs("#actionPane").innerHTML=`<div class="bag-grid">${entries.length?entries.map(([id,q])=>{const d=itemDef(id);return`<button class="bag-card ${selectedItemId===id?"selected":""}" data-item-choice="${id}"><span><b>${esc(d.name)}</b><small>${esc(d.desc)}</small></span><span class="qty">×${q}</span></button>`}).join(""):`<div class="statusbox">사용 가능한 배틀 아이템이 없습니다.</div>`}</div>${def?`<div class="target-picker"><b>대상</b><select id="itemTargetSelect">${targets.map(([i,p])=>`<option value="${i}" ${selectedItemTarget===i?"selected":""}>${esc(p.nickname)} · HP ${p.currentHp}/${p.stats.hp}${p.status?` · ${STATUS_KO[p.status]||p.status}`:""}</option>`).join("")}</select></div>`:""}`;qsa("[data-item-choice]").forEach(b=>b.onclick=()=>{selectedItemId=b.dataset.itemChoice;selectedItemTarget=null;renderControls()});const sel=qs("#itemTargetSelect");if(sel)sel.onchange=()=>{selectedItemTarget=Number(sel.value);renderControls()};qs("#mechanics").innerHTML=""}
 function renderControls(){
-  const mine=trainerByPerspective(true),p=mine.active,forced=battle.forceSwitch[mySide];qs("#forceSwitchBox").classList.toggle("hidden",!forced);qs("#normalControls").classList.toggle("hidden",forced);
-  if(forced){qs("#forceSwitchBox").innerHTML=`<div class="statusbox"><b>다음 포켓몬을 선택하세요.</b><div class="fieldrow" style="margin-top:8px"><select id="switchSelect">${mine.party.map((x,i)=>!x.isFainted()&&i!==mine.activeIndex?`<option value="${i}">${esc(x.nickname)} · ${x.currentHp}/${x.stats.hp}</option>`:"").join("")}</select><button class="btn primary" id="switchSubmit">교체</button></div></div>`;qs("#switchSubmit").onclick=submitSwitch;return}
-  qs("#moveGrid").innerHTML=p.moves.map((m,i)=>`<button class="movebtn type-${m.type} ${selectedMove===i?"selected":""}" data-move="${i}" ${m.pp<=0?"disabled":""}><span class="move-top"><strong>${esc(m.name)}</strong>${typePill(m.type)}</span><small>${m.category==="physical"?"물리":m.category==="special"?"특수":"변화"} · 위력 ${m.power||"—"} · 명중 ${m.accuracy>=999?"—":m.accuracy} · PP ${m.pp}/${m.maxPp}</small>${m.shortDesc?`<em>${esc(m.shortDesc)}</em>`:""}</button>`).join("");qsa("[data-move]").forEach(b=>b.onclick=()=>{selectedMove=Number(b.dataset.move);startBgm();renderControls()});
-  const items=[["mega","메가진화"],["z","Z기술"],["dynamax","다이맥스"],["gmax","거다이맥스"],["tera","테라스탈"]];qs("#mechanics").innerHTML=items.map(([k,l])=>{const ok=mechanicAvailable(k,mine,p);return`<button class="btn ${mine.pending===k?"active":""}" data-mech="${k}" ${ok?"":"disabled"}>${l}</button>`}).join("");qsa("[data-mech]").forEach(b=>b.onclick=()=>{battle.queue(mySide,b.dataset.mech);startBgm();renderControls()});qs("#submitAction").disabled=battle.finished;qs("#resetBattle").classList.toggle("hidden",mode==="online")
+  const mine=trainerByPerspective(true),p=mine.active,forced=battle.forceSwitch[mySide];if(lastControlTurn!==battle.turn){lastControlTurn=battle.turn;resetActionSelection()}qs("#forceSwitchBox").classList.toggle("hidden",!forced);qs("#normalControls").classList.toggle("hidden",forced);
+  if(forced){qs("#forceSwitchBox").innerHTML=`<div class="statusbox"><b>포켓몬이 쓰러졌습니다. 다음 포켓몬을 선택하세요.</b><div class="switch-grid" style="margin-top:10px">${mine.party.map((x,i)=>!x.isFainted()&&i!==mine.activeIndex?`<button class="switch-card" data-force-choice="${i}"><img src="${spriteUrl(x,false)}"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp}</small></span><span>선택</span></button>`:"").join("")}</div></div>`;qsa("[data-force-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.forceChoice);submitSwitch()});return}
+  qsa("[data-action-tab]").forEach(b=>{b.classList.toggle("active",b.dataset.actionTab===selectedActionKind);b.onclick=()=>{selectedActionKind=b.dataset.actionTab;if(selectedActionKind!=="move")mine.pending=null;renderControls()}});if(selectedActionKind==="switch")renderSwitchPane(mine);else if(selectedActionKind==="item")renderItemPane(mine);else renderMovePane(mine,p);
+  qs("#actionSummary").textContent=actionSummaryText();const valid=selectedActionKind==="move"?!!p.moves[selectedMove]:selectedActionKind==="switch"?selectedSwitchIndex!=null:!!(selectedItemId&&selectedItemTarget!=null);qs("#submitAction").disabled=battle.finished||!valid;qs("#resetBattle").classList.toggle("hidden",mode==="online")
 }
-function visualDiff(){const cur={mineHp:trainerByPerspective(true).active.currentHp,enemyHp:trainerByPerspective(false).active.currentHp,mineMega:trainerByPerspective(true).active.isMega,enemyMega:trainerByPerspective(false).active.isMega,mineId:trainerByPerspective(true).active.spriteId(),enemyId:trainerByPerspective(false).active.spriteId()};if(lastVisual){if(cur.mineHp<lastVisual.mineHp)hit(qs("#playerSprite"));if(cur.enemyHp<lastVisual.enemyHp)hit(qs("#enemySprite"));if((cur.mineMega&&!lastVisual.mineMega)||(cur.enemyMega&&!lastVisual.enemyMega))playMegaFx()}lastVisual=cur}
-function hit(el){el.classList.remove("hit");void el.offsetWidth;el.classList.add("hit")}
-async function playMegaFx(){const ov=qs("#megaOverlay");ov.classList.remove("hidden");await new Promise(r=>setTimeout(r,1700));ov.classList.add("hidden")}
+function setVisualLock(on){visualLockDepth=Math.max(0,visualLockDepth+(on?1:-1));qs("#battleSection")?.classList.toggle("visual-lock",visualLockDepth>0)}
+function playHitSfxOnce(){try{const a=new Audio(CONFIG.hitSfx);a.preload="auto";a.loop=false;a.currentTime=0;a.play().catch(()=>{});return a}catch{return null}}
+function hit(el){if(!el)return;el.classList.remove("hit");void el.offsetWidth;el.classList.add("hit")}
+async function playHitEvent(ev){const mine=ev.targetSide===mySide,el=qs(mine?"#playerSprite":"#enemySprite");setVisualLock(true);hit(el);playHitSfxOnce();await new Promise(r=>setTimeout(r,CONFIG.hitReactionMs));setVisualLock(false)}
+function visualDiff(){
+  const mine=trainerByPerspective(true),enemy=trainerByPerspective(false);const cur={mineHp:mine.active.currentHp,enemyHp:enemy.active.currentHp,mineActive:mine.activeIndex,enemyActive:enemy.activeIndex,megaKeys:[...mine.party.map((p,i)=>p.isMega?`M${i}`:null),...enemy.party.map((p,i)=>p.isMega?`E${i}`:null)].filter(Boolean)};
+  const allEvents=Array.isArray(battle.visualEvents)?battle.visualEvents:[];
+  if(!lastVisual){lastVisualEventId=allEvents.reduce((n,e)=>Math.max(n,Number(e.id)||0),0)}else{
+    const fresh=allEvents.filter(e=>(Number(e.id)||0)>lastVisualEventId);if(fresh.length){lastVisualEventId=Math.max(lastVisualEventId,...fresh.map(e=>Number(e.id)||0));const hits=fresh.filter(e=>e.type==="hit");if(hits.length)hitSequence=hitSequence.then(async()=>{for(const ev of hits)await playHitEvent(ev)}).catch(()=>{visualLockDepth=0;qs("#battleSection")?.classList.remove("visual-lock")})}
+    if(cur.megaKeys.some(k=>!lastVisual.megaKeys.includes(k)))playMegaFx();
+  }
+  lastVisual=cur
+}
+let megaFxPlaying=false;
+function drawCover(ctx,frame,w,h){const sw=frame.displayWidth||frame.codedWidth||frame.width,sh=frame.displayHeight||frame.codedHeight||frame.height;if(!sw||!sh)return;const scale=Math.max(w/sw,h/sh),dw=sw*scale,dh=sh*scale,dx=(w-dw)/2,dy=(h-dh)/2;ctx.clearRect(0,0,w,h);ctx.drawImage(frame,dx,dy,dw,dh)}
+async function playMegaFx(){
+  if(megaFxPlaying)return;megaFxPlaying=true;const ov=qs("#megaOverlay"),canvas=qs("#megaCanvas"),fallback=qs("#megaFallback");ov.classList.remove("hidden");fallback.classList.add("hidden");fallback.src="";
+  try{
+    if("ImageDecoder" in window&&await ImageDecoder.isTypeSupported("image/gif")){
+      const res=await fetch(`${CONFIG.megaFx}?once=${Date.now()}`,{cache:"no-store"});if(!res.ok)throw new Error(`mega gif ${res.status}`);const data=await res.arrayBuffer();const dec=new ImageDecoder({data,type:"image/gif"});await dec.tracks.ready;const count=dec.tracks.selectedTrack?.frameCount||1,dpr=Math.max(1,window.devicePixelRatio||1),w=Math.max(1,Math.round(innerWidth*dpr)),h=Math.max(1,Math.round(innerHeight*dpr));canvas.width=w;canvas.height=h;canvas.style.width="100vw";canvas.style.height="100vh";const ctx=canvas.getContext("2d");
+      for(let i=0;i<count;i++){const out=await dec.decode({frameIndex:i,completeFramesOnly:true});const frame=out.image;drawCover(ctx,frame,w,h);const ms=Math.max(16,Math.min(1000,(frame.duration||100000)/1000));await new Promise(r=>setTimeout(r,ms));frame.close?.()}
+      dec.close?.();ctx.clearRect(0,0,w,h)
+    }else{
+      canvas.width=1;canvas.height=1;fallback.classList.remove("hidden");fallback.src=`${CONFIG.megaFx}?once=${Date.now()}`;await new Promise(r=>setTimeout(r,CONFIG.megaFxDurationMs));fallback.src="";fallback.classList.add("hidden")
+    }
+  }catch(e){console.warn("Mega FX fallback",e);canvas.width=1;canvas.height=1;fallback.classList.remove("hidden");fallback.src=`${CONFIG.megaFx}?once=${Date.now()}`;await new Promise(r=>setTimeout(r,CONFIG.megaFxDurationMs));fallback.src="";fallback.classList.add("hidden")}
+  ov.classList.add("hidden");megaFxPlaying=false
+}
 function validationHtml(d){if(!d)return"";const errs=(d.errors||[]).map(x=>`<div class="validation-error">✕ ${esc(x)}</div>`).join("");const warns=(d.warnings||[]).map(x=>`<div class="validation-warn">△ ${esc(x)}</div>`).join("");return errs+warns}
 function previewEntry(data){if(!data?.partyData?.length){qs("#entryPreview").innerHTML=`<div class="bad">이 트레이너의 Pokémon 행을 찾지 못했습니다.</div>${validationHtml(data)}`;return}qs("#entryPreview").innerHTML=`${validationHtml(data)}${data.partyData.map(p=>`<div class="teamrow"><img src="${CONFIG.showdownBase}/${p.shiny?"ani-shiny":"ani"}/${encodeURIComponent(p.showdownId)}.gif" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · ${esc(p.showdownId)}</small></div><span>Lv.${p.level}</span></div>`).join("")}`}
-function startLocal(a,b){if(!a||!b||a.errors?.length||b.errors?.length){toast("엔트리 검증 오류가 있어 배틀을 시작할 수 없습니다.","bad");return}mode="local";mySide="A";battle=new Battle(a,b);selectedMove=0;lastVisual=null;qs("#lobby").classList.add("hidden");renderBattle();startBgm();scrollTo({top:0,behavior:"smooth"})}
-async function localSubmit(){if(!battle||mode!=="local")return;startBgm();const mine=battle.trainerA;if(mine.pending==="mega")await playMegaFx();const enemy=battle.trainerB;const legal=enemy.active.moves.map((m,i)=>({m,i})).filter(x=>x.m.pp>0);const enemyMove=(legal[Math.floor(Math.random()*legal.length)]||{i:0}).i;const choices=[];for(const k of["mega","dynamax","gmax","tera"])if(mechanicAvailable(k,enemy,enemy.active))choices.push(k);if(Math.random()<.12&&choices.length)enemy.pending=choices[Math.floor(Math.random()*choices.length)];battle.executeTurn(selectedMove,enemyMove);selectedMove=0;renderBattle()}
-function localSwitch(){const idx=Number(qs("#switchSelect").value);battle.switch("A",idx,true);if(battle.forceSwitch.B){const t=battle.trainerB;const i=t.party.findIndex((p,x)=>x!==t.activeIndex&&!p.isFainted());if(i>=0)battle.switch("B",i,true)}renderBattle()}
+function startLocal(a,b){if(!a||!b||a.errors?.length||b.errors?.length){toast("엔트리 검증 오류가 있어 배틀을 시작할 수 없습니다.","bad");return}mode="local";mySide="A";battle=new Battle(a,b);resetActionSelection();lastControlTurn=null;lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;qs("#lobby").classList.add("hidden");renderBattle();startBgm();scrollTo({top:0,behavior:"smooth"})}
+function chooseEnemyAction(t){const p=t.active,alive=t.party.map((x,i)=>({x,i})).filter(o=>o.i!==t.activeIndex&&!o.x.isFainted());const heal=Object.keys(t.bag||{}).find(id=>["potion","superpotion","hyperpotion","maxpotion","fullrestore"].includes(id)&&t.bag[id]>0);if(heal&&p.currentHp/p.stats.hp<.32&&Math.random()<.7)return{kind:"item",itemId:heal,targetIndex:t.activeIndex};if(alive.length&&p.currentHp/p.stats.hp<.23&&Math.random()<.4)return{kind:"switch",switchIndex:alive[Math.floor(Math.random()*alive.length)].i};const legal=p.moves.map((m,i)=>({m,i})).filter(x=>x.m.pp>0),move=(legal[Math.floor(Math.random()*legal.length)]||{i:0}).i;let mechanic=null;const choices=[];for(const k of["mega","dynamax","gmax","tera"])if(mechanicAvailable(k,t,p))choices.push(k);if(Math.random()<.12&&choices.length)mechanic=choices[Math.floor(Math.random()*choices.length)];return{kind:"move",moveIndex:move,mechanic}}
+async function localSubmit(){if(!battle||mode!=="local")return;startBgm();const myAction=selectedAction(),enemyAction=chooseEnemyAction(battle.trainerB);battle.executeActions(myAction,enemyAction);resetActionSelection();lastControlTurn=null;renderBattle()}
+function localSwitch(){const idx=Number(selectedSwitchIndex);battle.switch("A",idx,true);if(battle.forceSwitch.B){const t=battle.trainerB,i=t.party.findIndex((p,x)=>x!==t.activeIndex&&!p.isFainted());if(i>=0)battle.switch("B",i,true)}resetActionSelection();lastControlTurn=null;renderBattle()}
 
 let scWidget=null,bgmPlaying=false;
 function syncBgmButtons(){const play=qs("#musicPlay"),stop=qs("#musicStop");if(play)play.disabled=bgmPlaying;if(stop)stop.disabled=!bgmPlaying}
@@ -524,16 +645,16 @@ function renderOnline(){const q=norm(qs("#onlineSearch").value);const arr=Object
 async function sendChallenge(targetUid){if(!authUser||!myTrainerData)return;const target=onlineUsers[targetUid];if(!target)return;const ref=fb.db.ref(`challenges/${targetUid}/${authUser.uid}`);await ref.set({fromUid:authUser.uid,fromNickname:myNick,fromDisplayName:myTrainerData.name,toUid:targetUid,status:"pending",createdAt:firebase.database.ServerValue.TIMESTAMP});toast(`${target.displayName||target.nickname}에게 도전했습니다.`);ref.on("value",snap=>{const c=snap.val();if(c?.status==="accepted"&&c.roomId){ref.off();joinRoom(c.roomId)}});outgoingRefs.push(ref)}
 function renderChallenges(obj){const arr=Object.entries(obj).filter(([,c])=>c?.status==="pending");qs("#challengeList").innerHTML=arr.length?arr.map(([sourceUid,c])=>`<div class="person"><div><strong>${esc(c.fromDisplayName||c.fromNickname)}</strong><small>배틀 신청</small></div><div class="fieldrow"><button class="btn primary" data-accept="${esc(sourceUid)}">수락</button><button class="btn" data-reject="${esc(sourceUid)}">거절</button></div></div>`).join(""):`<div class="muted">도전 없음</div>`;qsa("[data-accept]").forEach(b=>b.onclick=()=>acceptChallenge(b.dataset.accept,obj[b.dataset.accept]));qsa("[data-reject]").forEach(b=>b.onclick=()=>fb.db.ref(`challenges/${authUser.uid}/${b.dataset.reject}`).update({status:"rejected"}))}
 async function acceptChallenge(sourceUid,c){const roomId="room_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7);const room={hostUid:sourceUid,status:"waiting-host",createdAt:firebase.database.ServerValue.TIMESTAMP,participants:{[sourceUid]:{uid:sourceUid,nickname:c.fromNickname,displayName:c.fromDisplayName,side:"A"},[authUser.uid]:{uid:authUser.uid,nickname:myNick,displayName:myTrainerData.name,side:"B"}}};await fb.db.ref(`rooms/${roomId}`).set(room);await fb.db.ref(`challenges/${authUser.uid}/${sourceUid}`).update({status:"accepted",roomId});joinRoom(roomId)}
-async function joinRoom(roomId){if(currentRoomId===roomId)return;currentRoomId=roomId;mode="online";roomRef=fb.db.ref(`rooms/${roomId}`);roomListener=roomRef.on("value",async snap=>{const room=snap.val();if(!room)return;const me=room.participants?.[authUser.uid];if(!me)return;mySide=me.side;if(!room.state&&room.hostUid===authUser.uid){await hostInitRoom(room);return}if(room.state){battle=Battle.hydrate(room.state);qs("#lobby").classList.add("hidden");renderBattle();startBgm();if(room.hostUid===authUser.uid)hostResolveIfReady(room)}})}
-async function hostInitRoom(room){const A=Object.values(room.participants).find(x=>x.side==="A"),B=Object.values(room.participants).find(x=>x.side==="B");const a=getTrainerData(A.nickname),b=getTrainerData(B.nickname);if(!a||!b||a.errors?.length||b.errors?.length){toast("상대 엔트리가 Showdown 데이터 검증을 통과하지 못했습니다.","bad");return}const init=new Battle(a,b);await roomRef.child("state").set(init.snapshot());await roomRef.child("status").set("battle")}
-async function submitOnlineAction(){if(!roomRef||!battle)return;startBgm();const t=battle.trainer(mySide);await roomRef.child(`actions/${battle.turn}/${authUser.uid}`).set({moveIndex:selectedMove,mechanic:t.pending||null,at:firebase.database.ServerValue.TIMESTAMP});qs("#submitAction").disabled=true;toast("행동을 제출했습니다. 상대를 기다립니다.")}
-async function submitOnlineSwitch(){const idx=Number(qs("#switchSelect").value);await roomRef.child(`switches/${battle.turn}/${authUser.uid}`).set({index:idx,at:firebase.database.ServerValue.TIMESTAMP});toast("교체 선택을 제출했습니다.")}
+async function joinRoom(roomId){if(currentRoomId===roomId)return;currentRoomId=roomId;mode="online";lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;lastControlTurn=null;resetActionSelection();roomRef=fb.db.ref(`rooms/${roomId}`);roomListener=roomRef.on("value",async snap=>{const room=snap.val();if(!room)return;const me=room.participants?.[authUser.uid];if(!me)return;mySide=me.side;if(!room.state&&room.hostUid===authUser.uid){await hostInitRoom(room);return}if(room.state){battle=Battle.hydrate(room.state);qs("#lobby").classList.add("hidden");renderBattle();startBgm();if(room.hostUid===authUser.uid)hostResolveIfReady(room)}})}
+async function hostInitRoom(room){const A=Object.values(room.participants).find(x=>x.side==="A"),B=Object.values(room.participants).find(x=>x.side==="B");await Promise.all([primeKoreanMoveNames(A.nickname),primeKoreanMoveNames(B.nickname)]);const a=getTrainerData(A.nickname),b=getTrainerData(B.nickname);if(!a||!b||a.errors?.length||b.errors?.length){toast("상대 엔트리가 Showdown 데이터 검증을 통과하지 못했습니다.","bad");return}const init=new Battle(a,b);await roomRef.child("state").set(init.snapshot());await roomRef.child("status").set("battle")}
+async function submitOnlineAction(){if(!roomRef||!battle)return;startBgm();const action=selectedAction();await roomRef.child(`actions/${battle.turn}/${authUser.uid}`).set({...action,at:firebase.database.ServerValue.TIMESTAMP});qs("#submitAction").disabled=true;toast("행동을 제출했습니다. 상대를 기다립니다.")}
+async function submitOnlineSwitch(){const idx=Number(selectedSwitchIndex);await roomRef.child(`switches/${battle.turn}/${authUser.uid}`).set({index:idx,at:firebase.database.ServerValue.TIMESTAMP});toast("교체 선택을 제출했습니다.")}
 let resolving=false;
-async function hostResolveIfReady(room){if(resolving||!room.state)return;const b=Battle.hydrate(room.state);const entries=Object.entries(room.participants||{});if(b.forceSwitch.A||b.forceSwitch.B){const needed=entries.filter(([,p])=>b.forceSwitch[p.side]);const sw=room.switches?.[b.turn]||{};if(!needed.every(([uid])=>sw[uid]))return;resolving=true;for(const[uid,p]of needed)b.switch(p.side,num(sw[uid].index),true);await roomRef.child("state").set(b.snapshot());resolving=false;return}const acts=room.actions?.[b.turn]||{};if(!entries.every(([uid])=>acts[uid]))return;if(room.resolvedTurn===b.turn)return;resolving=true;const getSide=s=>entries.find(([,p])=>p.side===s)?.[0];const a=acts[getSide("A")],c=acts[getSide("B")];if(a.mechanic)b.queue("A",a.mechanic);if(c.mechanic)b.queue("B",c.mechanic);b.executeTurn(num(a.moveIndex),num(c.moveIndex));await roomRef.update({state:b.snapshot(),resolvedTurn:b.turn-1,status:b.finished?"finished":"battle"});resolving=false}
+async function hostResolveIfReady(room){if(resolving||!room.state)return;const b=Battle.hydrate(room.state);const entries=Object.entries(room.participants||{});if(b.forceSwitch.A||b.forceSwitch.B){const needed=entries.filter(([,p])=>b.forceSwitch[p.side]);const sw=room.switches?.[b.turn]||{};if(!needed.every(([uid])=>sw[uid]))return;resolving=true;for(const[uid,p]of needed)b.switch(p.side,num(sw[uid].index),true);await roomRef.child("state").set(b.snapshot());resolving=false;return}const acts=room.actions?.[b.turn]||{};if(!entries.every(([uid])=>acts[uid]))return;if(room.resolvedTurn===b.turn)return;resolving=true;const getSide=s=>entries.find(([,p])=>p.side===s)?.[0];const a=acts[getSide("A")],c=acts[getSide("B")];b.executeActions(a,c);await roomRef.update({state:b.snapshot(),resolvedTurn:b.turn-1,status:b.finished?"finished":"battle"});resolving=false}
 function submitSwitch(){return mode==="online"?submitOnlineSwitch():localSwitch()}
 
-qs("#loginBtn").onclick=async()=>{const nick=norm(qs("#nicknameInput").value);if(!nick)return toast("닉네임을 입력하세요.");if(!sheetStore.loaded)return toast("Google Sheet가 아직 준비되지 않았습니다.","warn");if(!dexStore.ready)return toast("Pokémon Showdown Dex를 불러오지 못했습니다.","bad");const d=getTrainerData(nick);if(!d){qs("#loginStatus").innerHTML=`<span class="bad">Trainers.nickname에서 '${esc(nick)}'을 찾지 못했습니다.</span>`;qs("#entryPreview").innerHTML="";return}myTrainerData=d;previewEntry(d);if(d.errors.length){qs("#loginStatus").innerHTML=`<span class="bad">엔트리 검증 실패:</span> ${d.errors.length}개 오류. 아래 항목을 시트에서 수정하세요.`;return}qs("#loginStatus").innerHTML=`<span class="good">엔트리 검증 완료:</span> ${esc(d.name)} · ${d.partyData.length}마리${d.warnings.length?` · 경고 ${d.warnings.length}개`:""}`;await onlineLogin(nick,d)};
-qs("#demoBtn").onclick=()=>{if(!dexStore.ready)return toast("Showdown Dex 연결 후 데모를 사용할 수 있습니다.","warn");startLocal(demoTrainerData("demo"),demoTrainerData("rival"))};
+qs("#loginBtn").onclick=async()=>{const nick=norm(qs("#nicknameInput").value);if(!nick)return toast("닉네임을 입력하세요.");if(!sheetStore.loaded)return toast("Google Sheet가 아직 준비되지 않았습니다.","warn");if(!dexStore.ready)return toast("Pokémon Showdown Dex를 불러오지 못했습니다.","bad");await primeKoreanMoveNames(nick);const d=getTrainerData(nick);if(!d){qs("#loginStatus").innerHTML=`<span class="bad">Trainers.nickname에서 '${esc(nick)}'을 찾지 못했습니다.</span>`;qs("#entryPreview").innerHTML="";return}myTrainerData=d;previewEntry(d);if(d.errors.length){qs("#loginStatus").innerHTML=`<span class="bad">엔트리 검증 실패:</span> ${d.errors.length}개 오류. 아래 항목을 시트에서 수정하세요.`;return}qs("#loginStatus").innerHTML=`<span class="good">엔트리 검증 완료:</span> ${esc(d.name)} · ${d.partyData.length}마리${d.warnings.length?` · 경고 ${d.warnings.length}개`:""}`;await onlineLogin(nick,d)};
+qs("#demoBtn").onclick=async()=>{if(!dexStore.ready)return toast("Showdown Dex 연결 후 데모를 사용할 수 있습니다.","warn");await primeKoreanMoveNames();startLocal(demoTrainerData("demo"),demoTrainerData("rival"))};
 qs("#onlineSearch").oninput=renderOnline;
 qs("#submitAction").onclick=()=>mode==="online"?submitOnlineAction():localSubmit();
 qs("#resetBattle").onclick=()=>startLocal(demoTrainerData("demo"),demoTrainerData("rival"));
