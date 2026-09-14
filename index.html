@@ -222,42 +222,6 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 </style>
 
 
-<style id="v3-2-4-terastal-crystal-mask">
-/* V3.2.4 — Cristal.png를 포켓몬 실루엣에 직접 클리핑한다. */
-.tera-overlay-img{display:none !important;}
-.tera-crystal-mask{
-  position:absolute !important;
-  left:2.5% !important;
-  bottom:0 !important;
-  width:95% !important;
-  height:95% !important;
-  z-index:5 !important;
-  pointer-events:none !important;
-  transform-origin:center bottom !important;
-  transform:translateY(var(--base-y)) scale(var(--base-scale)) !important;
-  background-image:url('./Cristal.png') !important;
-  background-repeat:no-repeat !important;
-  background-position:center center !important;
-  background-size:cover !important;
-  -webkit-mask-image:var(--tera-mask) !important;
-  mask-image:var(--tera-mask) !important;
-  -webkit-mask-repeat:no-repeat !important;
-  mask-repeat:no-repeat !important;
-  -webkit-mask-position:center bottom !important;
-  mask-position:center bottom !important;
-  -webkit-mask-size:contain !important;
-  mask-size:contain !important;
-  opacity:.80 !important;
-  mix-blend-mode:screen !important;
-  filter:brightness(1.08) saturate(.82) contrast(1.04) !important;
-  animation:none !important;
-}
-/* 테라스탈은 떠 있는 별도 스프라이트가 아니라 원본 실루엣 내부 텍스처만 보인다. */
-.spritebox.tera-active:before{display:none !important;content:none !important;}
-@media(max-width:680px){
-  .tera-crystal-mask{opacity:.82 !important;}
-}
-</style>
 
 
 <style id="v3-2-5-battle-visual-fix">
@@ -294,44 +258,6 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
   --base-y:-4px !important;
 }
 
-/* Cristal.png가 포켓몬 실루엣 내부에 확실히 보이도록 하는 실제 마스크 레이어. */
-.tera-overlay-img{display:none !important;}
-.tera-crystal-mask{
-  display:block;
-  position:absolute !important;
-  left:50% !important;
-  bottom:0 !important;
-  width:100% !important;
-  height:100% !important;
-  z-index:8 !important;
-  pointer-events:none !important;
-  transform-origin:center bottom !important;
-  transform:translateX(-50%) translateY(var(--base-y)) scale(var(--base-scale)) !important;
-
-  background-color:rgba(255,245,255,.28) !important;
-  background-image:url('./Cristal.png') !important;
-  background-repeat:repeat !important;
-  background-position:center center !important;
-  background-size:165px 165px !important;
-
-  -webkit-mask-image:var(--tera-mask) !important;
-  mask-image:var(--tera-mask) !important;
-  -webkit-mask-repeat:no-repeat !important;
-  mask-repeat:no-repeat !important;
-  -webkit-mask-position:center bottom !important;
-  mask-position:center bottom !important;
-  -webkit-mask-size:contain !important;
-  mask-size:contain !important;
-  -webkit-mask-mode:alpha;
-  mask-mode:alpha;
-
-  opacity:.96 !important;
-  mix-blend-mode:screen !important;
-  filter:brightness(1.55) saturate(1.28) contrast(1.15) !important;
-  animation:none !important;
-}
-.tera-crystal-mask.hidden{display:none !important;}
-
 /* 테라스탈 중 원본도 약간 결정질에 어울리게 정리하되 떠오르지는 않는다. */
 .spritebox.tera-active > .sprite{
   filter:brightness(1.08) saturate(.92) contrast(1.04) drop-shadow(0 18px 12px rgba(0,0,0,.32)) !important;
@@ -345,7 +271,98 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
   .sprite.dynamax{--base-scale:2.70 !important;--base-y:-10px !important;}
   .enemy .sprite.dynamax{--base-scale:2.90 !important;--base-y:-30px !important;}
   .player .sprite.dynamax{--base-scale:2.70 !important;--base-y:0px !important;}
-  .tera-crystal-mask{background-size:120px 120px !important;}
+}
+</style>
+
+
+<style id="v3-2-6-scale-terastal-color-fix">
+/* V3.2.6 — 배치/크기 조정 + 순수 보라색 테라스탈 컬러 오버레이 */
+
+/* 상대 포켓몬은 V3.2.5보다 살짝 더 아래로. */
+.fighter.enemy{
+  top:11.5% !important;
+  right:7% !important;
+}
+
+/* 큰 내 포켓몬과 거대화가 잘리지 않도록 전장 높이를 확보한다. */
+.arena{
+  min-height:940px !important;
+  overflow:hidden !important;
+}
+
+/* 내 포켓몬의 평상시 크기 = 이전 다이맥스급. */
+.player .spritebox{
+  --base-scale:3.35 !important;
+  --base-y:8px !important;
+  height:370px !important;
+}
+.player .sprite:not(.dynamax){
+  --base-scale:3.35 !important;
+  --base-y:8px !important;
+}
+
+/* 다이맥스/거다이맥스는 그보다 훨씬 크게. */
+.sprite.dynamax{
+  --base-scale:4.55 !important;
+  --base-y:-18px !important;
+  filter:drop-shadow(0 0 44px rgba(236,87,255,.70)) drop-shadow(0 0 96px rgba(188,58,255,.32)) drop-shadow(0 28px 18px rgba(0,0,0,.40)) !important;
+}
+.enemy .sprite.dynamax{
+  --base-scale:4.70 !important;
+  --base-y:-34px !important;
+}
+.player .sprite.dynamax{
+  --base-scale:4.85 !important;
+  --base-y:-2px !important;
+}
+
+/* 테라스탈: 이미지 텍스처 없이 보라색 40% 컬러만 포켓몬 실루엣 내부에 입힌다. */
+.tera-overlay-img,.tera-crystal-mask{display:none !important;}
+.tera-color-overlay{
+  display:block;
+  position:absolute !important;
+  left:50% !important;
+  bottom:0 !important;
+  width:100% !important;
+  height:100% !important;
+  z-index:9 !important;
+  pointer-events:none !important;
+  transform-origin:center bottom !important;
+  transform:translateX(-50%) translateY(var(--base-y)) scale(var(--base-scale)) !important;
+  background:rgba(157,72,221,.40) !important;
+  opacity:1 !important;
+  mix-blend-mode:normal !important;
+  filter:none !important;
+  animation:none !important;
+  -webkit-mask-image:var(--tera-mask) !important;
+  mask-image:var(--tera-mask) !important;
+  -webkit-mask-repeat:no-repeat !important;
+  mask-repeat:no-repeat !important;
+  -webkit-mask-position:center bottom !important;
+  mask-position:center bottom !important;
+  -webkit-mask-size:contain !important;
+  mask-size:contain !important;
+  -webkit-mask-mode:alpha;
+  mask-mode:alpha;
+}
+.tera-color-overlay.hidden{display:none !important;}
+
+/* 테라스탈 자체가 포켓몬을 띄우거나 확대하지 않는다. */
+.spritebox.tera-active > .sprite:not(.dynamax){
+  filter:drop-shadow(0 18px 12px rgba(0,0,0,.32)) !important;
+}
+.spritebox.tera-active > .sprite.dynamax{
+  filter:drop-shadow(0 0 44px rgba(236,87,255,.70)) drop-shadow(0 0 96px rgba(188,58,255,.32)) drop-shadow(0 28px 18px rgba(0,0,0,.40)) !important;
+}
+
+@media(max-width:680px){
+  .arena{min-height:850px !important;}
+  .fighter.enemy{top:12.5% !important;right:1% !important;}
+  .player .spritebox{--base-scale:2.65 !important;--base-y:8px !important;height:320px !important;}
+  .player .sprite:not(.dynamax){--base-scale:2.65 !important;--base-y:8px !important;}
+  .sprite.dynamax{--base-scale:3.55 !important;--base-y:-10px !important;}
+  .enemy .sprite.dynamax{--base-scale:3.75 !important;--base-y:-26px !important;}
+  .player .sprite.dynamax{--base-scale:3.85 !important;--base-y:0px !important;}
 }
 </style>
 
@@ -354,7 +371,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 <div class="shell">
   <header class="topbar">
     <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2 · 교체/가방/한글화</span></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.6 · 대형 스프라이트/테라 컬러</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
@@ -378,10 +395,10 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
       <div class="arena" id="arena">
         <div id="terrainGlow" class="terrain-glow"></div>
         <div class="fighter enemy" id="enemyFighter">
-          <div class="pokehud" id="enemyHud"></div><div class="spritebox"><img id="enemySprite" class="sprite" alt="상대 포켓몬"><div id="enemyTeraOverlay" class="tera-crystal-mask hidden" aria-hidden="true"></div></div>
+          <div class="pokehud" id="enemyHud"></div><div class="spritebox"><img id="enemySprite" class="sprite" alt="상대 포켓몬"><div id="enemyTeraOverlay" class="tera-color-overlay hidden" aria-hidden="true"></div></div>
         </div>
         <div class="fighter player" id="playerFighter">
-          <div class="spritebox"><img id="playerSprite" class="sprite" alt="내 포켓몬"><div id="playerTeraOverlay" class="tera-crystal-mask hidden" aria-hidden="true"></div></div><div class="pokehud" id="playerHud"></div>
+          <div class="spritebox"><img id="playerSprite" class="sprite" alt="내 포켓몬"><div id="playerTeraOverlay" class="tera-color-overlay hidden" aria-hidden="true"></div></div><div class="pokehud" id="playerHud"></div>
         </div>
       </div>
       <div class="battle-message battle-message-strip" id="battleMessage">배틀 준비 완료</div>
@@ -862,13 +879,13 @@ function renderGear(t){const g=t.gear||{};return[["키스톤",g.keyStone],["Z링
 function setTeraOverlay(base,overlay,p,isMine){
   const box=base.closest(".spritebox");
   if(!p.isTerastallized){
-    overlay.className="tera-crystal-mask hidden";
+    overlay.className="tera-color-overlay hidden";
     overlay.style.removeProperty("--tera-mask");
     box?.classList.remove("tera-active");
     return;
   }
   const maskUrl=spriteUrl(p,isMine).replace(/"/g,"%22");
-  overlay.className="tera-crystal-mask";
+  overlay.className="tera-color-overlay";
   overlay.style.setProperty("--tera-mask",`url("${maskUrl}")`);
   box?.classList.add("tera-active");
 }
