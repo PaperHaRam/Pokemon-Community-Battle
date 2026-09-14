@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pokémon RP 배틀 — 비주얼 온라인 V3.2</title>
+<meta name="description" content="한국어 로컬라이징, 교체·가방, 지닌물건 및 기믹 조건, Pokémon Showdown 스프라이트, BGM, Firebase 매칭을 지원하는 Pokémon RP 배틀 시뮬레이터.">
+<style>
+:root{
+  --bg:#08101c;--panel:#101a2a;--panel2:#17243a;--line:#2b3d57;--text:#f7fbff;--muted:#9db0c7;
+  --blue:#72a9ff;--cyan:#6be4ff;--green:#6ee7a1;--yellow:#ffd76b;--red:#ff7373;--pink:#ff9edb;
+  --shadow:0 18px 60px rgba(0,0,0,.35)
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -10%,#18355e 0,#0a1728 36%,var(--bg) 72%);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.good{color:var(--green)}.warn{color:var(--yellow)}.bad{color:var(--red)}
+.shell{width:min(1500px,calc(100% - 24px));margin:18px auto 90px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+.brand h1{font-size:clamp(22px,3vw,38px);margin:0;letter-spacing:-.04em}.brand p{margin:4px 0 0;color:var(--muted)}
+.badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.badge{border:1px solid var(--line);background:rgba(16,26,42,.8);padding:7px 10px;border-radius:999px;color:var(--muted);font-size:13px}
+.panel{background:linear-gradient(180deg,rgba(18,31,50,.96),rgba(12,23,39,.97));border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.lobby{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:14px;padding:16px}
+.lobby-card{padding:18px;background:rgba(6,15,27,.45);border:1px solid var(--line);border-radius:16px}
+.lobby h2,.sidepanel h2{margin:0 0 12px}.fieldrow{display:flex;gap:8px;flex-wrap:wrap}.fieldrow input{flex:1;min-width:180px}
+input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:11px 13px;min-height:44px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px}.btn.primary{background:linear-gradient(135deg,#5c8dff,#67d9ff);color:#07111d;border:0;font-weight:900}.btn.danger{border-color:#66333c;color:#ffb8c1}.btn.active{outline:2px solid var(--cyan);box-shadow:0 0 20px rgba(107,228,255,.18)}
+.statusbox{margin-top:12px;padding:10px 12px;border-radius:12px;background:#081321;border:1px dashed var(--line);font-size:14px;color:var(--muted)}
+.online-list,.challenge-list{display:grid;gap:8px;max-height:310px;overflow:auto}.person{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px;border-radius:12px;background:#0c1828;border:1px solid #22354f}.person strong{display:block}.person small{color:var(--muted)}
+
+.battle-layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:14px;margin-top:14px}.battle-wrap{overflow:hidden}.arena{position:relative;min-height:650px;background:linear-gradient(#77b9df 0 47%,#7ebf83 47% 65%,#5e9f61 65% 100%);isolation:isolate}
+.arena:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 72% 38%,rgba(255,255,255,.4),transparent 28%),linear-gradient(180deg,rgba(255,255,255,.07),transparent 45%);z-index:-1}
+.arena.weather-rain:after{content:"";position:absolute;inset:-30px;background:repeating-linear-gradient(110deg,transparent 0 18px,rgba(200,235,255,.3) 19px 21px,transparent 22px 38px);animation:rain .45s linear infinite;pointer-events:none}.arena.weather-sand{filter:sepia(.22)}.arena.weather-snow:after{content:"✦  ·  ✧   ·  ✦  ·  ✧   ·  ✦";position:absolute;inset:0;color:rgba(255,255,255,.7);font-size:30px;letter-spacing:32px;animation:snow 5s linear infinite;pointer-events:none;overflow:hidden}.arena.weather-sun{box-shadow:inset 0 0 100px rgba(255,230,140,.28)}
+@keyframes rain{to{transform:translate(-30px,50px)}}@keyframes snow{from{transform:translateY(-60px)}to{transform:translateY(620px)}}
+.terrain-glow{position:absolute;left:0;right:0;bottom:0;height:46%;opacity:.28;pointer-events:none}.terrain-electric{background:radial-gradient(ellipse at 50% 100%,#f7e64b,transparent 68%)}.terrain-grassy{background:radial-gradient(ellipse at 50% 100%,#45ff79,transparent 68%)}.terrain-psychic{background:radial-gradient(ellipse at 50% 100%,#f47cff,transparent 68%)}.terrain-misty{background:radial-gradient(ellipse at 50% 100%,#d9efff,transparent 68%)}
+.fighter{position:absolute;width:44%;max-width:470px}.fighter.enemy{right:4%;top:4%}.fighter.player{left:3%;bottom:2%}.platform{position:absolute;width:78%;height:22%;left:11%;bottom:2%;background:radial-gradient(ellipse,#476d4b 0 48%,rgba(33,72,42,.7) 49% 62%,transparent 63%);transform:perspective(450px) rotateX(60deg);filter:blur(.2px)}.enemy .platform{bottom:10%}
+.spritebox{position:relative;height:290px;display:flex;align-items:flex-end;justify-content:center}.enemy .spritebox{height:260px}.sprite{max-width:95%;max-height:95%;image-rendering:auto;transform-origin:center bottom;filter:drop-shadow(0 16px 10px rgba(0,0,0,.25));transition:filter .25s,transform .25s,opacity .4s}.sprite.dynamax{transform:scale(1.27);filter:drop-shadow(0 0 20px rgba(235,77,255,.65)) drop-shadow(0 18px 12px rgba(0,0,0,.3))}.sprite.tera{filter:saturate(.68) brightness(1.18) contrast(.9) drop-shadow(0 0 11px rgba(255,220,255,.92)) drop-shadow(0 0 24px rgba(150,232,255,.8))}.sprite.hit{animation:hit .52s cubic-bezier(.2,.75,.25,1)}.sprite.faint{opacity:0;transform:translateY(45px) scale(.82)}@keyframes hit{0%,100%{transform:translateX(0)}25%{transform:translateX(-15px);filter:brightness(2)}55%{transform:translateX(12px)}}
+.pokehud{position:relative;z-index:3;background:rgba(6,15,26,.9);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);padding:10px 12px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,.28)}.pokehud .title{display:flex;justify-content:space-between;gap:8px;align-items:center}.pokehud h3{margin:0;font-size:19px}.pokehud small{color:#c5d8ed}.hptext{display:flex;justify-content:space-between;font-size:12px;margin-top:8px}.hp{height:10px;background:#26374b;border-radius:999px;overflow:hidden;margin-top:4px}.hpbar{height:100%;background:linear-gradient(90deg,#56e795,#9cf879);transition:width .5s}.party-dots{display:flex;gap:4px;margin-top:7px}.dot{width:10px;height:10px;border-radius:50%;background:#e8f3ff;border:1px solid rgba(0,0,0,.4)}.dot.fainted{background:#4e5968}.dot.active{box-shadow:0 0 0 2px var(--yellow)}
+.battle-message{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%);z-index:5;padding:9px 14px;border-radius:999px;background:rgba(5,13,25,.72);border:1px solid rgba(255,255,255,.2);font-weight:800;text-align:center;pointer-events:none;max-width:80%}
+
+.controls{padding:14px;border-top:1px solid var(--line);background:#0c1828}.turnhead{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.movegrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.movebtn{min-height:70px;text-align:left;padding:10px;border-radius:13px;border:1px solid var(--line);background:#12233a;color:var(--text)}.movebtn strong,.movebtn small{display:block}.movebtn small{margin-top:4px;color:var(--muted)}.movebtn.selected{outline:2px solid var(--cyan);background:#16304d}.mechanics{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}.mechanics .btn{font-size:12px;padding:8px 5px;min-height:38px}.submitrow{display:flex;gap:8px;margin-top:10px}.submitrow .btn{flex:1}
+.sidepanel{padding:14px;display:grid;gap:12px;align-content:start}.mini{background:#0a1625;border:1px solid var(--line);border-radius:15px;padding:12px}.mini h3{margin:0 0 8px}.log{display:grid;gap:6px;max-height:330px;overflow:auto}.entry{padding:8px 9px;background:#101f34;border-radius:9px;border-left:3px solid var(--blue);font-size:13px}.entry.mega{border-color:var(--pink)}.entry.tera{border-color:#d6c8ff}.entry.dyna{border-color:#ef6fff}.entry.zmove{border-color:var(--yellow)}
+.statline{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.stat{padding:8px;background:#101f34;border-radius:9px;text-align:center}.stat small{display:block;color:var(--muted);font-size:11px}.teamlist{display:grid;gap:6px}.teamrow{display:grid;grid-template-columns:36px 1fr auto;gap:8px;align-items:center;background:#101f34;border-radius:9px;padding:6px}.teamrow img{max-width:32px;max-height:32px}.teamrow small{color:var(--muted)}
+.debugdetails summary{cursor:pointer;color:var(--muted)}pre{white-space:pre-wrap;word-break:break-word;font-size:11px;max-height:260px;overflow:auto;background:#07111d;padding:9px;border-radius:9px}
+
+.musicbar{position:fixed;left:12px;bottom:8px;z-index:40;display:flex;align-items:center;gap:8px;padding:8px;border-radius:14px;background:rgba(6,14,25,.93);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.35)}.musicbar .btn{width:auto;min-height:38px;padding:8px 12px}.soundcloud-hidden{position:fixed!important;width:1px!important;height:1px!important;left:-10000px!important;top:-10000px!important;opacity:0!important;pointer-events:none!important;border:0!important;clip-path:inset(50%)!important}
+.mega-overlay{position:fixed;inset:0;z-index:80;background:#02050f;display:block;overflow:hidden;pointer-events:none}.mega-overlay img{position:absolute;inset:0;width:100vw;height:100vh;max-width:none;max-height:none;object-fit:cover;object-position:center;filter:none}
+.toast{position:fixed;right:16px;top:16px;z-index:100;max-width:400px;padding:11px 13px;background:#071322;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);animation:toast .25s ease}@keyframes toast{from{opacity:0;transform:translateY(-10px)}}
+.disclaimer{font-size:12px;color:var(--muted);margin-top:10px}
+@media(max-width:1100px){.battle-layout{grid-template-columns:1fr}.sidepanel{grid-template-columns:1fr 1fr}.lobby{grid-template-columns:1fr}}
+@media(max-width:720px){.shell{width:min(100% - 10px,1500px);margin-top:6px}.topbar{align-items:flex-start;flex-direction:column}.badges{justify-content:flex-start}.arena{min-height:580px}.fighter{width:58%}.fighter.enemy{right:1%}.fighter.player{left:0}.spritebox{height:245px}.enemy .spritebox{height:210px}.mechanics{grid-template-columns:repeat(3,1fr)}.sidepanel{grid-template-columns:1fr}.musicbar{left:5px;right:5px}.musicbar iframe{min-width:0}.musicbar .musicmeta{display:none}}
+
+/* ===== V3 visual + rules patch ===== */
+#dexBadge{border-color:#35527a;color:#bfe0ff}
+.arena{min-height:690px;background:linear-gradient(#5b91c8 0 42%,#b9d8eb 42% 47%,#79ad6b 47% 67%,#4b7848 67% 100%);overflow:hidden}
+.arena:before{background:radial-gradient(circle at 50% 8%,rgba(255,255,255,.48),transparent 22%),linear-gradient(180deg,rgba(9,24,48,.08),transparent 38%)}
+.arena:after{content:"";position:absolute;left:-7%;right:-7%;top:40%;height:20%;background:repeating-linear-gradient(90deg,rgba(9,18,31,.8) 0 12px,rgba(47,77,104,.78) 12px 24px,rgba(13,27,44,.82) 24px 36px);border-top:5px solid rgba(255,255,255,.45);border-bottom:5px solid rgba(22,52,64,.4);box-shadow:0 -16px 40px rgba(0,0,0,.18);z-index:-1;opacity:.65}
+.fighter{z-index:2}.fighter.enemy{right:5%;top:5%}.fighter.player{left:4%;bottom:2%}
+.spritebox{position:relative;isolation:isolate}.spritebox.tera-active:before{content:var(--tera-label);position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:8;padding:5px 9px;border-radius:999px;background:linear-gradient(90deg,rgba(255,255,255,.9),rgba(217,244,255,.78),rgba(255,222,246,.82));color:#17263b;border:1px solid rgba(255,255,255,.95);font-size:10px;font-weight:1000;letter-spacing:.08em;box-shadow:0 4px 18px rgba(0,0,0,.16);white-space:nowrap}
+.sprite{z-index:3}.sprite.dynamax{transform:scale(1.27);filter:drop-shadow(0 0 18px rgba(235,77,255,.5)) drop-shadow(0 18px 12px rgba(0,0,0,.3))}
+.tera-overlay-img{position:absolute;z-index:4;max-width:95%;max-height:95%;bottom:0;left:50%;transform:translateX(-50%);pointer-events:none;opacity:.48;mix-blend-mode:screen;filter:brightness(1.45) saturate(.35) contrast(.82);animation:teraPrism 2.8s linear infinite;transform-origin:center bottom}
+.tera-overlay-img.tera-fire{filter:brightness(1.45) saturate(.45) sepia(.2) hue-rotate(330deg)}.tera-overlay-img.tera-water{filter:brightness(1.45) saturate(.35) hue-rotate(155deg)}.tera-overlay-img.tera-electric{filter:brightness(1.55) saturate(.42) sepia(.18) hue-rotate(10deg)}.tera-overlay-img.tera-grass{filter:brightness(1.45) saturate(.38) hue-rotate(65deg)}.tera-overlay-img.tera-psychic,.tera-overlay-img.tera-fairy{filter:brightness(1.5) saturate(.35) hue-rotate(260deg)}.tera-overlay-img.tera-dark,.tera-overlay-img.tera-ghost{filter:brightness(1.28) saturate(.4) hue-rotate(240deg)}.tera-overlay-img.tera-stellar{filter:brightness(1.55) saturate(.25);animation:teraPrism .9s linear infinite}
+@keyframes teraPrism{0%,100%{opacity:.42}50%{opacity:.58}}
+.hud-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:4px}.type-row{display:flex;gap:4px;flex-wrap:wrap}.type-pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:900;letter-spacing:.02em;color:white;background:#6f7d8a;border:1px solid rgba(255,255,255,.24)}
+.type-fire{--type:#e76a48}.type-water{--type:#4b8fe2}.type-electric{--type:#dcbf32}.type-grass{--type:#5fae55}.type-ice{--type:#6fc8d0}.type-fighting{--type:#bf5350}.type-poison{--type:#a25bb2}.type-ground{--type:#c99d58}.type-flying{--type:#809ccf}.type-psychic{--type:#de668c}.type-bug{--type:#8ca93a}.type-rock{--type:#aa9353}.type-ghost{--type:#665c99}.type-dragon{--type:#5e5ac6}.type-dark{--type:#625650}.type-steel{--type:#7b92a0}.type-fairy{--type:#d982b4}.type-normal{--type:#8f938f}.type-stellar{--type:#b7c6ff}
+.type-pill[class*="type-"]{background:var(--type,#6f7d8a)}
+.status-pill{font-size:10px;border-radius:999px;padding:3px 7px;background:#402e48;border:1px solid #7b5d88;color:#f6dfff;font-weight:800}.mechanic-tags{display:flex;gap:4px;margin-top:7px;flex-wrap:wrap}.mechanic-tags span{font-size:10px;padding:3px 6px;border-radius:6px;background:#243c58;color:#cce7ff;font-weight:900}
+.turnhead{align-items:flex-start}.field-state{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.state-chip{display:grid;grid-template-columns:auto auto;gap:6px 9px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:11px;background:#091728;font-size:12px;min-width:125px}.state-chip b{color:#7fbfff}.state-chip span{color:#e9f5ff;text-align:right}
+.movebtn{position:relative;overflow:hidden;min-height:88px;background:linear-gradient(145deg,#132640,#0d1b2e);transition:transform .15s,border-color .15s,background .15s}.movebtn:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--type,#5c8dff)}.movebtn:hover:not(:disabled){transform:translateY(-1px);border-color:#50729a}.movebtn.selected{box-shadow:0 0 0 2px var(--cyan) inset}.move-top{display:flex;align-items:center;justify-content:space-between;gap:7px}.movebtn em{display:block;margin-top:6px;color:#8298b1;font-style:normal;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mechanics{grid-template-columns:repeat(5,minmax(0,1fr))}.mechanics .btn:disabled{filter:grayscale(.8);opacity:.28}.entry.field{border-color:#62d7c2}
+.validation-error,.validation-warn{padding:8px 10px;border-radius:9px;margin:5px 0;font-size:12px}.validation-error{background:#341b24;border:1px solid #6d3341;color:#ffc4cf}.validation-warn{background:#342d16;border:1px solid #6b5a28;color:#ffe3a1}
+.terrain-glow{height:48%;opacity:.22}.arena.terrain-bg-electric{box-shadow:inset 0 -80px 100px rgba(238,226,72,.12)}.arena.terrain-bg-grassy{box-shadow:inset 0 -90px 100px rgba(78,238,108,.12)}.arena.terrain-bg-psychic{box-shadow:inset 0 -90px 100px rgba(210,98,245,.13)}.arena.terrain-bg-misty{box-shadow:inset 0 -100px 100px rgba(220,241,255,.18)}
+@media(max-width:720px){.field-state{justify-content:flex-start}.state-chip{min-width:0;flex:1}.mechanics{grid-template-columns:repeat(2,1fr)}.arena{min-height:620px}}
+
+
+/* ===== V3 battle presentation ===== */
+:root{--glass:rgba(7,15,27,.78);--glass2:rgba(13,26,44,.9);--accent:#79b8ff;--accent2:#86ffe8;--ink:#06111f}
+.battle-layout{grid-template-columns:minmax(0,1fr) 350px;gap:18px}.battle-wrap{border-radius:28px;overflow:hidden;border:1px solid rgba(177,215,255,.2);box-shadow:0 28px 90px rgba(0,0,0,.5)}
+.arena{min-height:690px;background:linear-gradient(180deg,#8ed7ff 0 36%,#eaf8ff 36% 39%,#75ba7c 39% 62%,#42784e 62% 100%);overflow:hidden;perspective:1000px}
+.arena:before{z-index:0;background:radial-gradient(circle at 16% 12%,rgba(255,255,255,.88),transparent 8%),radial-gradient(circle at 78% 18%,rgba(255,255,255,.42),transparent 13%),linear-gradient(180deg,transparent 0 62%,rgba(3,30,16,.2) 100%)}
+.scene-horizon{position:absolute;left:-6%;right:-6%;top:34%;height:24%;z-index:0;background:linear-gradient(135deg,transparent 0 6%,rgba(56,99,112,.2) 6% 15%,transparent 15% 20%,rgba(45,96,70,.28) 20% 32%,transparent 32% 40%,rgba(43,88,74,.32) 40% 55%,transparent 55% 62%,rgba(47,99,82,.26) 62% 75%,transparent 75%);filter:blur(1px)}
+.scene-floor{position:absolute;left:-12%;right:-12%;bottom:-18%;height:62%;z-index:0;background:radial-gradient(ellipse at 50% 8%,rgba(170,235,171,.75) 0 18%,rgba(76,137,78,.72) 39%,rgba(30,79,47,.9) 72%);transform:rotateX(63deg);transform-origin:50% 0;box-shadow:inset 0 18px 40px rgba(255,255,255,.15)}
+.scene-lines{position:absolute;left:0;right:0;bottom:0;height:43%;z-index:1;opacity:.28;background:repeating-linear-gradient(90deg,transparent 0 88px,rgba(255,255,255,.2) 89px 91px),linear-gradient(180deg,transparent,rgba(255,255,255,.08));clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}
+.fighter{z-index:3}.fighter.enemy{right:6%;top:5%;width:40%}.fighter.player{left:4%;bottom:4%;width:46%}.spritebox{height:310px}.enemy .spritebox{height:285px}.sprite{filter:drop-shadow(0 22px 10px rgba(0,0,0,.28));max-width:100%;max-height:100%}.platform{width:88%;left:6%;height:19%;bottom:1%;background:radial-gradient(ellipse,rgba(32,70,39,.78) 0 48%,rgba(255,255,255,.12) 49% 53%,rgba(28,63,35,.36) 54% 64%,transparent 65%);filter:blur(.3px)}
+.pokehud{border-radius:18px 18px 8px 18px;background:linear-gradient(145deg,rgba(252,255,255,.93),rgba(218,236,247,.92));color:#112238;border:2px solid rgba(255,255,255,.78);box-shadow:0 13px 30px rgba(4,20,34,.28),inset 0 0 0 1px rgba(39,75,105,.12)}.enemy .pokehud{border-radius:18px 18px 18px 8px}.pokehud small,.pokehud .hud-meta>span:first-child{color:#4c657c}.pokehud .hptext{color:#263a4c}.hp{height:12px;background:#b9c5cc;border:1px solid rgba(29,54,73,.2)}.hpbar{background:linear-gradient(90deg,#42c86d,#8eea70)}
+.battle-message{left:3%;right:3%;top:auto;bottom:1.5%;transform:none;max-width:none;border-radius:18px;padding:14px 18px;text-align:left;background:linear-gradient(90deg,rgba(6,16,30,.94),rgba(14,35,57,.92));border:1px solid rgba(167,213,255,.35);box-shadow:0 8px 30px rgba(0,0,0,.3);font-size:15px;letter-spacing:.01em}
+.controls{position:relative;padding:16px 18px 18px;background:linear-gradient(180deg,#0a1727,#07111e);border-top:1px solid rgba(175,216,255,.16)}.command-shell{display:grid;grid-template-columns:190px minmax(0,1fr);gap:12px}.command-prompt{padding:14px;border-radius:16px;background:linear-gradient(145deg,#182f4c,#102138);border:1px solid #315173;align-self:start}.command-prompt strong{font-size:16px;display:block}.command-prompt small{display:block;margin-top:5px;color:#9eb5ca}.action-tabs{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}.action-tab{min-height:48px;border-radius:14px;border:1px solid #314b68;background:#0e2036;color:#eaf6ff;font-weight:900;text-align:left;padding:0 14px;transition:.15s}.action-tab:hover{transform:translateX(2px);border-color:#6ca7d9}.action-tab.active{background:linear-gradient(135deg,#69a8ff,#72e7d6);color:#071423;border-color:transparent;box-shadow:0 7px 22px rgba(71,170,255,.2)}
+.action-pane{min-height:235px;padding:4px}.movegrid{grid-template-columns:1fr 1fr}.movebtn{min-height:102px;border-radius:16px;padding:13px 14px;background:linear-gradient(145deg,#142a45,#0d1c31);border:1px solid #294664}.movebtn strong{font-size:15px}.movebtn small{font-size:11px}.movebtn em{font-size:10px}.movebtn.selected{outline:2px solid #82ffe7;box-shadow:0 0 0 4px rgba(130,255,231,.1)}
+.switch-grid,.bag-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.switch-card,.bag-card{position:relative;display:grid;grid-template-columns:58px 1fr auto;gap:10px;align-items:center;min-height:78px;padding:10px;border:1px solid #2d4763;border-radius:15px;background:linear-gradient(145deg,#122741,#0b1b2f);color:#edf7ff;text-align:left}.switch-card img{width:54px;height:54px;object-fit:contain}.switch-card small,.bag-card small{display:block;color:#9eb4c9;margin-top:3px}.switch-card.selected,.bag-card.selected{outline:2px solid #82ffe7;background:#16334b}.switch-card:disabled{opacity:.4}.bag-card{grid-template-columns:1fr auto}.bag-card .qty{font-weight:900;color:#ffe087}.target-picker{display:flex;gap:8px;align-items:center;margin-top:10px;padding:10px;border-radius:13px;background:#0a182a;border:1px dashed #31506f}.target-picker select{flex:1}
+.mechanics{margin-top:12px;border-top:1px solid rgba(255,255,255,.08);padding-top:10px}.mechanics:empty{display:none}.submitrow{margin-top:12px}.submitrow .btn.primary{font-size:15px;min-height:48px}.action-summary{margin-top:9px;padding:8px 10px;border-radius:10px;background:#091626;color:#a9bed1;font-size:12px;border:1px solid #223b55}
+.sidepanel{border-radius:24px;padding:16px;background:linear-gradient(180deg,rgba(13,26,44,.96),rgba(7,16,29,.97))}.mini{border-radius:16px;background:rgba(7,17,30,.7)}.teamrow{background:linear-gradient(145deg,#10233a,#0b1a2c)}
+.mega-overlay{background:#000}.mega-overlay img{object-fit:cover;width:100vw;height:100vh}.mega-overlay canvas{position:absolute;inset:0;width:100vw;height:100vh;display:block}.musicbar{backdrop-filter:blur(10px)}.entry.item{border-color:#8ff0b5}.battle.visual-lock .controls{pointer-events:none;opacity:.78}.battle.visual-lock .battle-message::after{content:" · 피격";color:#ffd36e;font-weight:900}
+@media(max-width:980px){.command-shell{grid-template-columns:1fr}.action-tabs{grid-template-columns:repeat(3,1fr)}.action-tab{text-align:center}.battle-layout{grid-template-columns:1fr}.sidepanel{grid-template-columns:1fr 1fr}}
+@media(max-width:680px){.arena{min-height:620px}.fighter.enemy{width:52%;right:0}.fighter.player{width:58%;left:0}.spritebox{height:245px}.enemy .spritebox{height:220px}.switch-grid,.bag-grid,.movegrid{grid-template-columns:1fr}.action-tabs{grid-template-columns:1fr 1fr 1fr}.command-prompt{padding:10px}.battle-message{font-size:13px}.sidepanel{grid-template-columns:1fr}}
+
+/* V3.2 — 경기장 비주얼 / 한글 HUD */
+.arena{min-height:720px;background:linear-gradient(180deg,#052c33 0 19%,#064c53 19% 34%,#078c83 34% 55%,#087c70 55% 100%);box-shadow:inset 0 0 90px rgba(0,0,0,.28),inset 0 -60px 100px rgba(1,39,39,.28)}
+.arena:before{z-index:0;background:radial-gradient(ellipse at 78% 4%,rgba(45,255,222,.28),transparent 24%),linear-gradient(180deg,rgba(2,16,22,.25),transparent 42%,rgba(1,28,28,.16));pointer-events:none}
+.scene-horizon{left:0;right:0;top:0;height:36%;z-index:0;filter:none;background:linear-gradient(180deg,#04242c 0 13%,#06343b 13% 28%,#07555b 28% 100%);overflow:hidden;border-bottom:5px solid rgba(91,255,244,.9);box-shadow:0 8px 22px rgba(81,255,241,.32)}
+.scene-horizon:before{content:"";position:absolute;left:-1%;right:-1%;bottom:12px;height:72%;opacity:.78;background-image:radial-gradient(circle at 13px 10px,rgba(30,228,215,.92) 0 6px,transparent 7px),radial-gradient(ellipse at 13px 27px,rgba(15,166,164,.92) 0 8px,transparent 9px);background-size:27px 36px;mask-image:linear-gradient(180deg,rgba(0,0,0,.18),#000 38%,#000)}
+.scene-horizon:after{content:"";position:absolute;right:-3%;top:5%;width:34%;height:42%;border:4px solid rgba(67,255,224,.4);background:linear-gradient(180deg,rgba(18,180,153,.52),rgba(3,76,77,.25));box-shadow:0 0 25px rgba(39,255,217,.26),inset 0 0 35px rgba(86,255,225,.12);transform:skewX(-2deg)}
+.scene-floor{left:-7%;right:-7%;bottom:-8%;height:72%;z-index:0;transform:none;clip-path:polygon(0 19%,100% 8%,100% 100%,0 100%);background:radial-gradient(ellipse at 51% 60%,transparent 0 14%,rgba(85,255,238,.75) 14.5% 15.3%,transparent 15.8% 31%,rgba(37,218,200,.48) 31.4% 32.1%,transparent 32.7%),linear-gradient(175deg,#12a996 0 18%,#0a9386 18% 52%,#087e73 52% 100%);box-shadow:inset 0 18px 46px rgba(103,255,240,.17)}
+.scene-floor:before{content:"";position:absolute;left:7%;right:7%;top:13%;height:4px;background:linear-gradient(90deg,transparent,#70fff3 12%,#70fff3 88%,transparent);box-shadow:0 0 18px rgba(103,255,243,.74)}
+.scene-floor:after{content:"";position:absolute;left:50%;top:53%;width:150px;height:150px;transform:translate(-50%,-50%) scaleY(.56);border:8px solid rgba(104,255,242,.64);border-radius:50%;box-shadow:0 0 20px rgba(92,255,238,.25),inset 0 0 18px rgba(92,255,238,.12)}
+.scene-lines{left:4%;right:4%;bottom:0;height:53%;z-index:1;opacity:.42;clip-path:polygon(13% 0,87% 0,100% 100%,0 100%);background:linear-gradient(90deg,transparent 49.65%,rgba(97,255,242,.85) 49.75% 50.25%,transparent 50.35%),repeating-linear-gradient(90deg,transparent 0 89px,rgba(105,255,244,.12) 90px 92px),repeating-linear-gradient(180deg,transparent 0 69px,rgba(105,255,244,.1) 70px 72px)}
+.scene-lines:before{content:"";position:absolute;left:50%;top:48%;width:42px;height:42px;transform:translate(-50%,-50%) scaleY(.58);border-radius:50%;border:7px solid rgba(110,255,243,.83);box-shadow:0 0 14px rgba(91,255,240,.4)}
+.scene-lines:after{content:"";position:absolute;left:calc(50% - 76px);top:48%;width:152px;height:6px;background:rgba(110,255,243,.75);transform:translateY(-50%);box-shadow:0 0 12px rgba(91,255,240,.34)}
+.fighter.enemy{right:7%;top:21%;width:38%;max-width:460px}.fighter.player{left:1.5%;bottom:2%;width:50%;max-width:560px}.spritebox{height:330px}.enemy .spritebox{height:285px}
+.platform{width:86%;left:7%;height:18%;bottom:2%;background:radial-gradient(ellipse,rgba(6,71,68,.58) 0 45%,rgba(79,255,237,.34) 47% 52%,rgba(7,67,64,.18) 54% 66%,transparent 67%);filter:blur(.2px)}.enemy .platform{bottom:7%}
+.sprite{filter:drop-shadow(0 18px 10px rgba(0,25,28,.42));transition:filter .25s,transform .3s cubic-bezier(.2,.8,.2,1),opacity .4s}.sprite.dynamax{transform:scale(1.58) translateY(-8px);filter:drop-shadow(0 0 28px rgba(236,87,255,.7)) drop-shadow(0 0 54px rgba(188,58,255,.32)) drop-shadow(0 24px 13px rgba(0,0,0,.36))}.enemy .sprite.dynamax{transform:scale(1.62) translateY(-10px)}
+.pokehud{background:linear-gradient(145deg,rgba(252,255,255,.96),rgba(215,239,240,.94));border-color:rgba(143,255,246,.72);box-shadow:0 14px 34px rgba(0,31,38,.34),inset 0 0 0 1px rgba(7,84,87,.1)}
+.held-item{margin-top:6px;padding:5px 7px;border-radius:8px;background:rgba(7,73,78,.08);color:#365a65;font-size:11px;border:1px solid rgba(8,86,91,.1)}.held-item b{color:#123e48}
+.gear-list{display:flex;flex-wrap:wrap;gap:6px}.gear-chip{padding:6px 8px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid #31506b}.gear-chip.on{background:rgba(84,229,171,.12);border-color:rgba(84,229,171,.45);color:#9ff4c9}.gear-chip.off{background:rgba(255,105,105,.08);border-color:rgba(255,105,105,.3);color:#ffb1b1}
+.mechanic-tags span{font-size:10px}.battle.visual-lock .battle-message::after{content:" · 피격";color:#ffd36e;font-weight:900}
+.arena.terrain-bg-electric{box-shadow:inset 0 -110px 130px rgba(244,224,66,.22),inset 0 0 90px rgba(0,0,0,.2)}.arena.terrain-bg-grassy{box-shadow:inset 0 -110px 130px rgba(78,238,108,.2),inset 0 0 90px rgba(0,0,0,.2)}.arena.terrain-bg-psychic{box-shadow:inset 0 -110px 130px rgba(212,94,245,.22),inset 0 0 90px rgba(0,0,0,.2)}.arena.terrain-bg-misty{box-shadow:inset 0 -125px 150px rgba(220,244,255,.28),inset 0 0 90px rgba(0,0,0,.18)}
+@media(max-width:680px){.arena{min-height:640px}.fighter.enemy{top:22%;right:1%;width:49%}.fighter.player{left:0;bottom:2%;width:59%}.spritebox{height:260px}.enemy .spritebox{height:220px}.sprite.dynamax{transform:scale(1.42) translateY(-5px)}.enemy .sprite.dynamax{transform:scale(1.45) translateY(-6px)}.scene-horizon:before{background-size:22px 31px}.held-item{font-size:10px}}
+
+</style>
+
+
+<style id="v3-2-3-battle-layout">
+/* V3.2.3 — clean meadow stage / enlarged sprites / fixed pastel Terastal overlay */
+.arena{
+  min-height:1020px !important;
+  background-image:url('https://play.pokemonshowdown.com/sprites/gen6bgs/bg-meadow.jpg') !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+  box-shadow:none !important;
+  overflow:hidden;
+}
+/* 사용자가 요청한 배경 위 임의 도형은 표시하지 않는다. */
+.arena:before,.scene-horizon,.scene-floor,.scene-lines,.platform{display:none !important;content:none !important;}
+/* 필드 효과는 오브젝트가 아니라 매우 약한 색조만 남긴다. */
+.terrain-glow{display:none !important;}
+.arena.terrain-bg-electric{box-shadow:inset 0 -90px 120px rgba(244,224,66,.13) !important}
+.arena.terrain-bg-grassy{box-shadow:inset 0 -90px 120px rgba(78,238,108,.11) !important}
+.arena.terrain-bg-psychic{box-shadow:inset 0 -90px 120px rgba(212,94,245,.12) !important}
+.arena.terrain-bg-misty{box-shadow:inset 0 -100px 130px rgba(220,244,255,.16) !important}
+
+/* 상대는 확실히 위, 내 포켓몬은 아래쪽 안전 영역. */
+.fighter.enemy{top:1.5% !important;right:7% !important;width:38% !important;max-width:480px !important;z-index:3}
+.fighter.player{left:5% !important;bottom:7% !important;width:48% !important;max-width:590px !important;z-index:4}
+.spritebox{height:350px !important;--base-scale:1.90;--base-y:0px;overflow:visible !important}
+.enemy .spritebox{height:300px !important;--base-scale:1.90;--base-y:-28px}
+.player .spritebox{--base-y:10px}
+.sprite{
+  transform-origin:center bottom !important;
+  transform:translateY(var(--base-y)) scale(var(--base-scale)) !important;
+  filter:drop-shadow(0 18px 12px rgba(0,0,0,.32)) !important;
+  transition:filter .25s,transform .28s cubic-bezier(.2,.8,.2,1),opacity .4s !important;
+}
+.sprite.dynamax{--base-scale:2.55;--base-y:-6px;filter:drop-shadow(0 0 30px rgba(236,87,255,.62)) drop-shadow(0 24px 14px rgba(0,0,0,.34)) !important}
+.enemy .sprite.dynamax{--base-scale:2.62;--base-y:-34px}
+.player .sprite.dynamax{--base-scale:2.55;--base-y:4px}
+.sprite.faint{opacity:0 !important;transform:translateY(calc(var(--base-y) + 55px)) scale(var(--base-scale)) !important}
+.sprite.hit{animation:hitLarge .65s cubic-bezier(.2,.75,.25,1) !important}
+.sprite.attack{animation:attackLarge .48s cubic-bezier(.2,.8,.2,1) !important}
+@keyframes hitLarge{
+  0%,100%{transform:translateY(var(--base-y)) translateX(0) scale(var(--base-scale))}
+  24%{transform:translateY(var(--base-y)) translateX(-16px) scale(var(--base-scale));filter:brightness(1.9) drop-shadow(0 18px 12px rgba(0,0,0,.32))}
+  56%{transform:translateY(var(--base-y)) translateX(12px) scale(var(--base-scale))}
+}
+@keyframes attackLarge{
+  0%,100%{transform:translateY(var(--base-y)) translateX(0) scale(var(--base-scale))}
+  45%{transform:translateY(var(--base-y)) translateX(18px) scale(var(--base-scale))}
+}
+.enemy .sprite.attack{animation-name:attackLargeEnemy !important}
+@keyframes attackLargeEnemy{
+  0%,100%{transform:translateY(var(--base-y)) translateX(0) scale(var(--base-scale))}
+  45%{transform:translateY(var(--base-y)) translateX(-18px) scale(var(--base-scale))}
+}
+
+/* 전투 문구는 전장 밖 별도 줄에 둬서 내 포켓몬을 가리지 않는다. */
+.battle-message-strip{
+  position:relative !important;left:auto !important;top:auto !important;bottom:auto !important;
+  transform:none !important;max-width:none !important;width:100%;min-height:58px;
+  display:flex;align-items:center;justify-content:center;border-radius:0 !important;
+  background:linear-gradient(90deg,#071525,#10283d,#071525) !important;
+  border-left:0 !important;border-right:0 !important;border-color:rgba(160,210,255,.23) !important;
+  font-size:16px;letter-spacing:.01em;z-index:6;
+}
+.battle.visual-lock .battle-message::after{content:"" !important}
+
+/* 테라스탈: 부유/점멸 없이 원본과 정확히 포개지는 파스텔 결정 코팅. */
+.spritebox.tera-active:before{display:none !important;content:none !important}
+.tera-overlay-img{
+  position:absolute !important;left:50% !important;bottom:0 !important;z-index:5 !important;
+  max-width:95% !important;max-height:95% !important;
+  transform-origin:center bottom !important;
+  transform:translateX(-50%) translateY(var(--base-y)) scale(var(--base-scale)) !important;
+  opacity:.46 !important;mix-blend-mode:screen !important;animation:none !important;
+  filter:brightness(1.34) saturate(.42) contrast(.88) !important;
+  pointer-events:none !important;
+}
+.tera-overlay-img.tera-fire{filter:brightness(1.35) saturate(.48) sepia(.18) hue-rotate(330deg) !important}
+.tera-overlay-img.tera-water{filter:brightness(1.38) saturate(.40) hue-rotate(155deg) !important}
+.tera-overlay-img.tera-electric{filter:brightness(1.43) saturate(.44) sepia(.14) hue-rotate(10deg) !important}
+.tera-overlay-img.tera-grass{filter:brightness(1.36) saturate(.42) hue-rotate(65deg) !important}
+.tera-overlay-img.tera-psychic,.tera-overlay-img.tera-fairy{filter:brightness(1.42) saturate(.40) hue-rotate(260deg) !important}
+.tera-overlay-img.tera-dark,.tera-overlay-img.tera-ghost{filter:brightness(1.24) saturate(.42) hue-rotate(240deg) !important}
+.tera-overlay-img.tera-stellar{filter:brightness(1.46) saturate(.30) !important}
+
+/* 아이템 대상 선택 */
+.target-picker-cards{display:block !important}.target-picker-cards>b{display:block;margin-bottom:8px}
+.item-target-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.item-target-card{display:grid;grid-template-columns:54px 1fr;gap:9px;align-items:center;text-align:left;padding:8px 10px;border-radius:13px;border:1px solid #294664;background:#0d1d31;color:#edf7ff}
+.item-target-card img{width:50px;height:50px;object-fit:contain}.item-target-card strong,.item-target-card small{display:block}.item-target-card small{color:#9eb4c9;margin-top:3px}.item-target-card.selected{outline:2px solid #82ffe7;background:#16334b}
+
+@media(max-width:680px){
+  .arena{min-height:800px !important;background-position:center center !important}
+  .fighter.enemy{top:1% !important;right:1% !important;width:47% !important}
+  .fighter.player{left:2% !important;bottom:6% !important;width:58% !important}
+  .spritebox{height:300px !important;--base-scale:1.62}.enemy .spritebox{height:250px !important;--base-scale:1.62;--base-y:-18px}.player .spritebox{--base-y:8px}
+  .sprite.dynamax{--base-scale:2.05}.enemy .sprite.dynamax{--base-scale:2.10;--base-y:-24px}.player .sprite.dynamax{--base-scale:2.05;--base-y:4px}
+  .battle-message-strip{min-height:54px;font-size:14px;padding:10px 12px}
+  .item-target-grid{grid-template-columns:1fr}
+}
+</style>
+
+
+
+
+<style id="v3-2-5-battle-visual-fix">
+/* V3.2.5 — 전장에는 원본 배경 외의 중앙선/장식 도형을 남기지 않는다. */
+.arena:before,.arena:after,.scene-horizon,.scene-floor,.scene-lines,.platform,.terrain-glow{
+  display:none !important;
+  content:none !important;
+  background:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+/* 상대 포켓몬은 이전보다 조금 아래로. */
+.fighter.enemy{
+  top:8% !important;
+  right:7% !important;
+}
+
+/* HUD는 거대한 스프라이트/테라 마스크보다 항상 위에 둔다. */
+.pokehud{position:relative !important;z-index:20 !important;}
+
+/* 다이맥스는 일반 스프라이트보다 훨씬 크게 보이게 한다. */
+.sprite.dynamax{
+  --base-scale:3.35 !important;
+  --base-y:-18px !important;
+  filter:drop-shadow(0 0 38px rgba(236,87,255,.68)) drop-shadow(0 0 82px rgba(188,58,255,.30)) drop-shadow(0 26px 16px rgba(0,0,0,.38)) !important;
+}
+.enemy .sprite.dynamax{
+  --base-scale:3.55 !important;
+  --base-y:-42px !important;
+}
+.player .sprite.dynamax{
+  --base-scale:3.35 !important;
+  --base-y:-4px !important;
+}
+
+/* 테라스탈 중 원본도 약간 결정질에 어울리게 정리하되 떠오르지는 않는다. */
+.spritebox.tera-active > .sprite{
+  filter:brightness(1.08) saturate(.92) contrast(1.04) drop-shadow(0 18px 12px rgba(0,0,0,.32)) !important;
+}
+.spritebox.tera-active > .sprite.dynamax{
+  filter:brightness(1.08) saturate(.92) contrast(1.04) drop-shadow(0 0 38px rgba(236,87,255,.68)) drop-shadow(0 0 82px rgba(188,58,255,.30)) drop-shadow(0 26px 16px rgba(0,0,0,.38)) !important;
+}
+
+@media(max-width:680px){
+  .fighter.enemy{top:9% !important;right:1% !important;}
+  .sprite.dynamax{--base-scale:2.70 !important;--base-y:-10px !important;}
+  .enemy .sprite.dynamax{--base-scale:2.90 !important;--base-y:-30px !important;}
+  .player .sprite.dynamax{--base-scale:2.70 !important;--base-y:0px !important;}
+}
+</style>
+
+
+<style id="v3-2-6-scale-terastal-color-fix">
+/* V3.2.6 — 배치/크기 조정 + 순수 보라색 테라스탈 컬러 오버레이 */
+
+/* 상대 포켓몬은 V3.2.5보다 살짝 더 아래로. */
+.fighter.enemy{
+  top:11.5% !important;
+  right:7% !important;
+}
+
+/* 큰 내 포켓몬과 거대화가 잘리지 않도록 전장 높이를 확보한다. */
+.arena{
+  min-height:940px !important;
+  overflow:hidden !important;
+}
+
+/* 내 포켓몬의 평상시 크기 = 이전 다이맥스급. */
+.player .spritebox{
+  --base-scale:3.35 !important;
+  --base-y:8px !important;
+  height:370px !important;
+}
+.player .sprite:not(.dynamax){
+  --base-scale:3.35 !important;
+  --base-y:8px !important;
+}
+
+/* 다이맥스/거다이맥스는 그보다 훨씬 크게. */
+.sprite.dynamax{
+  --base-scale:4.55 !important;
+  --base-y:-18px !important;
+  filter:drop-shadow(0 0 44px rgba(236,87,255,.70)) drop-shadow(0 0 96px rgba(188,58,255,.32)) drop-shadow(0 28px 18px rgba(0,0,0,.40)) !important;
+}
+.enemy .sprite.dynamax{
+  --base-scale:4.70 !important;
+  --base-y:-34px !important;
+}
+.player .sprite.dynamax{
+  --base-scale:4.85 !important;
+  --base-y:-2px !important;
+}
+
+/* 테라스탈: 이미지 텍스처 없이 보라색 40% 컬러만 포켓몬 실루엣 내부에 입힌다. */
+.tera-overlay-img,.tera-crystal-mask{display:none !important;}
+.tera-color-overlay{
+  display:block;
+  position:absolute !important;
+  left:50% !important;
+  bottom:0 !important;
+  width:100% !important;
+  height:100% !important;
+  z-index:9 !important;
+  pointer-events:none !important;
+  transform-origin:center bottom !important;
+  transform:translateX(-50%) translateY(var(--base-y)) scale(var(--base-scale)) !important;
+  background:rgba(157,72,221,.40) !important;
+  opacity:1 !important;
+  mix-blend-mode:normal !important;
+  filter:none !important;
+  animation:none !important;
+  -webkit-mask-image:var(--tera-mask) !important;
+  mask-image:var(--tera-mask) !important;
+  -webkit-mask-repeat:no-repeat !important;
+  mask-repeat:no-repeat !important;
+  -webkit-mask-position:center bottom !important;
+  mask-position:center bottom !important;
+  -webkit-mask-size:contain !important;
+  mask-size:contain !important;
+  -webkit-mask-mode:alpha;
+  mask-mode:alpha;
+}
+.tera-color-overlay.hidden{display:none !important;}
+
+/* 테라스탈 자체가 포켓몬을 띄우거나 확대하지 않는다. */
+.spritebox.tera-active > .sprite:not(.dynamax){
+  filter:drop-shadow(0 18px 12px rgba(0,0,0,.32)) !important;
+}
+.spritebox.tera-active > .sprite.dynamax{
+  filter:drop-shadow(0 0 44px rgba(236,87,255,.70)) drop-shadow(0 0 96px rgba(188,58,255,.32)) drop-shadow(0 28px 18px rgba(0,0,0,.40)) !important;
+}
+
+@media(max-width:680px){
+  .arena{min-height:850px !important;}
+  .fighter.enemy{top:12.5% !important;right:1% !important;}
+  .player .spritebox{--base-scale:2.65 !important;--base-y:8px !important;height:320px !important;}
+  .player .sprite:not(.dynamax){--base-scale:2.65 !important;--base-y:8px !important;}
+  .sprite.dynamax{--base-scale:3.55 !important;--base-y:-10px !important;}
+  .enemy .sprite.dynamax{--base-scale:3.75 !important;--base-y:-26px !important;}
+  .player .sprite.dynamax{--base-scale:3.85 !important;--base-y:0px !important;}
+}
+</style>
+
+
+<style id="v3-2-7-player-lower-fix">
+/* V3.2.7 — 내 포켓몬을 시각적으로 조금 더 아래 배치 */
+.player .spritebox{--base-y:28px !important;}
+.player .sprite:not(.dynamax){--base-y:28px !important;}
+.player .sprite.dynamax{--base-y:16px !important;}
+@media(max-width:680px){
+  .player .spritebox{--base-y:22px !important;}
+  .player .sprite:not(.dynamax){--base-y:22px !important;}
+  .player .sprite.dynamax{--base-y:14px !important;}
+}
+</style>
+
+
+<style id="v3-2-8-terastal-visible-scale-fix">
+/* V3.2.9 — 테라스탈 표시 유지 / 거·다이맥스 극대화 / 불필요한 시각 효과 제거 */
+
+/* 상대 포켓몬을 기존보다 살짝 아래로 유지. */
+.fighter.enemy{top:14.8% !important;}
+
+/* 거/다이맥스는 거의 15배 크기로 보이게 크게 확대한다. 추가 발광, 오오라, 색광 효과는 사용하지 않는다. */
+.arena{min-height:1180px !important;}
+.sprite.dynamax{
+  --base-scale:13.8 !important;
+  --base-y:-32px !important;
+  filter:drop-shadow(0 18px 12px rgba(0,0,0,.28)) !important;
+}
+.enemy .sprite.dynamax{
+  --base-scale:14.4 !important;
+  --base-y:-82px !important;
+}
+.player .sprite.dynamax{
+  --base-scale:14.9 !important;
+  --base-y:42px !important;
+}
+
+/* 테라스탈은 동일 스프라이트의 알파를 그대로 이용한 보라색 40% 컬러 오버레이. */
+.tera-color-overlay{
+  display:block;
+  position:absolute !important;
+  left:50% !important;
+  bottom:0 !important;
+  z-index:9 !important;
+  max-width:95% !important;
+  max-height:95% !important;
+  width:auto !important;
+  height:auto !important;
+  object-fit:contain !important;
+  pointer-events:none !important;
+  transform-origin:center bottom !important;
+  opacity:.40 !important;
+  mix-blend-mode:normal !important;
+  /* 투명 픽셀은 그대로 유지하면서 보이는 픽셀만 보라색 단색에 가깝게 변환 */
+  filter:brightness(0) saturate(100%) invert(35%) sepia(74%) saturate(1870%) hue-rotate(247deg) brightness(91%) contrast(91%) !important;
+  animation:none !important;
+  -webkit-mask:none !important;
+  mask:none !important;
+}
+.tera-color-overlay.hidden{display:none !important;}
+
+/* 각 진영의 원본 스프라이트와 위치/배율을 정확히 맞춘다. */
+.player .tera-color-overlay{
+  transform:translateX(-50%) translateY(28px) scale(3.35) !important;
+}
+.enemy .tera-color-overlay{
+  transform:translateX(-50%) translateY(-28px) scale(1.90) !important;
+}
+.player .tera-color-overlay.dynamax{
+  transform:translateX(-50%) translateY(42px) scale(14.9) !important;
+}
+.enemy .tera-color-overlay.dynamax{
+  transform:translateX(-50%) translateY(-82px) scale(14.4) !important;
+}
+
+/* 테라스탈 자체 이외에는 별도 색조/광택을 더하지 않는다. */
+.spritebox.tera-active > .sprite,
+.spritebox.tera-active > .sprite.dynamax{
+  filter:drop-shadow(0 18px 12px rgba(0,0,0,.32)) !important;
+}
+
+/* 날씨/필드 상태는 텍스트 상태만 표시하고 전장에 추가 특수효과를 얹지 않는다. */
+.arena.weather-rain:after,.arena.weather-snow:after{display:none !important;content:none !important;}
+.arena.weather-sand,.arena.weather-sun{filter:none !important;box-shadow:none !important;}
+.arena.terrain-bg-electric,.arena.terrain-bg-grassy,.arena.terrain-bg-psychic,.arena.terrain-bg-misty{box-shadow:none !important;}
+.terrain-glow{display:none !important;}
+
+@media(max-width:680px){
+  .fighter.enemy{top:15% !important;}
+  .arena{min-height:930px !important;}.sprite.dynamax{--base-scale:9.8 !important;--base-y:-24px !important;}
+  .enemy .sprite.dynamax{--base-scale:10.4 !important;--base-y:-52px !important;}
+  .player .sprite.dynamax{--base-scale:10.9 !important;--base-y:30px !important;}
+  .player .tera-color-overlay{transform:translateX(-50%) translateY(22px) scale(2.65) !important;}
+  .enemy .tera-color-overlay{transform:translateX(-50%) translateY(-18px) scale(1.62) !important;}
+  .player .tera-color-overlay.dynamax{transform:translateX(-50%) translateY(30px) scale(10.9) !important;}
+  .enemy .tera-color-overlay.dynamax{transform:translateX(-50%) translateY(-52px) scale(10.4) !important;}
+}
+
+
+/* V3.2.10 — 포켓몬 그림자 완전 제거 + 테라스탈 40% 보라색 복제 스프라이트 */
+/* 포켓몬 자체에는 어떤 그림자/광원 효과도 사용하지 않는다. */
+.sprite,
+.sprite.dynamax,
+.sprite.hit,
+.sprite.attack,
+.sprite.faint,
+.spritebox.tera-active > .sprite,
+.spritebox.tera-active > .sprite.dynamax{
+  filter:none !important;
+  text-shadow:none !important;
+  box-shadow:none !important;
+}
+
+/* 예전 테라스탈 레이어는 사용하지 않는다. */
+.tera-color-overlay,.tera-overlay-img,.tera-crystal-mask{display:none !important;}
+
+/* 원본 GIF를 그대로 한 장 겹쳐 보라색 단색에 가깝게 만든다. */
+.tera-copy{
+  display:block !important;
+  position:absolute !important;
+  left:50% !important;
+  bottom:0 !important;
+  z-index:12 !important;
+  width:auto !important;
+  height:auto !important;
+  max-width:95% !important;
+  max-height:95% !important;
+  object-fit:contain !important;
+  pointer-events:none !important;
+  opacity:.40 !important;
+  mix-blend-mode:normal !important;
+  transform-origin:center bottom !important;
+  transform:translateX(-50%) translateY(var(--base-y)) scale(var(--base-scale)) !important;
+  filter:brightness(0) saturate(100%) invert(31%) sepia(66%) saturate(2370%) hue-rotate(248deg) brightness(96%) contrast(98%) !important;
+  transition:none !important;
+  animation:none !important;
+}
+.tera-copy.hidden{display:none !important;}
+
+/* 거대화 상태에서도 원본과 정확히 같은 배율/위치를 사용한다. */
+.player .tera-copy.dynamax,
+.enemy .tera-copy.dynamax{
+  transform:translateX(-50%) translateY(var(--base-y)) scale(var(--base-scale)) !important;
+}
+
+/* 테라스탈 표시는 복제본 자체만 담당하며 다른 광택/발광은 추가하지 않는다. */
+.spritebox.tera-active:after{display:none !important;content:none !important;}
+</style>
+
+
+<style id="v3-2-11-final-override">
+/* V3.2.13 — 테라스탈 시각효과 제거 유지 / 거·다이맥스 6~7배 */
+
+/* 테라스탈은 규칙/HUD 표시만 유지. 모든 시각 레이어를 완전히 숨긴다. */
+.tera-copy,
+.tera-color-overlay,
+.tera-overlay-img,
+.tera-crystal-mask,
+.spritebox.tera-active::before,
+.spritebox.tera-active::after {
+  display:none !important;
+  content:none !important;
+}
+.spritebox.tera-active > .sprite {
+  filter:none !important;
+}
+
+/* 포켓몬 그림자/발광 효과는 계속 사용하지 않는다. */
+.sprite,
+.sprite.dynamax,
+.sprite.hit,
+.sprite.attack,
+.sprite.faint,
+.spritebox.tera-active > .sprite,
+.spritebox.tera-active > .sprite.dynamax {
+  filter:none !important;
+  text-shadow:none !important;
+  box-shadow:none !important;
+}
+
+/* 거/다이맥스는 6~7배 수준. 내 포켓몬 6.8배, 상대 6.5배. */
+.sprite.dynamax {
+  --base-scale:6.6 !important;
+  --base-y:-20px !important;
+}
+.enemy .sprite.dynamax {
+  --base-scale:6.5 !important;
+  --base-y:-44px !important;
+}
+.player .sprite.dynamax {
+  --base-scale:6.8 !important;
+  --base-y:30px !important;
+}
+
+@media(max-width:680px){
+  .sprite.dynamax {--base-scale:6.6 !important;}
+  .enemy .sprite.dynamax {--base-scale:6.5 !important;}
+  .player .sprite.dynamax {--base-scale:6.8 !important;}
+  .enemy .sprite.dynamax{--base-y:-38px !important;}
+  .player .sprite.dynamax{--base-y:24px !important;}
+}
+</style>
+
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.17 · Firebase 연결 포함</span></div>
+  </header>
+
+  <section class="panel lobby" id="lobby">
+    <div class="lobby-card">
+      <h2>트레이너 접속</h2>
+      <p class="muted">Google 시트의 <b>Trainers 탭 nickname 열</b>과 일치하는 닉네임의 엔트리를 불러옵니다.</p>
+      <div class="fieldrow"><input id="nicknameInput" autocomplete="off" placeholder="트레이너 닉네임"><button class="btn primary" id="loginBtn">엔트리 불러오기</button><button class="btn" id="demoBtn">데모 배틀</button></div>
+      <div class="statusbox" id="loginStatus">시트 데이터를 준비하고 있습니다.</div>
+      <div id="entryPreview" class="teamlist" style="margin-top:10px"></div>
+      <p class="disclaimer">팬 제작 전투 도구입니다. Pokémon 및 관련 명칭/이미지의 권리는 각 권리자에게 있습니다. 스프라이트는 복제 저장하지 않고 Pokémon Showdown의 공개 GIF 경로를 표시합니다.</p>
+    </div>
+    <div class="lobby-card">
+      <div class="fieldrow" style="justify-content:space-between;align-items:center"><h2 style="margin:0">온라인 트레이너</h2><input id="onlineSearch" placeholder="닉네임 검색" style="max-width:180px"></div>
+      <div id="onlineList" class="online-list"><div class="muted">Firebase를 설정하면 접속자가 여기에 표시됩니다.</div></div>
+      <h3 style="margin:14px 0 8px">받은 도전</h3><div id="challengeList" class="challenge-list"><div class="muted">도전 없음</div></div>
+    </div>
+  </section>
+
+  <section id="battleSection" class="battle-layout hidden">
+    <div class="panel battle-wrap">
+      <div class="arena" id="arena">
+        <div id="terrainGlow" class="terrain-glow"></div>
+        <div class="fighter enemy" id="enemyFighter">
+          <div class="pokehud" id="enemyHud"></div><div class="spritebox"><img id="enemySprite" class="sprite" alt="상대 포켓몬"><img id="enemyTeraOverlay" class="sprite tera-copy hidden" alt="" aria-hidden="true"></div>
+        </div>
+        <div class="fighter player" id="playerFighter">
+          <div class="spritebox"><img id="playerSprite" class="sprite" alt="내 포켓몬"><img id="playerTeraOverlay" class="sprite tera-copy hidden" alt="" aria-hidden="true"></div><div class="pokehud" id="playerHud"></div>
+        </div>
+      </div>
+      <div class="battle-message battle-message-strip" id="battleMessage">배틀 준비 완료</div>
+      <div class="controls">
+        <div class="turnhead"><div><b id="turnLabel">턴 1</b><div class="muted" id="modeLabel">로컬 시뮬레이션</div></div><div class="field-state"><div class="state-chip" id="weatherChip"><b>날씨</b><span>없음</span></div><div class="state-chip" id="terrainChip"><b>필드</b><span>없음</span></div></div></div>
+        <div id="forceSwitchBox" class="hidden"></div>
+        <div id="normalControls">
+          <div class="command-shell">
+            <div class="command-prompt"><strong id="commandQuestion">무엇을 할까?</strong><small>행동 하나를 선택하면 한 턴을 사용합니다.</small><div class="action-tabs"><button class="action-tab active" data-action-tab="move">⚔ 싸운다</button><button class="action-tab" data-action-tab="switch">◉ 포켓몬</button><button class="action-tab" data-action-tab="item">▣ 가방</button></div></div>
+            <div><div id="actionPane" class="action-pane"></div><div class="mechanics" id="mechanics"></div><div id="actionSummary" class="action-summary"></div></div>
+          </div>
+          <div class="submitrow"><button class="btn primary" id="submitAction">이 행동으로 결정</button><button class="btn" id="resetBattle">로컬 리셋</button></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel sidepanel">
+      <div class="mini"><h3>내 엔트리</h3><div id="myTeam" class="teamlist"></div></div>
+      <div class="mini"><h3>능력치</h3><div id="statBox" class="statline"></div></div>
+      <div class="mini"><h3>기믹 장비</h3><div id="gearBox" class="gear-list"></div></div>
+      <div class="mini"><h3>전투 로그</h3><div id="battleLog" class="log"></div></div>
+      <button class="btn" id="backLobby">로비 표시</button>
+    </aside>
+  </section>
+</div>
+
+<iframe id="soundcloudPlayer" class="soundcloud-hidden" allow="autoplay" title="SoundCloud Battle BGM" aria-hidden="true" tabindex="-1" src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/sol64/sets/pokemon-battle-music&auto_play=false&show_artwork=false&show_user=false&show_comments=false&visual=false"></iframe>
+<div class="musicbar" aria-label="배틀 BGM 제어">
+  <button class="btn primary" id="musicPlay">▶ BGM 재생</button>
+  <button class="btn" id="musicStop">■ BGM 정지</button>
+</div>
+<div id="megaOverlay" class="mega-overlay hidden"><canvas id="megaCanvas" aria-label="메가진화 연출"></canvas><img id="megaFallback" class="hidden" alt="메가진화 연출"></div>
+<div id="toast" class="toast hidden"></div>
+
+<script src="./firebase-config.js"></script>
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+"use strict";
+
+const CONFIG = {
+  sheetId: "1f0x52RfSWOWJRjeqthimmLADL4VOwUvLQi7wzjel_FY",
+  sheetTabs: { trainers: "Trainers", pokemon: "Pokemon", moves: "Moves", items: "Items" },
+  showdownBase: "https://play.pokemonshowdown.com/sprites",
+  showdownData: "https://play.pokemonshowdown.com/data",
+  pokeApi: "https://pokeapi.co/api/v2",
+  generation: 9,
+  legalityMode: "anygen", // mixed RP mechanics: species must have learned the move in at least one documented generation
+  megaFx: "./mega-evolution.gif",
+  megaFxDurationMs: 5000, // ImageDecoder 미지원 브라우저용 폴백 시간
+  hitSfx: "./Hit-Normal-Damage.mp3",
+  hitReactionMs: 650, // 직접 공격 적중 피격 연출 시간
+  moveReadDelayMs: 1800, // 기술명이 표시된 뒤 읽을 수 있도록 기다리는 시간
+  afterHitDelayMs: 1100, // 피해 문구를 읽은 뒤 다음 행동까지 기다리는 시간
+  bgmUrl: "https://soundcloud.com/sol64/sets/pokemon-battle-music",
+  allowCustomFinalStats: true,
+};
+
+const TYPE_CHART = {
+  normal:{rock:.5,ghost:0,steel:.5},
+  fire:{fire:.5,water:.5,grass:2,ice:2,bug:2,rock:.5,dragon:.5,steel:2},
+  water:{fire:2,water:.5,grass:.5,ground:2,rock:2,dragon:.5},
+  electric:{water:2,electric:.5,grass:.5,ground:0,flying:2,dragon:.5},
+  grass:{fire:.5,water:2,grass:.5,poison:.5,ground:2,flying:.5,bug:.5,rock:2,dragon:.5,steel:.5},
+  ice:{fire:.5,water:.5,grass:2,ice:.5,ground:2,flying:2,dragon:2,steel:.5},
+  fighting:{normal:2,ice:2,poison:.5,flying:.5,psychic:.5,bug:.5,rock:2,ghost:0,dark:2,steel:2,fairy:.5},
+  poison:{grass:2,poison:.5,ground:.5,rock:.5,ghost:.5,steel:0,fairy:2},
+  ground:{fire:2,electric:2,grass:.5,poison:2,flying:0,bug:.5,rock:2,steel:2},
+  flying:{electric:.5,grass:2,fighting:2,bug:2,rock:.5,steel:.5},
+  psychic:{fighting:2,poison:2,psychic:.5,dark:0,steel:.5},
+  bug:{fire:.5,grass:2,fighting:.5,poison:.5,flying:.5,psychic:2,ghost:.5,dark:2,steel:.5,fairy:.5},
+  rock:{fire:2,ice:2,fighting:.5,ground:.5,flying:2,bug:2,steel:.5},
+  ghost:{normal:0,psychic:2,ghost:2,dark:.5},
+  dragon:{dragon:2,steel:.5,fairy:0},
+  dark:{fighting:.5,psychic:2,ghost:2,dark:.5,fairy:.5},
+  steel:{fire:.5,water:.5,electric:.5,ice:2,rock:2,steel:.5,fairy:2},
+  fairy:{fire:.5,fighting:2,poison:.5,dragon:2,dark:2,steel:.5},
+};
+
+const TYPE_KO = {
+  normal:"노말",fire:"불꽃",water:"물",electric:"전기",grass:"풀",ice:"얼음",fighting:"격투",poison:"독",ground:"땅",flying:"비행",psychic:"에스퍼",bug:"벌레",rock:"바위",ghost:"고스트",dragon:"드래곤",dark:"악",steel:"강철",fairy:"페어리",stellar:"스텔라"
+};
+const WEATHER_KO={rain:"비",sun:"쾌청",sand:"모래바람",snow:"설경"};
+const TERRAIN_KO={electric:"일렉트릭필드",grassy:"그래스필드",psychic:"사이코필드",misty:"미스트필드"};
+const STATUS_KO={burn:"화상",paralysis:"마비",poison:"독",toxic:"맹독",sleep:"잠듦",freeze:"얼음"};
+const STAT_NAME={attack:"공격",defense:"방어",specialAttack:"특공",specialDefense:"특방",speed:"스피드",accuracy:"명중률",evasion:"회피율"};
+const SHOWDOWN_STATUS={brn:"burn",par:"paralysis",psn:"poison",tox:"toxic",slp:"sleep",frz:"freeze"};
+const SHOWDOWN_STAT={atk:"attack",def:"defense",spa:"specialAttack",spd:"specialDefense",spe:"speed",accuracy:"accuracy",evasion:"evasion"};
+const NATURES={
+  hardy:[null,null],lonely:["attack","defense"],brave:["attack","speed"],adamant:["attack","specialAttack"],naughty:["attack","specialDefense"],
+  bold:["defense","attack"],docile:[null,null],relaxed:["defense","speed"],impish:["defense","specialAttack"],lax:["defense","specialDefense"],
+  timid:["speed","attack"],hasty:["speed","defense"],serious:[null,null],jolly:["speed","specialAttack"],naive:["speed","specialDefense"],
+  modest:["specialAttack","attack"],mild:["specialAttack","defense"],quiet:["specialAttack","speed"],bashful:[null,null],rash:["specialAttack","specialDefense"],
+  calm:["specialDefense","attack"],gentle:["specialDefense","defense"],sassy:["specialDefense","speed"],careful:["specialDefense","specialAttack"],quirky:[null,null]
+};
+
+const qs=s=>document.querySelector(s);
+const qsa=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const norm=s=>String(s??"").trim().toLowerCase();
+const toID=s=>String(s??"").normalize("NFKD").toLowerCase().replace(/[♀]/g,"f").replace(/[♂]/g,"m").replace(/[^a-z0-9]+/g,"");
+const num=(v,d=0)=>{const n=Number(v);return Number.isFinite(n)?n:d};
+const bool=v=>[true,1,"1","true","yes","y","on","예","네"].includes(typeof v==="string"?v.trim().toLowerCase():v);
+const list=v=>String(v??"").split(/[\/,|]/).map(x=>x.trim()).filter(Boolean);
+function toast(msg,kind=""){const t=qs("#toast");t.textContent=msg;t.className=`toast ${kind}`;clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.add("hidden"),4200)}
+function rowVal(row,...keys){for(const k of keys){const hit=Object.keys(row||{}).find(x=>norm(x)===norm(k));if(hit!=null&&row[hit]!=="")return row[hit]}return ""}
+function canonicalItem(s){return toID(s)}
+function spriteIdFromDexId(dexId,species){const base=toID(species?.baseSpecies||species?.name||dexId);if(dexId===base)return dexId;if(dexId.startsWith(base)){const suffix=dexId.slice(base.length);return suffix?`${base}-${suffix}`:base}return dexId}
+function typePill(t){const id=norm(t);return `<span class="type-pill type-${esc(id)}">${esc(TYPE_KO[id]||t)}</span>`}
+
+const dexStore={pokedex:null,moves:null,learnsets:null,ready:false,error:null};
+async function fetchJson(url){const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error(`${r.status} ${url}`);return r.json()}
+async function loadDex(){
+  qs("#dexBadge").textContent="도감: 연결 중";
+  try{
+    // Pokémon Showdown의 JSON 배포본은 pokedex / moves / learnsets에 사용한다.
+    // items와 abilities는 현재 data 디렉터리에 .js만 있으므로 JSON으로 요청하지 않는다.
+    const [pokedex,moves,learnsets]=await Promise.all([
+      fetchJson(`${CONFIG.showdownData}/pokedex.json`),
+      fetchJson(`${CONFIG.showdownData}/moves.json`),
+      fetchJson(`${CONFIG.showdownData}/learnsets.json`)
+    ]);
+    dexStore.pokedex=pokedex;dexStore.moves=moves;dexStore.learnsets=learnsets;dexStore.ready=true;dexStore.error=null;
+    qs("#dexBadge").textContent=`도감: Showdown · ${CONFIG.legalityMode==="anygen"?"전국도감":"제"+CONFIG.generation+"세대"}`;
+    return true;
+  }catch(e){
+    dexStore.ready=false;dexStore.error=e;qs("#dexBadge").textContent="도감: 연결 오류";console.error(e);return false;
+  }
+}
+function dexSpecies(id){return dexStore.pokedex?.[toID(id)]||null}
+function dexMove(id){return dexStore.moves?.[toID(id)]||null}
+function speciesLearnset(showdownId){
+  if(!dexStore.ready)return null;
+  let id=toID(showdownId),guard=0;
+  while(id&&guard++<8){
+    const own=dexStore.learnsets?.[id]?.learnset;
+    if(own)return own;
+    const sp=dexStore.pokedex?.[id];
+    const next=toID(sp?.baseSpecies||sp?.prevo||"");
+    if(!next||next===id)break;
+    id=next;
+  }
+  return null;
+}
+function checkMoveLegality(showdownId,moveId){
+  const ls=speciesLearnset(showdownId);const id=toID(moveId);
+  if(!ls)return{ok:false,reason:"learnset 없음"};
+  const src=ls[id];if(!src)return{ok:false,reason:"습득 기록 없음"};
+  if(CONFIG.legalityMode==="anygen")return{ok:true,sources:src};
+  const gen=String(CONFIG.generation);
+  const current=src.some(x=>String(x).startsWith(gen));
+  return current?{ok:true,sources:src}:{ok:false,reason:`제${CONFIG.generation}세대 습득 경로 없음`,sources:src};
+}
+function mapBoosts(b){const out={};for(const [k,v] of Object.entries(b||{})){const kk=SHOWDOWN_STAT[k]||k;if(STAT_NAME[kk])out[kk]=num(v)}return out}
+function mapWeather(w){return({raindance:"rain",sunnyday:"sun",sandstorm:"sand",snow:"snow",hail:"snow"})[toID(w)]||null}
+function mapTerrain(t){return({electricterrain:"electric",grassyterrain:"grassy",psychicterrain:"psychic",mistyterrain:"misty"})[toID(t)]||null}
+function mapSecondary(s){if(!s)return null;return{chance:num(s.chance,100),status:SHOWDOWN_STATUS[s.status]||null,boosts:mapBoosts(s.boosts),selfBoosts:mapBoosts(s.self?.boosts)}}
+function showdownMoveData(moveId,displayOverride=""){
+  const id=toID(moveId),m=dexMove(id);if(!m)return null;
+  return{
+    id,num:num(m.num,0),englishName:m.name||id,name:displayOverride||moveKoMap[id]||m.name||id,type:norm(m.type)||"normal",category:norm(m.category)||"status",power:num(m.basePower,0),
+    accuracy:m.accuracy===true?999:num(m.accuracy,100),maxPp:num(m.pp,1),priority:num(m.priority,0),flags:{...(m.flags||{})},
+    status:SHOWDOWN_STATUS[m.status]||null,boosts:mapBoosts(m.boosts),selfBoosts:mapBoosts(m.self?.boosts),secondary:mapSecondary(m.secondary),
+    secondaries:(m.secondaries||[]).map(mapSecondary).filter(Boolean),heal:Array.isArray(m.heal)?m.heal:null,recoil:Array.isArray(m.recoil)?m.recoil:null,
+    drain:Array.isArray(m.drain)?m.drain:null,multihit:m.multihit??null,forceSwitch:!!m.forceSwitch,selfSwitch:!!m.selfSwitch,
+    weather:mapWeather(m.weather),terrain:mapTerrain(m.terrain),protect:!!m.stallingMove&&toID(m.volatileStatus)==="protect",maxGuard:toID(m.volatileStatus)==="maxguard",
+    target:m.target||"normal",shortDesc:moveKoDescMap[id]||"",isNonstandard:m.isNonstandard||null
+  };
+}
+const STRUGGLE={id:"struggle",name:"발버둥",type:"typeless",category:"physical",power:50,accuracy:999,maxPp:999,pp:999,priority:0,flags:{contact:1,protect:1},struggle:true};
+
+const sheetStore={trainers:[],pokemon:[],moves:[],items:[],loaded:false,error:null};
+const moveKoMap={},moveKoDescMap={},itemKoMap={},abilityKoMap={},speciesKoMap={};
+const ITEM_KO_FALLBACK={
+  charizarditex:"리자몽나이트X",charizarditey:"리자몽나이트Y",mewtwonitex:"뮤츠나이트X",mewtwonitey:"뮤츠나이트Y",
+  lightball:"전기구슬",leftovers:"먹다남은음식",blacksludge:"검은진흙",lifeorb:"생명의구슬",choicescarf:"구애스카프",choiceband:"구애머리띠",choicespecs:"구애안경",focussash:"기합의띠",
+  sitrusberry:"자뭉열매",quickpowder:"스피드파우더",metalpowder:"금속가루",lumberry:"리샘열매",oranberry:"오랭열매",
+  eviolite:"진화의휘석",rockyhelmet:"울퉁불퉁멧",assaultvest:"돌격조끼",heavydutyboots:"통굽부츠",airballoon:"풍선",
+  normaliumz:"노말Z",firiumz:"불꽃Z",wateriumz:"물Z",electriumz:"전기Z",grassiumz:"풀Z",iciumz:"얼음Z",fightiniumz:"격투Z",poisoniumz:"독Z",groundiumz:"땅Z",flyiniumz:"비행Z",psychiumz:"에스퍼Z",buginiumz:"벌레Z",rockiumz:"바위Z",ghostiumz:"고스트Z",dragoniumz:"드래곤Z",darkiniumz:"악Z",steeliumz:"강철Z",fairiumz:"페어리Z"
+};
+function koNameFrom(data){return(data?.names||[]).find(x=>x.language?.name==="ko")?.name||""}
+async function fetchKoreanMoveName(moveId){
+  const id=toID(moveId),m=dexMove(id);if(!m?.num||moveKoMap[id])return moveKoMap[id]||"";
+  try{const data=await fetchJson(`${CONFIG.pokeApi}/move/${m.num}/`);const ko=koNameFrom(data);const desc=[...(data.flavor_text_entries||[])].reverse().find(x=>x.language?.name==="ko")?.flavor_text?.replace(/[\n\f]/g," ")||"";if(ko)moveKoMap[id]=ko;if(desc)moveKoDescMap[id]=desc;return ko}catch{return""}
+}
+function pokeSlug(raw){return String(raw||"").trim().toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")}
+const ITEM_API_SLUG_FALLBACK={sitrusberry:"sitrus-berry",quickpowder:"quick-powder",metalpowder:"metal-powder",lumberry:"lum-berry",oranberry:"oran-berry",choicescarf:"choice-scarf",choiceband:"choice-band",choicespecs:"choice-specs",focussash:"focus-sash",lifeorb:"life-orb",lightball:"light-ball",blacksludge:"black-sludge",assaultvest:"assault-vest",rockyhelmet:"rocky-helmet",heavydutyboots:"heavy-duty-boots",airballoon:"air-balloon"};
+async function fetchKoreanItemName(itemName){const id=toID(itemName);if(!id||itemKoMap[id])return itemKoMap[id]||"";const slugs=[pokeSlug(itemName),ITEM_API_SLUG_FALLBACK[id]].filter((x,i,a)=>x&&a.indexOf(x)===i);for(const slug of slugs){try{const data=await fetchJson(`${CONFIG.pokeApi}/item/${slug}/`);const ko=koNameFrom(data);if(ko){itemKoMap[id]=ko;return ko}}catch{}}if(ITEM_KO_FALLBACK[id])itemKoMap[id]=ITEM_KO_FALLBACK[id];return itemKoMap[id]||""}
+async function fetchKoreanAbilityName(abilityName){const id=toID(abilityName);if(!id||abilityKoMap[id])return abilityKoMap[id]||"";const slug=pokeSlug(abilityName);try{const data=await fetchJson(`${CONFIG.pokeApi}/ability/${slug}/`);const ko=koNameFrom(data);if(ko)abilityKoMap[id]=ko;return ko}catch{return""}}
+async function fetchKoreanSpeciesName(showdownId){const id=toID(showdownId),sp=dexSpecies(id);if(!sp?.num)return"";const key=String(Math.abs(sp.num));if(speciesKoMap[key])return speciesKoMap[key];try{const data=await fetchJson(`${CONFIG.pokeApi}/pokemon-species/${Math.abs(sp.num)}/`);const ko=koNameFrom(data);if(ko)speciesKoMap[key]=ko;return ko}catch{return""}}
+function displayItemName(raw){if(!raw)return"없음";const id=toID(raw);return itemKoMap[id]||ITEM_KO_FALLBACK[id]||raw}
+function displayAbilityName(raw){if(!raw)return"없음";return abilityKoMap[toID(raw)]||raw}
+function displaySpeciesName(showdownId,fallback="포켓몬"){const sp=dexSpecies(showdownId),base=sp?.num?speciesKoMap[String(Math.abs(sp.num))]:"";if(!base)return fallback||sp?.name||showdownId;const f=norm(sp?.forme||"");if(f.startsWith("mega")){const suffix=/x$/.test(f)?"X":/y$/.test(f)?"Y":"";return`메가${base}${suffix}`}if(f.includes("gmax"))return`거다이맥스 ${base}`;if(f==="alola")return`알로라의 모습 ${base}`;if(f==="galar")return`가라르의 모습 ${base}`;if(f==="hisui")return`히스이의 모습 ${base}`;if(f==="paldea")return`팔데아의 모습 ${base}`;return base}
+async function primeKoreanMoveNames(nickname=null){
+  if(!dexStore.ready)return;const moves=new Set(),items=new Set(),abilities=new Set(),species=new Set(),key=nickname?norm(nickname):null;
+  const rows=key?sheetStore.pokemon.filter(r=>norm(rowVal(r,"trainer_nickname","trainer","트레이너"))===key):(DEMO?.pokemon||[]);
+  for(const r of rows){const sid=rowVal(r,"showdown_id","sprite_id")||rowVal(r,"species","pokemon","포켓몬");if(sid){const did=toID(sid);species.add(did);const sp=dexSpecies(did);for(const a of Object.values(sp?.abilities||{}))abilities.add(toID(a));for(const formName of(sp?.otherFormes||[])){const fid=toID(formName),fd=dexSpecies(fid);if(fd&&/mega/.test(norm(fd.forme||fd.name))){species.add(fid);for(const a of Object.values(fd.abilities||{}))abilities.add(toID(a));if(fd.requiredItem)items.add(fd.requiredItem)}}}const it=rowVal(r,"item","도구");if(it)items.add(it);const ab=rowVal(r,"ability","특성");if(ab)abilities.add(toID(ab));for(let i=1;i<=4;i++){const v=rowVal(r,`move${i}`,`기술${i}`)||r[`move${i}`];if(v)moves.add(toID(v))}}
+  const tasks=[...moves].map(fetchKoreanMoveName).concat([...items].map(fetchKoreanItemName),[...abilities].map(fetchKoreanAbilityName),[...species].map(fetchKoreanSpeciesName));for(let i=0;i<tasks.length;i+=12)await Promise.all(tasks.slice(i,i+12));
+}
+function parseInlineBag(v){const out={};for(const part of String(v||"").split(/[|,]/)){const [rawId,rawQty]=part.split(/[:*x×]/);const id=toID(rawId);if(!id)continue;out[id]=(out[id]||0)+Math.max(0,num(rawQty,1))}return out}
+function trainerBag(key,tr,source=sheetStore){const bag=parseInlineBag(rowVal(tr,"bag","items","가방"));for(const r of(source.items||[])){if(norm(rowVal(r,"trainer_nickname","trainer","트레이너"))!==key)continue;const id=toID(rowVal(r,"item_id","item","아이템id","아이템"));if(!id)continue;bag[id]=(bag[id]||0)+Math.max(0,num(rowVal(r,"quantity","qty","수량"),1))}return bag}
+
+function gvizTab(tab){return new Promise((resolve,reject)=>{const cb="__gviz_"+Math.random().toString(36).slice(2);const script=document.createElement("script");const timer=setTimeout(()=>done(new Error(`시트 '${tab}' 응답 시간 초과`)),12000);function done(err,data){clearTimeout(timer);delete window[cb];script.remove();err?reject(err):resolve(data)}window[cb]=res=>{if(res?.status==="error")return done(new Error(res.errors?.[0]?.detailed_message||res.errors?.[0]?.message||`${tab} 로딩 실패`));done(null,res)};script.onerror=()=>done(new Error(`${tab} 탭을 불러오지 못했습니다.`));script.src=`https://docs.google.com/spreadsheets/d/${CONFIG.sheetId}/gviz/tq?headers=1&sheet=${encodeURIComponent(tab)}&tqx=${encodeURIComponent("responseHandler:"+cb)}`;document.head.appendChild(script)})}
+function gvizObjects(res){const cols=(res.table?.cols||[]).map((c,i)=>String(c.label||c.id||`col${i}`).trim());return(res.table?.rows||[]).map(r=>{const o={};cols.forEach((k,i)=>{if(k)o[k]=r.c?.[i]?.v??r.c?.[i]?.f??""});return o})}
+async function loadSheets(){
+  qs("#sheetBadge").textContent="시트: 연결 중";
+  try{
+    const [t,p]=await Promise.all([gvizTab(CONFIG.sheetTabs.trainers),gvizTab(CONFIG.sheetTabs.pokemon)]);
+    let m=[],items=[];try{m=gvizObjects(await gvizTab(CONFIG.sheetTabs.moves))}catch{m=[]}try{items=gvizObjects(await gvizTab(CONFIG.sheetTabs.items))}catch{items=[]}
+    sheetStore.trainers=gvizObjects(t);sheetStore.pokemon=gvizObjects(p);sheetStore.moves=m;sheetStore.items=items;sheetStore.loaded=true;sheetStore.error=null;
+    qs("#sheetBadge").textContent=`시트: 트레이너 ${sheetStore.trainers.length}명`;
+    qs("#loginStatus").textContent=dexStore.ready?"데이터 준비 완료. 닉네임을 입력하세요.":"Google 시트는 준비됐지만 Showdown 도감 연결을 확인 중입니다.";
+  }catch(e){sheetStore.loaded=false;sheetStore.error=e;qs("#sheetBadge").textContent="시트: 가이드 확인";qs("#loginStatus").innerHTML=`<span class="warn">시트 자동 불러오기 실패:</span> ${esc(e.message)}<br>데모 배틀은 사용할 수 있습니다.`}
+}
+function displayMoveName(id){const key=toID(id),r=sheetStore.moves.find(x=>toID(rowVal(x,"move_id","id","기술id"))===key);return (r?rowVal(r,"display_name","name","기술명"):"")||moveKoMap[key]||""}
+function autoMegaData(baseId,item,manualId="",variant=""){
+  const base=dexSpecies(baseId);if(!base)return null;
+  const ids=(base.otherFormes||[]).map(toID).filter(id=>/mega/.test(norm(dexSpecies(id)?.forme||dexSpecies(id)?.name)));
+  const forms=ids.map(id=>({id,data:dexSpecies(id)})).filter(x=>x.data);if(!forms.length)return null;
+  const held=canonicalItem(item),wanted=norm(variant).replace(/[^xy]/g,"");let chosen=null;
+  if(manualId){const mid=toID(manualId);const d=dexSpecies(mid);if(d)chosen={id:mid,data:d}}
+  if(!chosen&&held)chosen=forms.find(x=>canonicalItem(x.data.requiredItem||"")===held);
+  if(!chosen&&wanted)chosen=forms.find(x=>norm(x.data.forme||x.data.name).replace(/[^a-z]/g,"").endsWith(wanted));
+  if(!chosen&&forms.length===1)chosen=forms[0];
+  if(!chosen)return{ambiguous:true,options:forms.map(x=>({showdownId:spriteIdFromDexId(x.id,x.data),name:x.data.name,stone:x.data.requiredItem||null}))};
+  const d=chosen.data;return{showdownId:spriteIdFromDexId(chosen.id,d),name:displaySpeciesName(chosen.id,d.name),types:(d.types||[]).map(norm),ability:Object.values(d.abilities||{})[0]||"",stone:d.requiredItem||null,requiredMove:toID(d.requiredMove||""),statsMode:"base",stats:{hp:d.baseStats.hp,attack:d.baseStats.atk,defense:d.baseStats.def,specialAttack:d.baseStats.spa,specialDefense:d.baseStats.spd,speed:d.baseStats.spe}};
+}
+function autoGmaxId(baseId,manualId=""){
+  if(manualId)return manualId;
+  const base=dexSpecies(baseId);const id=(base?.otherFormes||[]).map(toID).find(x=>/gmax/.test(norm(dexSpecies(x)?.forme||dexSpecies(x)?.name)));
+  return id?spriteIdFromDexId(id,dexSpecies(id)):null;
+}
+function statField(r,prefix,key,short){return num(rowVal(r,`${prefix}_${key}`,`${prefix}_${short}`),prefix==="iv"?31:0)}
+function buildPokemonData(r){
+  const rawSprite=rowVal(r,"showdown_id","sprite_id")||rowVal(r,"species","pokemon","포켓몬");
+  const dexId=toID(rawSprite);const sp=dexSpecies(dexId);const errors=[],warnings=[];
+  if(!sp)return{errors:[`알 수 없는 포켓몬/폼: ${rawSprite}`]};
+  const speciesKo=displaySpeciesName(dexId,sp.name);
+  if(sp.battleOnly)errors.push(`${speciesKo}은(는) 전투 시작 형태로 직접 등록할 수 없습니다. 기본 형태를 등록하세요.`);
+  const spriteId=rowVal(r,"showdown_id","sprite_id")||spriteIdFromDexId(dexId,sp);
+  const allowedAbilities=Object.values(sp.abilities||{});let ability=rowVal(r,"ability","특성")||allowedAbilities[0]||"";
+  if(ability&&!allowedAbilities.some(a=>toID(a)===toID(ability))){warnings.push(`특성 '${displayAbilityName(ability)}'은 ${speciesKo}의 일반 특성이 아니므로 '${displayAbilityName(allowedAbilities[0]||"없음")}'으로 교체됨.`);ability=allowedAbilities[0]||ability}
+  const moveIds=[1,2,3,4].map(i=>rowVal(r,`move${i}`,`기술${i}`)).filter(Boolean);
+  const moves=[];
+  for(const raw of moveIds){
+    const m=showdownMoveData(raw,displayMoveName(raw));
+    if(!m){errors.push(`존재하지 않는 기술: ${raw}`);continue}
+    const legal=checkMoveLegality(dexId,m.id);
+    if(!legal.ok){errors.push(`${speciesKo} → ${m.name}: ${legal.reason}`);continue}
+    if(m.isNonstandard&&m.isNonstandard!=="Unobtainable")warnings.push(`${m.name}: 현재 규칙에서 일반적으로 사용할 수 없는 기술로 분류됩니다.`);
+    moves.push(m);
+  }
+  if(!moves.length)errors.push(`${speciesKo}: 사용할 수 있는 기술이 없습니다.`);
+  const base={hp:sp.baseStats.hp,attack:sp.baseStats.atk,defense:sp.baseStats.def,specialAttack:sp.baseStats.spa,specialDefense:sp.baseStats.spd,speed:sp.baseStats.spe};
+  const statMode=norm(rowVal(r,"stat_mode"))||"base";
+  const finalStats={hp:num(rowVal(r,"hp"),base.hp),attack:num(rowVal(r,"attack","atk"),base.attack),defense:num(rowVal(r,"defense","def"),base.defense),specialAttack:num(rowVal(r,"special_attack","spa"),base.specialAttack),specialDefense:num(rowVal(r,"special_defense","spd"),base.specialDefense),speed:num(rowVal(r,"speed","spe"),base.speed)};
+  const ivs={hp:statField(r,"iv","hp","hp"),attack:statField(r,"iv","attack","atk"),defense:statField(r,"iv","defense","def"),specialAttack:statField(r,"iv","special_attack","spa"),specialDefense:statField(r,"iv","special_defense","spd"),speed:statField(r,"iv","speed","spe")};
+  const evs={hp:statField(r,"ev","hp","hp"),attack:statField(r,"ev","attack","atk"),defense:statField(r,"ev","defense","def"),specialAttack:statField(r,"ev","special_attack","spa"),specialDefense:statField(r,"ev","special_defense","spd"),speed:statField(r,"ev","speed","spe")};
+  if(Object.values(evs).some(v=>v>252)||Object.values(evs).reduce((a,b)=>a+b,0)>510)warnings.push(`${speciesKo}: EV가 일반 한도(개별 252 / 합계 510)를 넘습니다.`);
+  const item=rowVal(r,"item","도구")||null;
+  const teraType=norm(rowVal(r,"tera_type","tera","테라타입"))||norm(sp.types?.[0])||"normal";if(!TYPE_KO[teraType])errors.push(`${speciesKo}: 알 수 없는 테라타입 '${teraType}'`);
+  const megaData=autoMegaData(dexId,item,rowVal(r,"mega_showdown_id"),rowVal(r,"mega_variant","메가분기"));
+  if(megaData?.ambiguous)errors.push(`${speciesKo}: 메가진화 형태가 여러 개입니다. 지닌물건에 정확한 메가스톤을 넣거나 mega_variant(X/Y) 또는 mega_showdown_id를 지정하세요.`);
+  const gmaxShowdownId=autoGmaxId(dexId,rowVal(r,"gmax_showdown_id"));
+  return{errors,warnings,data:{species:speciesKo,dexName:speciesKo,nickname:rowVal(r,"nickname","별명")||speciesKo,showdownId:spriteId,dexId,shiny:bool(rowVal(r,"shiny","이로치")),level:num(rowVal(r,"level","레벨"),50),types:(sp.types||["Normal"]).map(norm),ability,item,teraType,statsMode:statMode,stats:statMode==="final"&&CONFIG.allowCustomFinalStats?finalStats:base,baseStats:base,ivs,evs,nature:norm(rowVal(r,"nature","성격"))||"serious",moves,dynamaxLevel:Math.max(0,Math.min(10,num(rowVal(r,"dynamax_level"),10))),megaData,gmaxShowdownId,cannotDynamax:!!sp.cannotDynamax}};
+}
+function getTrainerData(nickname,source=sheetStore){
+  const key=norm(nickname);const tr=(source.trainers||[]).find(r=>norm(rowVal(r,"nickname","닉네임"))===key);if(!tr)return null;
+  const rows=(source.pokemon||[]).filter(r=>norm(rowVal(r,"trainer_nickname","trainer","트레이너"))===key).sort((a,b)=>num(rowVal(a,"slot"),999)-num(rowVal(b,"slot"),999)).slice(0,6);
+  const partyData=[],errors=[],warnings=[];
+  for(const r of rows){const x=buildPokemonData(r);errors.push(...(x.errors||[]));warnings.push(...(x.warnings||[]));if(x.data)partyData.push(x.data)}
+  const gear={keyStone:bool(rowVal(tr,"key_stone","keystone","키스톤")),zRing:bool(rowVal(tr,"z_ring","zring","Z링","제트링")),dynamaxBand:bool(rowVal(tr,"dynamax_band","dynamaxband","다이맥스밴드")),teraOrb:bool(rowVal(tr,"tera_orb","teraorb","테라스탈오브","테라오브"))};
+  return{id:key,name:rowVal(tr,"display_name","name","표시이름")||rowVal(tr,"nickname","닉네임"),money:num(rowVal(tr,"money","소지금"),0),bag:trainerBag(key,tr,source),gear,partyData,errors,warnings};
+}
+
+const DEMO={
+  trainers:[{nickname:"demo",display_name:"게스트",money:3000,key_stone:true,z_ring:true,dynamax_band:true,tera_orb:true},{nickname:"rival",display_name:"라이벌",money:5000,key_stone:true,z_ring:true,dynamax_band:true,tera_orb:true}],
+  pokemon:[
+    {trainer_nickname:"demo",slot:1,species:"리자몽",showdown_id:"charizard",level:50,ability:"Blaze",item:"Charizardite X",tera_type:"dragon",nature:"timid",move1:"flamethrower",move2:"airslash",move3:"dragonpulse",move4:"protect"},
+    {trainer_nickname:"demo",slot:2,species:"피카츄",showdown_id:"pikachu",level:50,ability:"Static",item:"Light Ball",tera_type:"electric",nature:"jolly",move1:"thunderbolt",move2:"quickattack",move3:"thunderwave",move4:"protect"},
+    {trainer_nickname:"rival",slot:1,species:"거북왕",showdown_id:"blastoise",level:50,ability:"Torrent",item:"Leftovers",tera_type:"steel",nature:"modest",move1:"surf",move2:"icebeam",move3:"darkpulse",move4:"protect"},
+    {trainer_nickname:"rival",slot:2,species:"이상해꽃",showdown_id:"venusaur",level:50,ability:"Overgrow",item:"Black Sludge",tera_type:"fairy",nature:"calm",move1:"gigadrain",move2:"sludgebomb",move3:"sleeppowder",move4:"protect"}
+  ],moves:[],items:[
+    {trainer_nickname:"demo",item_id:"potion",quantity:3},{trainer_nickname:"demo",item_id:"superpotion",quantity:1},{trainer_nickname:"demo",item_id:"fullheal",quantity:1},{trainer_nickname:"demo",item_id:"revive",quantity:1},{trainer_nickname:"demo",item_id:"xattack",quantity:1},
+    {trainer_nickname:"rival",item_id:"superpotion",quantity:2},{trainer_nickname:"rival",item_id:"fullheal",quantity:1}
+  ]
+};
+function demoTrainerData(nickname){const old={trainers:sheetStore.trainers,pokemon:sheetStore.pokemon,moves:sheetStore.moves,items:sheetStore.items};sheetStore.trainers=DEMO.trainers;sheetStore.pokemon=DEMO.pokemon;sheetStore.moves=[];sheetStore.items=DEMO.items;const x=getTrainerData(nickname,sheetStore);Object.assign(sheetStore,old);return x}
+
+function deepMove(m){const x=JSON.parse(JSON.stringify(m));x.pp=num(x.maxPp,10);return x}
+function clampStage(s){return Math.max(-6,Math.min(6,s))}
+function statStageMul(s){s=clampStage(s);return s>=0?(2+s)/2:2/(2-s)}
+function accStageMul(s){s=clampStage(s);return s>=0?(3+s)/3:3/(3-s)}
+function zPower(p){if(p<=55)return 100;if(p<=65)return 120;if(p<=75)return 140;if(p<=85)return 160;if(p<=95)return 175;if(p===100)return 180;if(p===110)return 185;if(p<=125)return 190;if(p===130)return 195;return 200}
+function maxPower(p,t){const r=t==="fighting"||t==="poison";if(r){if(p<=40)return 70;if(p<=50)return 75;if(p<=60)return 80;if(p<=70)return 85;if(p<=100)return 90;if(p<=140)return 95;return 100}if(p<=40)return 90;if(p<=50)return 100;if(p<=60)return 110;if(p<=70)return 120;if(p<=100)return 130;if(p<=140)return 140;return 150}
+function typeMultiplier(type,target){if(type==="typeless")return 1;if(type==="stellar")return target.isTerastallized?2:1;return target.types.reduce((n,t)=>n*(TYPE_CHART[type]?.[t]??1),1)}
+function randomHits(m){if(typeof m.multihit==="number")return m.multihit;if(Array.isArray(m.multihit)){const[a,b]=m.multihit;if(a===2&&b===5){const r=Math.random();return r<.35?2:r<.70?3:r<.85?4:5}return a+Math.floor(Math.random()*(b-a+1))}return 1}
+
+const ITEM_DEFS={
+  potion:{name:"상처약",kind:"heal",amount:20,desc:"HP를 20 회복"},superpotion:{name:"좋은상처약",kind:"heal",amount:60,desc:"HP를 60 회복"},hyperpotion:{name:"고급상처약",kind:"heal",amount:120,desc:"HP를 120 회복"},maxpotion:{name:"풀회복약",kind:"healFull",desc:"HP를 전부 회복"},fullrestore:{name:"회복약",kind:"fullRestore",desc:"HP와 상태이상을 모두 회복"},
+  antidote:{name:"해독제",kind:"status",statuses:["poison","toxic"],desc:"독/맹독 회복"},burnheal:{name:"화상치료제",kind:"status",statuses:["burn"],desc:"화상 회복"},iceheal:{name:"얼음상태치료제",kind:"status",statuses:["freeze"],desc:"얼음 상태 회복"},awakening:{name:"잠깨는약",kind:"status",statuses:["sleep"],desc:"잠듦 회복"},paralyzeheal:{name:"마비치료제",kind:"status",statuses:["paralysis"],desc:"마비 회복"},fullheal:{name:"만병통치제",kind:"statusAll",desc:"모든 주요 상태이상 회복"},
+  revive:{name:"기력의조각",kind:"revive",ratio:.5,desc:"기절한 포켓몬 HP 절반으로 회복"},maxrevive:{name:"기력의덩어리",kind:"revive",ratio:1,desc:"기절한 포켓몬 HP 전부 회복"},
+  xattack:{name:"플러스파워",kind:"boost",stat:"attack",stages:2,activeOnly:false,desc:"공격을 2랭크 올림"},xdefense:{name:"디펜드업",kind:"boost",stat:"defense",stages:2,activeOnly:false,desc:"방어를 2랭크 올림"},xspatk:{name:"스페셜업",kind:"boost",stat:"specialAttack",stages:2,activeOnly:false,desc:"특공을 2랭크 올림"},xspdef:{name:"스페셜가드",kind:"boost",stat:"specialDefense",stages:2,activeOnly:false,desc:"특방을 2랭크 올림"},xspeed:{name:"스피드업",kind:"boost",stat:"speed",stages:2,activeOnly:false,desc:"스피드를 2랭크 올림"},xaccuracy:{name:"잘-맞히기",kind:"boost",stat:"accuracy",stages:2,activeOnly:false,desc:"명중률을 2랭크 올림"}
+};
+function itemDef(id){return ITEM_DEFS[toID(id)]||null}
+
+const Z_CRYSTAL_BY_TYPE={normal:"normaliumz",fire:"firiumz",water:"wateriumz",electric:"electriumz",grass:"grassiumz",ice:"iciumz",fighting:"fightiniumz",poison:"poisoniumz",ground:"groundiumz",flying:"flyiniumz",psychic:"psychiumz",bug:"buginiumz",rock:"rockiumz",ghost:"ghostiumz",dragon:"dragoniumz",dark:"darkiniumz",steel:"steeliumz",fairy:"fairiumz"};
+const MECHANIC_KO={mega:"메가진화",z:"Z기술",dynamax:"다이맥스",gmax:"거다이맥스",tera:"테라스탈"};
+function zCrystalMatches(p,move){if(!p||!move||move.category==="status")return false;return canonicalItem(p.item)===Z_CRYSTAL_BY_TYPE[move.type]}
+function hasMegaRequirement(p){if(!p?.megaData)return false;if(p.megaData.stone)return canonicalItem(p.item)===canonicalItem(p.megaData.stone);if(p.megaData.requiredMove)return p.moves.some(m=>m.id===p.megaData.requiredMove);return false}
+function mechanicReason(k,t,p,move=null){
+  if(k==="mega"){if(t.megaUsed)return"이미 이번 배틀에서 메가진화를 사용했습니다.";if(!t.gear?.keyStone)return"트레이너에게 키스톤이 없습니다.";if(!p.megaData)return"이 포켓몬은 메가진화할 수 없습니다.";if(!hasMegaRequirement(p))return p.megaData.stone?`${displayItemName(p.megaData.stone)}을(를) 지니고 있어야 합니다.`:"필요한 메가진화 조건을 만족하지 못했습니다.";if(p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
+  if(k==="z"){if(t.zUsed)return"이미 이번 배틀에서 Z기술을 사용했습니다.";if(!t.gear?.zRing)return"트레이너에게 Z링이 없습니다.";if(!move)return"먼저 기술을 선택하세요.";if(move.category==="status")return"현재 엔진은 공격 기술의 Z기술만 지원합니다.";const need=Z_CRYSTAL_BY_TYPE[move.type];if(!need)return"이 기술 타입에 대응하는 Z크리스탈을 찾을 수 없습니다.";if(canonicalItem(p.item)!==need)return`${displayItemName(need)}을(를) 지니고 있어야 합니다.`;if(p.isMega||p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
+  if(k==="dynamax"){if(t.dynamaxUsed)return"이미 이번 배틀에서 다이맥스를 사용했습니다.";if(!t.gear?.dynamaxBand)return"트레이너에게 다이맥스밴드가 없습니다.";if(p.cannotDynamax)return"이 포켓몬은 다이맥스할 수 없습니다.";if(p.isMega||p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
+  if(k==="gmax"){if(t.dynamaxUsed)return"이미 이번 배틀에서 다이맥스 계열을 사용했습니다.";if(!t.gear?.dynamaxBand)return"트레이너에게 다이맥스밴드가 없습니다.";if(!p.gmaxShowdownId)return"이 포켓몬은 거다이맥스할 수 없습니다.";if(p.isMega||p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
+  if(k==="tera"){if(t.terastalUsed)return"이미 이번 배틀에서 테라스탈을 사용했습니다.";if(!t.gear?.teraOrb)return"트레이너에게 테라스탈오브가 없습니다.";if(p.isMega||p.isDynamaxed)return"현재 다른 기믹이 적용 중입니다.";return""}
+  return"사용할 수 없습니다."
+}
+function mechanicAvailable(k,t,p,move=null){return!mechanicReason(k,t,p,move)}
+
+// V3.2.14 — 변신 / 괴짜 / 일루전 구현
+class Pokemon{
+  constructor(d){
+    this.species=d.species;this.dexName=d.dexName||d.species;this.dexId=d.dexId||toID(d.showdownId);this.nickname=d.nickname||d.species;this.showdownId=d.showdownId;this.shiny=!!d.shiny;this.level=d.level||50;
+    this.types=d.types?.length?[...d.types]:["normal"];this.originalTypes=[...this.types];this.ability=d.ability||"";this.item=d.item||null;this.teraType=d.teraType||"normal";this.statsMode=d.statsMode||"base";
+    this.sourceStats={...(d.stats||d.baseStats)};this.ivs={hp:31,attack:31,defense:31,specialAttack:31,specialDefense:31,speed:31,...d.ivs};this.evs={hp:0,attack:0,defense:0,specialAttack:0,specialDefense:0,speed:0,...d.evs};this.nature=d.nature||"serious";
+    this.moves=(d.moves||[]).map(deepMove);this.megaData=d.megaData?JSON.parse(JSON.stringify(d.megaData)):null;this.gmaxShowdownId=d.gmaxShowdownId||null;this.cannotDynamax=!!d.cannotDynamax;this.dynamaxLevel=d.dynamaxLevel??10;
+    this.isMega=false;this.isDynamaxed=false;this.isGigantamaxed=false;this.isTerastallized=false;this.dynamaxTurnsLeft=0;this.status=null;this.statusTurns=0;this.toxicCounter=0;
+    // 변신/괴짜/일루전용 전투 상태. JSON 스냅샷에도 그대로 저장된다.
+    this.isTransformed=false;this.transformBackup=null;this.transformedSpriteId=null;this.transformedShiny=null;this.transformedIntoName=null;
+    this.illusionActive=false;this.illusionData=null;
+    this.statStages={attack:0,defense:0,specialAttack:0,specialDefense:0,speed:0,accuracy:0,evasion:0};this.protectChain=0;this.protected=false;this.maxGuarded=false;this.stats=this.calcStats();this.currentHp=this.stats.hp;
+  }
+  calcStats(){
+    if(this.statsMode==="final")return{hp:Math.max(1,num(this.sourceStats.hp,1)),attack:Math.max(1,num(this.sourceStats.attack,1)),defense:Math.max(1,num(this.sourceStats.defense,1)),specialAttack:Math.max(1,num(this.sourceStats.specialAttack,1)),specialDefense:Math.max(1,num(this.sourceStats.specialDefense,1)),speed:Math.max(1,num(this.sourceStats.speed,1))};
+    const nature=NATURES[toID(this.nature)]||NATURES.serious;
+    const calc=(stat,isHp=false)=>{const b=num(this.sourceStats[stat],1),iv=Math.max(0,Math.min(31,num(this.ivs[stat],31))),ev=Math.max(0,Math.min(252,num(this.evs[stat],0)));const core=Math.floor(((2*b+iv+Math.floor(ev/4))*this.level)/100);if(isHp)return core+this.level+10;let v=core+5;if(nature[0]===stat)v=Math.floor(v*1.1);if(nature[1]===stat)v=Math.floor(v*.9);return v};
+    return{hp:calc("hp",true),attack:calc("attack"),defense:calc("defense"),specialAttack:calc("specialAttack"),specialDefense:calc("specialDefense"),speed:calc("speed")};
+  }
+  isFainted(){return this.currentHp<=0}
+  takeDamage(n){const d=Math.min(this.currentHp,Math.max(0,Math.floor(n)));this.currentHp-=d;return d}
+  heal(n){const old=this.currentHp;this.currentHp=Math.min(this.stats.hp,this.currentHp+Math.max(0,Math.floor(n)));return this.currentHp-old}
+  resetVolatile(){for(const k in this.statStages)this.statStages[k]=0;this.protectChain=0;this.protected=false;this.maxGuarded=false}
+  allPpDepleted(){return this.moves.every(m=>m.pp<=0)}
+  actualSpriteId(){if(this.isTransformed&&this.transformedSpriteId)return this.transformedSpriteId;if(this.isGigantamaxed&&this.gmaxShowdownId)return this.gmaxShowdownId;if(this.isMega&&this.megaData?.showdownId)return this.megaData.showdownId;return this.showdownId}
+  spriteId(){if(this.illusionActive&&this.illusionData?.showdownId)return this.illusionData.showdownId;return this.actualSpriteId()}
+  spriteShiny(){if(this.illusionActive&&this.illusionData&&typeof this.illusionData.shiny==="boolean")return this.illusionData.shiny;if(this.isTransformed&&typeof this.transformedShiny==="boolean")return this.transformedShiny;return !!this.shiny}
+  displayName(){return this.illusionActive&&this.illusionData?.nickname?this.illusionData.nickname:this.nickname}
+}
+class Trainer{
+  constructor(d){this.id=d.id;this.name=d.name;this.money=d.money||0;this.bag={...(d.bag||{})};this.gear={keyStone:false,zRing:false,dynamaxBand:false,teraOrb:false,...(d.gear||{})};this.party=(d.partyData||[]).map(x=>new Pokemon(x));this.activeIndex=0;this.megaUsed=false;this.zUsed=false;this.dynamaxUsed=false;this.terastalUsed=false;this.pending=null}
+  get active(){return this.party[this.activeIndex]}usable(){return this.party.filter(p=>!p.isFainted())}hasUsable(){return this.usable().length>0}
+}
+
+class Battle{
+  constructor(a,b){
+    this.trainerA=new Trainer({...a,id:"A"});this.trainerB=new Trainer({...b,id:"B"});this.turn=1;this.finished=false;this.logs=[];this.debug=[];this.visualEvents=[];this.visualSeq=0;this.weather=null;this.weatherTurns=0;this.terrain=null;this.terrainTurns=0;this.forceSwitch={A:false,B:false};
+    this.applyInitialAbilities();
+  }
+  trainer(side){return side==="A"?this.trainerA:this.trainerB}
+  log(text,kind="normal"){this.logs.push({turn:this.turn,text,kind,at:Date.now()})}
+  emitVisual(type,data={}){const ev={id:++this.visualSeq,type,turn:this.turn,...data};this.visualEvents.push(ev);if(this.visualEvents.length>24)this.visualEvents.splice(0,this.visualEvents.length-24);return ev}
+  dbg(text){this.debug.push(`[T${this.turn}] ${text}`)}
+  grounded(p){return!p.types.includes("flying")&&toID(p.ability)!=="levitate"}
+  effectiveStat(p,stat){let v=Math.floor(p.stats[stat]*statStageMul(p.statStages[stat]||0));if(stat==="speed"&&p.status==="paralysis")v=Math.floor(v*.5);if(stat==="defense"&&this.weather==="snow"&&p.types.includes("ice"))v=Math.floor(v*1.5);if(stat==="specialDefense"&&this.weather==="sand"&&p.types.includes("rock"))v=Math.floor(v*1.5);return Math.max(1,v)}
+  weatherDuration(user,w){const item=canonicalItem(user?.item);if((w==="rain"&&item==="damprock")||(w==="sun"&&item==="heatrock")||(w==="sand"&&item==="smoothrock")||(w==="snow"&&item==="icyrock"))return 8;return 5}
+  terrainDuration(user){return canonicalItem(user?.item)==="terrainextender"?8:5}
+  setWeather(w,turns=5,source=""){if(this.weather===w){this.log(`${WEATHER_KO[w]||w}은(는) 이미 이어지고 있다.`);return false}this.weather=w;this.weatherTurns=w?turns:0;this.log(w?`${source?source+"의 효과로 ":""}${WEATHER_KO[w]||w} 날씨가 시작됐다!`:"날씨가 평온해졌다.","field");return true}
+  setTerrain(t,turns=5,source=""){if(this.terrain===t){this.log(`${TERRAIN_KO[t]||t}은(는) 이미 펼쳐져 있다.`);return false}this.terrain=t;this.terrainTurns=t?turns:0;this.log(t?`${source?source+"의 효과로 ":""}${TERRAIN_KO[t]||t}가 펼쳐졌다!`:"필드 효과가 사라졌다.","field");return true}
+  applyInitialAbilities(){const pair=[["A",this.trainerA.active],["B",this.trainerB.active]].sort((x,y)=>this.effectiveStat(y[1],"speed")-this.effectiveStat(x[1],"speed"));for(const[,p]of pair)this.applyEntryAbility(p)}
+  sideOfPokemon(p){if(this.trainerA.party.includes(p))return"A";if(this.trainerB.party.includes(p))return"B";return null}
+  ownerOfPokemon(p){const side=this.sideOfPokemon(p);return side?this.trainer(side):null}
+  foeOfPokemon(p){const side=this.sideOfPokemon(p);return side?this.trainer(side==="A"?"B":"A"):null}
+  activateIllusion(p){
+    p.illusionActive=false;p.illusionData=null;
+    if(toID(p.ability)!=="illusion")return false;
+    const owner=this.ownerOfPokemon(p);if(!owner)return false;
+    const disguise=[...owner.party].reverse().find(x=>x!==p&&!x.isFainted());if(!disguise)return false;
+    p.illusionActive=true;p.illusionData={showdownId:disguise.actualSpriteId?disguise.actualSpriteId():disguise.showdownId,shiny:disguise.spriteShiny?disguise.spriteShiny():!!disguise.shiny,nickname:disguise.nickname,species:disguise.species,types:[...(disguise.types||[])],level:disguise.level};
+    return true;
+  }
+  breakIllusion(p,announce=true){if(!p?.illusionActive)return false;p.illusionActive=false;p.illusionData=null;if(announce)this.log(`${p.nickname}의 일루전이 깨졌다!`);return true}
+  transformPokemon(user,target,source="move"){
+    if(!user||!target||user===target||user.isTransformed||target.isFainted())return false;
+    const keepHp=user.currentHp,keepMax=user.stats.hp;
+    user.transformBackup={types:[...user.types],originalTypes:[...user.originalTypes],ability:user.ability,stats:{...user.stats},moves:JSON.parse(JSON.stringify(user.moves))};
+    user.types=[...target.types];user.originalTypes=[...(target.originalTypesBeforeTera??target.originalTypes??target.types)];user.ability=target.ability;
+    user.stats={...target.stats,hp:keepMax};user.currentHp=Math.min(keepMax,keepHp);
+    user.moves=(target.moves||[]).map(m=>{const x=JSON.parse(JSON.stringify(m));x.pp=Math.min(5,Math.max(1,num(x.maxPp,5)));return x});
+    user.statStages={...target.statStages};
+    user.isTransformed=true;user.transformedSpriteId=target.actualSpriteId?target.actualSpriteId():target.spriteId();user.transformedShiny=target.spriteShiny?target.spriteShiny():!!target.shiny;user.transformedIntoName=target.nickname;
+    this.breakIllusion(user,false);
+    this.log(source==="imposter"?`${user.nickname}의 괴짜! ${target.nickname}의 모습으로 변신했다!`:`${user.nickname}이(가) ${target.nickname}의 모습으로 변신했다!`,"transform");
+    return true;
+  }
+  revertTransform(p){
+    if(!p?.isTransformed)return false;const b=p.transformBackup;
+    if(b){p.types=[...b.types];p.originalTypes=[...b.originalTypes];p.ability=b.ability;p.stats={...b.stats};p.moves=JSON.parse(JSON.stringify(b.moves));p.currentHp=Math.min(p.currentHp,p.stats.hp)}
+    p.isTransformed=false;p.transformBackup=null;p.transformedSpriteId=null;p.transformedShiny=null;p.transformedIntoName=null;
+    return true;
+  }
+  applyEntryAbility(p){
+    const a=toID(p.ability);const source=`${p.nickname}의 ${displayAbilityName(p.ability)}`;
+    if(a==="illusion")this.activateIllusion(p);
+    if(a==="imposter"){const foe=this.foeOfPokemon(p)?.active;if(foe&&!foe.isFainted())this.transformPokemon(p,foe,"imposter");return}
+    if(a==="drizzle")this.setWeather("rain",this.weatherDuration(p,"rain"),source);else if(a==="drought"||a==="orichalcumpulse")this.setWeather("sun",this.weatherDuration(p,"sun"),source);else if(a==="sandstream")this.setWeather("sand",this.weatherDuration(p,"sand"),source);else if(a==="snowwarning")this.setWeather("snow",this.weatherDuration(p,"snow"),source);
+    else if(a==="electricsurge"||a==="hadronengine")this.setTerrain("electric",this.terrainDuration(p),source);else if(a==="grassysurge")this.setTerrain("grassy",this.terrainDuration(p),source);else if(a==="mistysurge")this.setTerrain("misty",this.terrainDuration(p),source);else if(a==="psychicsurge")this.setTerrain("psychic",this.terrainDuration(p),source);
+  }
+  queue(side,kind,moveIndex=null){
+    const t=this.trainer(side),p=t.active;if(t.pending===kind){t.pending=null;return}
+    const move=moveIndex==null?null:p.moves[moveIndex];const reason=mechanicReason(kind,t,p,move);if(reason){this.log(`${t.name}: ${MECHANIC_KO[kind]||kind} 사용 불가 — ${reason}`);return}
+    t.pending=kind;
+  }
+  activateBeforeOrder(t){
+    const p=t.active,k=t.pending;
+    if(k==="mega"){
+      const oldMax=p.stats.hp,ratio=p.currentHp/oldMax;p.nickname=p.megaData.name;p.types=[...p.megaData.types];p.ability=p.megaData.ability||p.ability;p.sourceStats={...p.megaData.stats};p.statsMode="base";p.stats=p.calcStats();p.currentHp=Math.max(1,Math.min(p.stats.hp,Math.floor(p.stats.hp*ratio)));p.isMega=true;t.megaUsed=true;this.log(`${p.species} → ${p.nickname}!`,"mega");this.applyEntryAbility(p);
+    }else if(k==="dynamax"||k==="gmax"){
+      const mult=1.5+.05*p.dynamaxLevel;p.preDynamaxMaxHp=p.stats.hp;p.stats.hp=Math.floor(p.stats.hp*mult);p.currentHp=Math.floor(p.currentHp*mult);p.isDynamaxed=true;p.isGigantamaxed=k==="gmax";p.dynamaxTurnsLeft=3;t.dynamaxUsed=true;this.log(`${p.nickname}이(가) ${k==="gmax"?"거다이맥스":"다이맥스"}했다!`,"dyna");
+    }else if(k==="tera"){
+      p.originalTypesBeforeTera=[...p.types];p.isTerastallized=true;if(p.teraType!=="stellar")p.types=[p.teraType];t.terastalUsed=true;this.log(`${p.nickname}이(가) ${TYPE_KO[p.teraType]||p.teraType} 타입으로 테라스탈했다!`,"tera");
+    }
+    if(["mega","dynamax","gmax","tera"].includes(k))t.pending=null;
+  }
+  getStab(p,type){const orig=p.originalTypesBeforeTera??p.originalTypes;if(!p.isTerastallized)return orig.includes(type)?1.5:1;if(p.teraType==="stellar")return orig.includes(type)?2:1;if(type===p.teraType&&orig.includes(type))return 2;if(type===p.teraType||orig.includes(type))return 1.5;return 1}
+  weatherMod(type){if(this.weather==="rain"){if(type==="water")return 1.5;if(type==="fire")return .5}if(this.weather==="sun"){if(type==="fire")return 1.5;if(type==="water")return .5}return 1}
+  terrainMod(user,target,move){let x=1;if(move.type==="electric"&&this.terrain==="electric"&&this.grounded(user))x*=1.3;if(move.type==="grass"&&this.terrain==="grassy"&&this.grounded(user))x*=1.3;if(move.type==="psychic"&&this.terrain==="psychic"&&this.grounded(user))x*=1.3;if(move.type==="dragon"&&this.terrain==="misty"&&this.grounded(target))x*=.5;if(this.terrain==="grassy"&&["earthquake","bulldoze","magnitude"].includes(move.id))x*=.5;return x}
+  abilityMod(p,m){let x=1;const a=toID(p.ability);if(a==="toughclaws"&&m.flags?.contact)x*=1.3;if(a==="megalauncher"&&m.flags?.pulse)x*=1.5;const low=p.currentHp<=Math.floor(p.stats.hp/3);if(low&&((a==="blaze"&&m.type==="fire")||(a==="torrent"&&m.type==="water")||(a==="overgrow"&&m.type==="grass")||(a==="swarm"&&m.type==="bug")))x*=1.5;return x}
+  accuracyPass(user,target,m){if(m.accuracy>=999)return true;let acc=m.accuracy*accStageMul(user.statStages.accuracy||0)/accStageMul(target.statStages.evasion||0);if(this.weather==="rain"&&["thunder","hurricane"].includes(m.id))return true;if(this.weather==="sun"&&["thunder","hurricane"].includes(m.id))acc=50;return Math.random()*100<Math.min(100,acc)}
+  damage(user,target,move){
+    const A=this.effectiveStat(user,move.category==="physical"?"attack":"specialAttack"),D=this.effectiveStat(target,move.category==="physical"?"defense":"specialDefense");let atk=A;if(move.category==="physical"&&user.status==="burn"&&toID(user.ability)!=="guts")atk=Math.max(1,Math.floor(atk*.5));
+    let dmg=Math.floor(Math.floor((Math.floor(2*user.level/5)+2)*move.power*atk/D)/50)+2;const crit=Math.random()<1/24;if(crit)dmg=Math.floor(dmg*1.5);dmg=Math.floor(dmg*this.weatherMod(move.type));dmg=Math.floor(dmg*this.terrainMod(user,target,move));dmg=Math.floor(dmg*this.getStab(user,move.type));const eff=typeMultiplier(move.type,target);dmg=Math.floor(dmg*eff);dmg=Math.floor(dmg*this.abilityMod(user,move));dmg=Math.floor(dmg*((85+Math.floor(Math.random()*16))/100));if(eff>0&&move.power>0)dmg=Math.max(1,dmg);else if(eff===0)dmg=0;return{dmg,eff,crit};
+  }
+  canInflictStatus(target,status,move=null){if(target.status)return{ok:false};if(status==="burn"&&target.types.includes("fire"))return{ok:false};if(status==="paralysis"&&target.types.includes("electric"))return{ok:false};if((status==="poison"||status==="toxic")&&(target.types.includes("poison")||target.types.includes("steel")))return{ok:false};if(move?.flags?.powder&&target.types.includes("grass"))return{ok:false};if(this.grounded(target)&&this.terrain==="misty")return{ok:false};if(status==="sleep"&&this.grounded(target)&&this.terrain==="electric")return{ok:false};return{ok:true}}
+  applyStatus(target,status,move=null){const c=this.canInflictStatus(target,status,move);if(!c.ok){this.log(`${target.nickname}에게는 ${STATUS_KO[status]||"상태이상"}이 통하지 않았다.`);return false}target.status=status;if(status==="toxic")target.toxicCounter=1;if(status==="sleep")target.statusTurns=1+Math.floor(Math.random()*3);this.log(`${target.nickname}은(는) ${STATUS_KO[status]||status} 상태가 되었다!`);return true}
+  applyBoosts(p,boosts){for(const[k,v]of Object.entries(boosts||{})){if(!(k in p.statStages)||!v)continue;const before=p.statStages[k];p.statStages[k]=clampStage(before+v);const delta=p.statStages[k]-before;if(delta)this.log(`${p.nickname}의 ${STAT_NAME[k]}${delta>0?"이 올랐다":"이 떨어졌다"}!`)} }
+  protectSuccess(p){const chance=1/Math.pow(3,p.protectChain);return Math.random()<chance}
+  canAct(p){if(p.status==="sleep"){if(p.statusTurns>0){p.statusTurns--;this.log(`${p.nickname}은(는) 깊이 잠들어 있다.`);return false}p.status=null;this.log(`${p.nickname}이(가) 잠에서 깨어났다!`)}if(p.status==="freeze"){if(Math.random()<.2){p.status=null;this.log(`${p.nickname}의 얼음이 녹았다!`)}else{this.log(`${p.nickname}은(는) 얼어붙어 움직일 수 없다.`);return false}}if(p.status==="paralysis"&&Math.random()<.25){this.log(`${p.nickname}은(는) 몸이 저려 움직일 수 없다!`);return false}return true}
+  prepareMove(t,index){
+    const p=t.active;let base=p.moves[index];if(!base||p.allPpDepleted())return{...STRUGGLE};if(base.pp<=0){this.log(`${base.name}의 PP가 없다!`);return{id:"noaction",name:"행동 실패",category:"status",priority:-99,failed:true}}
+    if(p.isDynamaxed){base.pp--;if(base.category==="status")return{id:`maxguard${base.id}`,name:"다이월",type:"normal",category:"status",power:0,accuracy:999,priority:4,maxGuard:true,flags:{}};return{...base,name:`다이${base.name}`,power:maxPower(base.power,base.type),accuracy:999,priority:0,isMaxMove:true,weather:({fire:"sun",water:"rain",rock:"sand",ice:"snow"})[base.type]||null,terrain:({electric:"electric",grass:"grassy",psychic:"psychic",fairy:"misty"})[base.type]||null}}
+    if(t.pending==="z"){t.pending=null;if(!t.zUsed&&t.gear?.zRing&&zCrystalMatches(p,base)){t.zUsed=true;base.pp--;return{...base,name:`Z기술 · ${base.name}`,power:zPower(base.power),accuracy:999,priority:0,isZMove:true}}this.log(`${t.name}: 선택한 기술은 Z기술 조건을 만족하지 않는다.`)}
+    base.pp--;let m={...base};if(m.id==="terablast"&&p.isTerastallized){m={...m,type:p.teraType,category:this.effectiveStat(p,"attack")>this.effectiveStat(p,"specialAttack")?"physical":"special"};if(p.teraType==="stellar"){m.power=100;m.selfBoosts={attack:-1,specialAttack:-1}}}return m;
+  }
+  getOrder(a,b){if(a.priority!==b.priority)return a.priority>b.priority?["A","B"]:["B","A"];const sa=this.effectiveStat(this.trainerA.active,"speed"),sb=this.effectiveStat(this.trainerB.active,"speed");if(sa!==sb)return sa>sb?["A","B"]:["B","A"];return Math.random()<.5?["A","B"]:["B","A"]}
+  applyMoveField(user,m){if(m.weather)this.setWeather(m.weather,this.weatherDuration(user,m.weather),m.name);if(m.terrain)this.setTerrain(m.terrain,this.terrainDuration(user),m.name)}
+  applySecondary(user,target,s,m){if(!s||Math.random()*100>=num(s.chance,100))return;if(s.status)this.applyStatus(target,s.status,m);this.applyBoosts(target,s.boosts);this.applyBoosts(user,s.selfBoosts)}
+  forceRandomSwitch(targetTrainer){const opts=targetTrainer.party.map((p,i)=>({p,i})).filter(x=>x.i!==targetTrainer.activeIndex&&!x.p.isFainted());if(!opts.length)return false;const pick=opts[Math.floor(Math.random()*opts.length)];this.switch(targetTrainer.id,pick.i,true);return true}
+  executeMove(t,o,m){
+    const u=t.active,target=o.active;if(m.failed)return;if(!this.canAct(u))return;this.log(`${u.nickname}의 ${m.name}!`,m.isZMove?"zmove":m.isMaxMove?"dyna":"normal");this.emitVisual("move",{sourceSide:t.id,targetSide:o.id,text:`${u.nickname}의 ${m.name}!`,moveName:m.name,userName:u.nickname});
+    if(m.protect||m.maxGuard){const ok=this.protectSuccess(u);if(ok){u.protected=!m.maxGuard;u.maxGuarded=!!m.maxGuard;u.protectChain++;this.log(`${u.nickname}은(는) 몸을 지켰다!`)}else{u.protectChain=0;this.log("그러나 실패했다!")}return}u.protectChain=0;
+    if(this.terrain==="psychic"&&this.grounded(target)&&m.priority>0){this.log("사이코필드가 우선도 기술을 막았다!");return}
+    const toxicAuto=m.id==="toxic"&&u.types.includes("poison");if(!toxicAuto&&!this.accuracyPass(u,target,m)){this.log("그러나 빗나갔다!");return}
+    this.applyMoveField(u,m);
+    if(m.category==="status"){
+      if(m.id==="transform"){if(!this.transformPokemon(u,target,"move"))this.log("그러나 변신에 실패했다!");return}
+      if(m.heal){const h=u.heal(Math.floor(u.stats.hp*m.heal[0]/m.heal[1]));this.log(`${u.nickname}의 HP가 ${h} 회복됐다!`)}
+      if(m.status)this.applyStatus(target,m.status,m);this.applyBoosts(m.target==="self"?u:target,m.boosts);this.applyBoosts(u,m.selfBoosts);if(m.forceSwitch)this.forceRandomSwitch(o);return;
+    }
+    if(target.maxGuarded){this.log(`${target.nickname}은(는) 다이월로 완전히 막았다!`);return}
+    let protectMult=1;if(target.protected){if(m.isZMove||m.isMaxMove){protectMult=.25;this.log("방어를 뚫고 일부 피해를 입혔다!")}else{this.log(`${target.nickname}은(는) 공격을 막았다!`);return}}
+    const hits=randomHits(m);let total=0,last=null;for(let i=0;i<hits&&!target.isFainted();i++){last=this.damage(u,target,m);total+=target.takeDamage(Math.floor(last.dmg*protectMult))}
+    if(total>0){this.emitVisual("hit",{sourceSide:t.id,targetSide:o.id,moveId:m.id,moveName:m.name,targetName:target.nickname,damage:total,hits});this.breakIllusion(target,true)}
+    if(last?.crit)this.log("급소에 맞았다!");if(last?.eff===0)this.log("효과가 없는 것 같다…");else if(last?.eff>=2)this.log("효과가 굉장했다!");else if(last?.eff<1)this.log("효과가 별로인 듯하다…");this.log(`${target.nickname}에게 ${total}의 피해!${hits>1?` (${hits}회)` :""}`);
+    if(m.drain&&total>0){const h=u.heal(Math.floor(total*m.drain[0]/m.drain[1]));if(h)this.log(`${u.nickname}이(가) ${h} 회복했다!`)}
+    if(m.recoil&&total>0&&!u.isFainted()){const d=u.takeDamage(Math.max(1,Math.floor(total*m.recoil[0]/m.recoil[1])));this.log(`${u.nickname}은(는) 반동으로 ${d}의 피해!`)}
+    if(m.struggle&&!u.isFainted()){const d=u.takeDamage(Math.max(1,Math.floor(u.stats.hp/4)));this.log(`${u.nickname}은(는) 반동으로 ${d}의 피해!`)}
+    if(!target.isFainted()){if(m.status)this.applyStatus(target,m.status,m);this.applyBoosts(target,m.boosts);this.applySecondary(u,target,m.secondary,m);for(const s of m.secondaries||[])this.applySecondary(u,target,s,m)}
+    this.applyBoosts(u,m.selfBoosts);if(m.forceSwitch&&!target.isFainted())this.forceRandomSwitch(o);
+    if(target.isFainted())this.log(`${target.nickname}은(는) 쓰러졌다!`);
+  }
+  useItem(side,itemId,targetIndex){
+    const t=this.trainer(side),id=toID(itemId),def=itemDef(id),qty=num(t.bag?.[id],0),target=t.party[num(targetIndex,t.activeIndex)];
+    if(!def||qty<=0||!target){this.log(`${t.name}: 아이템을 사용할 수 없다.`);return false}
+    let applied=false;
+    if(def.kind==="heal"&&!target.isFainted()&&target.currentHp<target.stats.hp){const h=target.heal(def.amount);this.log(`${t.name}은(는) ${target.nickname}에게 ${def.name}을 사용했다! HP가 ${h} 회복됐다.`,"item");applied=h>0}
+    else if(def.kind==="healFull"&&!target.isFainted()&&target.currentHp<target.stats.hp){const h=target.heal(target.stats.hp);this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 HP가 ${h} 회복됐다.`,"item");applied=h>0}
+    else if(def.kind==="fullRestore"&&!target.isFainted()&&(target.currentHp<target.stats.hp||target.status)){const h=target.heal(target.stats.hp),had=target.status;target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${target.nickname}에게 ${def.name}을 사용했다!${h?` HP ${h} 회복.`:""}${had?` ${STATUS_KO[had]||had} 회복.`:""}`,"item");applied=true}
+    else if(def.kind==="status"&&!target.isFainted()&&def.statuses.includes(target.status)){const old=target.status;target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 ${STATUS_KO[old]||old} 상태가 나았다.`,"item");applied=true}
+    else if(def.kind==="statusAll"&&!target.isFainted()&&target.status){const old=target.status;target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 ${STATUS_KO[old]||old} 상태가 나았다.`,"item");applied=true}
+    else if(def.kind==="revive"&&target.isFainted()){target.currentHp=Math.max(1,Math.ceil(target.stats.hp*def.ratio));target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}이(가) HP ${target.currentHp}로 일어났다.`,"item");applied=true}
+    else if(def.kind==="boost"&&!target.isFainted()){const before=target.statStages[def.stat]||0;target.statStages[def.stat]=clampStage(before+def.stages);applied=target.statStages[def.stat]!==before;if(applied)this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 ${STAT_NAME[def.stat]}이 크게 올랐다!`,"item")}
+    if(!applied){this.log(`${def.name}을 사용해도 효과가 없었다.`);return false}t.bag[id]=qty-1;if(t.bag[id]<=0)delete t.bag[id];return true
+  }
+  clearProtection(){for(const t of[this.trainerA,this.trainerB]){t.active.protected=false;t.active.maxGuarded=false}}
+  endTurn(){
+    for(const t of[this.trainerA,this.trainerB]){const p=t.active;if(p.isFainted())continue;let residual=0,label=null;if(p.status==="burn"){residual=Math.max(1,Math.floor(p.stats.hp/16));label="화상"}else if(p.status==="poison"){residual=Math.max(1,Math.floor(p.stats.hp/8));label="독"}else if(p.status==="toxic"){residual=Math.max(1,Math.floor(p.stats.hp*p.toxicCounter/16));p.toxicCounter=Math.min(15,p.toxicCounter+1);label="맹독"}if(residual){const d=p.takeDamage(residual);this.log(`${p.nickname}은(는) ${label}으로 ${d}의 피해를 입었다!`)}if(!p.isFainted()&&this.weather==="sand"&&!p.types.some(x=>["rock","ground","steel"].includes(x))&&!["magicguard","overcoat"].includes(toID(p.ability))){const d=p.takeDamage(Math.max(1,Math.floor(p.stats.hp/16)));this.log(`${p.nickname}은(는) 모래바람으로 ${d}의 피해를 입었다!`)}if(!p.isFainted()&&this.terrain==="grassy"&&this.grounded(p)){const h=p.heal(Math.max(1,Math.floor(p.stats.hp/16)));if(h)this.log(`${p.nickname}은(는) 그래스필드로 ${h} 회복했다!`)}if(!p.isFainted()&&p.isDynamaxed){p.dynamaxTurnsLeft--;if(p.dynamaxTurnsLeft<=0)this.endDynamax(p)}if(p.isFainted())this.log(`${p.nickname}은(는) 쓰러졌다!`)}
+    if(this.weatherTurns>0&&--this.weatherTurns===0){this.weather=null;this.log("날씨가 평온해졌다.","field")}if(this.terrainTurns>0&&--this.terrainTurns===0){this.terrain=null;this.log("필드 효과가 사라졌다.","field")}this.clearProtection();const a=this.trainerA.hasUsable(),b=this.trainerB.hasUsable();if(!a&&!b){this.finished=true;this.log("양쪽 모두 전투 불능! 무승부다.");return}if(!a){this.finish(this.trainerB,this.trainerA);return}if(!b){this.finish(this.trainerA,this.trainerB);return}this.updateForcedSwitch();
+  }
+  endDynamax(p){const oldMax=p.stats.hp,base=p.preDynamaxMaxHp,ratio=base/oldMax;p.currentHp=Math.min(base,Math.ceil(p.currentHp*ratio));p.stats.hp=base;p.preDynamaxMaxHp=null;p.isDynamaxed=false;p.isGigantamaxed=false;p.dynamaxTurnsLeft=0}
+  updateForcedSwitch(){for(const side of["A","B"]){const t=this.trainer(side);this.forceSwitch[side]=t.active.isFainted()&&t.hasUsable();if(this.forceSwitch[side])this.log(`${t.name}은(는) 다음 포켓몬을 내보내야 한다.`)}}
+  switch(side,index,forced=false){const t=this.trainer(side),old=t.active,next=t.party[index];if(!next||next.isFainted()||next===old)return false;if(this.forceSwitch[side]&&!forced)return false;if(old.isDynamaxed)this.endDynamax(old);this.breakIllusion(old,false);this.revertTransform(old);old.resetVolatile();t.activeIndex=index;this.forceSwitch[side]=false;this.applyEntryAbility(next);this.log(`${t.name}: ${old.nickname} → ${next.displayName?next.displayName():next.nickname}`);return true}
+  actionSpeedOrder(){const sa=this.effectiveStat(this.trainerA.active,"speed"),sb=this.effectiveStat(this.trainerB.active,"speed");if(sa!==sb)return sa>sb?["A","B"]:["B","A"];return Math.random()<.5?["A","B"]:["B","A"]}
+  executeActions(actionA,actionB){
+    if(this.finished)return;if(this.forceSwitch.A||this.forceSwitch.B){this.log("강제 교체를 먼저 완료해야 한다.");return}
+    const actions={A:actionA||{kind:"move",moveIndex:0},B:actionB||{kind:"move",moveIndex:0}};this.log(`턴 ${this.turn}`);
+    for(const side of["A","B"]){const t=this.trainer(side),a=actions[side];t.pending=null;if(a.kind==="move"&&a.mechanic)this.queue(side,a.mechanic,a.moveIndex)}
+    const specialOrder=this.actionSpeedOrder();
+    for(const side of specialOrder){const a=actions[side];if(a.kind!=="switch")continue;const ok=this.switch(side,num(a.switchIndex,-1),false);if(!ok)this.log(`${this.trainer(side).name}: 교체에 실패했다.`)}
+    for(const side of specialOrder){const a=actions[side];if(a.kind!=="item")continue;this.useItem(side,a.itemId,a.targetIndex)}
+    for(const side of["A","B"]){if(actions[side].kind==="move")this.activateBeforeOrder(this.trainer(side));else this.trainer(side).pending=null}
+    const moves={};for(const side of["A","B"]){if(actions[side].kind==="move")moves[side]=this.prepareMove(this.trainer(side),num(actions[side].moveIndex,0))}
+    let order=[];if(moves.A&&moves.B)order=this.getOrder(moves.A,moves.B);else if(moves.A)order=["A"];else if(moves.B)order=["B"];
+    for(const side of order){const t=this.trainer(side),o=this.trainer(side==="A"?"B":"A"),mv=moves[side];if(t.active.isFainted()||o.active.isFainted())continue;this.executeMove(t,o,mv);if(!o.hasUsable()){this.finish(t,o);break}}
+    if(!this.finished){this.endTurn();this.turn++}
+  }
+  executeTurn(ia,ib){return this.executeActions({kind:"move",moveIndex:ia},{kind:"move",moveIndex:ib})}
+  finish(w,l){if(this.finished)return;this.finished=true;const prize=Math.floor(l.money*.1);l.money-=prize;w.money+=prize;this.log(`${w.name}의 승리!`);this.log(`${l.name}은(는) ${prize.toLocaleString()}원을 지급했다.`)}
+  snapshot(){return JSON.parse(JSON.stringify(this))}
+  static hydrate(s){const b=Object.create(Battle.prototype);Object.assign(b,s);b.visualEvents=Array.isArray(b.visualEvents)?b.visualEvents:[];b.visualSeq=Number.isFinite(b.visualSeq)?b.visualSeq:(b.visualEvents.at(-1)?.id||0);for(const key of["trainerA","trainerB"]){const t=Object.create(Trainer.prototype);Object.assign(t,s[key]);t.party=(s[key].party||[]).map(p=>{const x=Object.create(Pokemon.prototype);Object.assign(x,p);if(typeof x.isTransformed!=="boolean")x.isTransformed=false;if(!("transformBackup" in x))x.transformBackup=null;if(typeof x.illusionActive!=="boolean")x.illusionActive=false;if(!("illusionData" in x))x.illusionData=null;return x});b[key]=t}return b}
+}
+
+let battle=null,mySide="A",selectedMove=0,selectedActionKind="move",selectedSwitchIndex=null,selectedItemId=null,selectedItemTarget=null,lastControlTurn=null,mode="local",myTrainerData=null,lastVisual=null,lastVisualEventId=0,hitSequence=Promise.resolve(),visualLockDepth=0;
+function spriteUrl(p,isMine){const shiny=p.spriteShiny?p.spriteShiny():!!p.shiny;const folder=isMine?(shiny?"ani-back-shiny":"ani-back"):(shiny?"ani-shiny":"ani");return`${CONFIG.showdownBase}/${folder}/${encodeURIComponent(p.spriteId())}.gif`}
+function setSprite(img,p,isMine){const exact=spriteUrl(p,isMine);img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`};img.style.opacity="";img.src=exact}
+function trainerByPerspective(mine=true){return battle.trainer(mine?mySide:(mySide==="A"?"B":"A"))}
+function hud(t,isMineView=false){const p=t.active,pct=Math.max(0,Math.min(100,p.currentHp/p.stats.hp*100)),hideByIllusion=!isMineView&&p.illusionActive&&p.illusionData;const shownName=hideByIllusion?p.illusionData.nickname:p.nickname,shownLevel=hideByIllusion?(p.illusionData.level||p.level):p.level,shownTypes=hideByIllusion?(p.illusionData.types||p.types):p.types;const mechs=[p.isMega?"메가진화":"",p.isDynamaxed?(p.isGigantamaxed?"거다이맥스":"다이맥스"):"",p.isTerastallized?`테라스탈 · ${TYPE_KO[p.teraType]||p.teraType}`:"",p.isTransformed?`변신 · ${p.transformedIntoName||"상대"}`:""].filter(Boolean);return`<div class="title"><h3>${esc(shownName)}</h3><small>레벨 ${shownLevel}</small></div><div class="hud-meta"><span>${esc(t.name)}</span><span class="type-row">${shownTypes.map(typePill).join("")}</span>${p.status?`<span class="status-pill">${esc(STATUS_KO[p.status]||p.status)}</span>`:""}</div><div class="held-item">지닌물건 · <b>${esc(displayItemName(p.item))}</b></div><div class="hptext"><b>HP</b><span>${p.currentHp}/${p.stats.hp}</span></div><div class="hp"><div class="hpbar" style="width:${pct}%"></div></div><div class="party-dots">${t.party.map((x,i)=>`<span class="dot ${x.isFainted()?"fainted":""} ${i===t.activeIndex?"active":""}"></span>`).join("")}</div>${mechs.length?`<div class="mechanic-tags">${mechs.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}`}
+function renderTeam(t){return t.party.map((p,i)=>`<div class="teamrow"><img src="${spriteUrl(p,false)}" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · HP ${p.currentHp}/${p.stats.hp} · ${esc(displayItemName(p.item))}</small></div><span>${i===t.activeIndex?"●":""}</span></div>`).join("")}
+function renderGear(t){const g=t.gear||{};return[["키스톤",g.keyStone],["Z링",g.zRing],["다이맥스밴드",g.dynamaxBand],["테라스탈오브",g.teraOrb]].map(([name,on])=>`<span class="gear-chip ${on?"on":"off"}">${on?"✓":"×"} ${name}</span>`).join("")}
+function setTeraOverlay(base,overlay,p,isMine){
+  // 테라스탈은 전투 규칙/HUD만 유지하고 스프라이트에는 시각 효과를 주지 않는다.
+  if(overlay){
+    overlay.className="hidden";
+    overlay.removeAttribute("src");
+    overlay.style.display="none";
+  }
+  base?.closest(".spritebox")?.classList.remove("tera-active");
+}
+function renderBattle(){
+  if(!battle)return;const mine=trainerByPerspective(true),enemy=trainerByPerspective(false),mp=mine.active,ep=enemy.active;qs("#battleSection").classList.remove("hidden");qs("#playerHud").innerHTML=hud(mine,true);qs("#enemyHud").innerHTML=hud(enemy,false);setSprite(qs("#playerSprite"),mp,true);setSprite(qs("#enemySprite"),ep,false);setTeraOverlay(qs("#playerSprite"),qs("#playerTeraOverlay"),mp,true);setTeraOverlay(qs("#enemySprite"),qs("#enemyTeraOverlay"),ep,false);
+  qs("#playerSprite").className=`sprite ${mp.isDynamaxed?"dynamax":""} ${mp.isFainted()?"faint":""}`;qs("#enemySprite").className=`sprite ${ep.isDynamaxed?"dynamax":""} ${ep.isFainted()?"faint":""}`;qs("#turnLabel").textContent=`턴 ${battle.turn}`;qs("#modeLabel").textContent=mode==="online"?`온라인 배틀 · 내 진영 ${mySide}`:"로컬 시뮬레이션";qs("#myTeam").innerHTML=renderTeam(mine);qs("#gearBox").innerHTML=renderGear(mine);qs("#statBox").innerHTML=[["공격",battle.effectiveStat(mp,"attack")],["방어",battle.effectiveStat(mp,"defense")],["특공",battle.effectiveStat(mp,"specialAttack")],["특방",battle.effectiveStat(mp,"specialDefense")],["스피드",battle.effectiveStat(mp,"speed")],["지닌물건",displayItemName(mp.item)],["특성",displayAbilityName(mp.ability)]].map(x=>`<div class="stat"><small>${x[0]}</small>${esc(x[1])}</div>`).join("");qs("#battleLog").innerHTML=battle.logs.length?battle.logs.slice(-50).reverse().map(x=>`<div class="entry ${x.kind||""}">${esc(x.text)}</div>`).join(""):`<div class="muted">로그 없음</div>`;const debug=qs("#debugState");if(debug)debug.textContent=JSON.stringify(battle.snapshot(),null,2);renderArenaEffects();renderControls();visualDiff();if(battle.logs.length)qs("#battleMessage").textContent=battle.logs.at(-1).text;if(battle.finished){qs("#submitAction").disabled=true;stopBgm(false)}
+}
+function renderArenaEffects(){const a=qs("#arena");a.className=`arena ${battle.weather?`weather-${battle.weather}`:""} ${battle.terrain?`has-terrain terrain-bg-${battle.terrain}`:""}`;const tg=qs("#terrainGlow");tg.className=`terrain-glow ${battle.terrain?`terrain-${battle.terrain}`:""}`;qs("#weatherChip").innerHTML=`<b>날씨</b><span>${battle.weather?`${WEATHER_KO[battle.weather]} · ${battle.weatherTurns}턴`:"없음"}</span>`;qs("#terrainChip").innerHTML=`<b>필드</b><span>${battle.terrain?`${TERRAIN_KO[battle.terrain]} · ${battle.terrainTurns}턴`:"없음"}</span>`}
+function resetActionSelection(){selectedActionKind="move";selectedMove=0;selectedSwitchIndex=null;selectedItemId=null;selectedItemTarget=null}
+function selectedAction(){const t=trainerByPerspective(true);if(selectedActionKind==="switch")return{kind:"switch",switchIndex:selectedSwitchIndex};if(selectedActionKind==="item")return{kind:"item",itemId:selectedItemId,targetIndex:selectedItemTarget};return{kind:"move",moveIndex:selectedMove,mechanic:t.pending||null}}
+function actionSummaryText(){const mine=trainerByPerspective(true),p=mine.active;if(selectedActionKind==="switch"){const x=mine.party[selectedSwitchIndex];return x?`${p.nickname}을(를) 불러들이고 ${x.nickname}으로 교체`:"교체할 포켓몬을 선택하세요."}if(selectedActionKind==="item"){const d=itemDef(selectedItemId),x=mine.party[selectedItemTarget];return d&&x?`${d.name} → ${x.nickname}`:"사용할 아이템과 대상을 선택하세요."}const m=p.moves[selectedMove];return m?`${p.nickname} → ${m.name}${mine.pending?` · ${MECHANIC_KO[mine.pending]||mine.pending}`:""}`:"기술을 선택하세요."}
+function renderMovePane(mine,p){qs("#actionPane").innerHTML=`<div class="movegrid">${p.moves.map((m,i)=>`<button class="movebtn type-${m.type} ${selectedMove===i?"selected":""}" data-move="${i}" ${m.pp<=0?"disabled":""}><span class="move-top"><strong>${esc(m.name)}</strong>${typePill(m.type)}</span><small>${m.category==="physical"?"물리":m.category==="special"?"특수":"변화"} · 위력 ${m.power||"—"} · 명중 ${m.accuracy>=999?"—":m.accuracy} · PP ${m.pp}/${m.maxPp}</small>${m.shortDesc?`<em>${esc(m.shortDesc)}</em>`:""}</button>`).join("")}</div>`;qsa("[data-move]").forEach(b=>b.onclick=()=>{selectedMove=Number(b.dataset.move);startBgm();renderControls()});const ms=[["mega","메가진화"],["z","Z기술"],["dynamax","다이맥스"],["gmax","거다이맥스"],["tera","테라스탈"]],move=p.moves[selectedMove];qs("#mechanics").innerHTML=ms.map(([k,l])=>{const reason=mechanicReason(k,mine,p,move),ok=!reason;return`<button class="btn ${mine.pending===k?"active":""}" data-mech="${k}" title="${esc(reason||l+" 사용 가능")}" ${ok?"":"disabled"}>${l}</button>`}).join("");qsa("[data-mech]").forEach(b=>b.onclick=()=>{battle.queue(mySide,b.dataset.mech,selectedMove);renderControls()})}
+function renderSwitchPane(mine){mine.pending=null;const valid=mine.party.findIndex((x,i)=>i!==mine.activeIndex&&!x.isFainted());if(selectedSwitchIndex==null||selectedSwitchIndex===mine.activeIndex||mine.party[selectedSwitchIndex]?.isFainted())selectedSwitchIndex=valid>=0?valid:null;qs("#actionPane").innerHTML=`<div class="switch-grid">${mine.party.map((x,i)=>`<button class="switch-card ${selectedSwitchIndex===i?"selected":""}" data-switch-choice="${i}" ${i===mine.activeIndex||x.isFainted()?"disabled":""}><img src="${spriteUrl(x,false)}" onerror="this.style.visibility='hidden'"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp} · ${x.types.map(t=>TYPE_KO[t]||t).join("/")}</small></span><span>${i===mine.activeIndex?"배틀 중":x.isFainted()?"기절":"교체"}</span></button>`).join("")}</div>`;qsa("[data-switch-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.switchChoice);renderControls()});qs("#mechanics").innerHTML=""}
+function itemTargets(mine,def){
+  if(!def)return[];
+  return mine.party.map((p,i)=>[i,p]).filter(([,p])=>def.kind==="revive"?p.isFainted():!p.isFainted())
+}
+function renderItemPane(mine){
+  mine.pending=null;
+  const entries=Object.entries(mine.bag||{}).filter(([id,q])=>q>0&&itemDef(id));
+  if(!selectedItemId||!mine.bag[selectedItemId])selectedItemId=entries[0]?.[0]||null;
+  const def=itemDef(selectedItemId),targets=itemTargets(mine,def);
+  if(selectedItemTarget==null||!targets.some(([i])=>i===selectedItemTarget))selectedItemTarget=targets[0]?.[0]??null;
+  qs("#actionPane").innerHTML=`<div class="bag-grid">${entries.length?entries.map(([id,q])=>{const d=itemDef(id);return`<button class="bag-card ${selectedItemId===id?"selected":""}" data-item-choice="${id}"><span><b>${esc(d.name)}</b><small>${esc(d.desc)}</small></span><span class="qty">×${q}</span></button>`}).join(""):`<div class="statusbox">사용 가능한 배틀 아이템이 없습니다.</div>`}</div>${def?`<div class="target-picker target-picker-cards"><b>사용할 포켓몬 선택</b><div class="item-target-grid">${targets.length?targets.map(([i,p])=>`<button class="item-target-card ${selectedItemTarget===i?"selected":""}" data-item-target="${i}"><img src="${spriteUrl(p,false)}" onerror="this.style.visibility='hidden'"><span><strong>${esc(p.nickname)}</strong><small>HP ${p.currentHp}/${p.stats.hp}${p.status?` · ${STATUS_KO[p.status]||p.status}`:""}</small></span></button>`).join(""):`<span class="muted">이 아이템을 사용할 수 있는 포켓몬이 없습니다.</span>`}</div></div>`:""}`;
+  qsa("[data-item-choice]").forEach(b=>b.onclick=()=>{selectedItemId=b.dataset.itemChoice;selectedItemTarget=null;renderControls()});
+  qsa("[data-item-target]").forEach(b=>b.onclick=()=>{selectedItemTarget=Number(b.dataset.itemTarget);renderControls()});
+  qs("#mechanics").innerHTML=""
+}
+function renderControls(){
+  const mine=trainerByPerspective(true),p=mine.active,forced=battle.forceSwitch[mySide];if(lastControlTurn!==battle.turn){lastControlTurn=battle.turn;resetActionSelection()}qs("#forceSwitchBox").classList.toggle("hidden",!forced);qs("#normalControls").classList.toggle("hidden",forced);
+  if(forced){qs("#forceSwitchBox").innerHTML=`<div class="statusbox"><b>포켓몬이 쓰러졌습니다. 다음 포켓몬을 선택하세요.</b><div class="switch-grid" style="margin-top:10px">${mine.party.map((x,i)=>!x.isFainted()&&i!==mine.activeIndex?`<button class="switch-card" data-force-choice="${i}"><img src="${spriteUrl(x,false)}"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp}</small></span><span>선택</span></button>`:"").join("")}</div></div>`;qsa("[data-force-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.forceChoice);submitSwitch()});return}
+  qsa("[data-action-tab]").forEach(b=>{b.classList.toggle("active",b.dataset.actionTab===selectedActionKind);b.onclick=()=>{selectedActionKind=b.dataset.actionTab;if(selectedActionKind!=="move")mine.pending=null;renderControls()}});if(selectedActionKind==="switch")renderSwitchPane(mine);else if(selectedActionKind==="item")renderItemPane(mine);else renderMovePane(mine,p);
+  qs("#actionSummary").textContent=actionSummaryText();const valid=selectedActionKind==="move"?!!p.moves[selectedMove]:selectedActionKind==="switch"?selectedSwitchIndex!=null:!!(selectedItemId&&selectedItemTarget!=null);qs("#submitAction").disabled=battle.finished||!valid;qs("#resetBattle").classList.toggle("hidden",mode==="online")
+}
+function setVisualLock(on){visualLockDepth=Math.max(0,visualLockDepth+(on?1:-1));qs("#battleSection")?.classList.toggle("visual-lock",visualLockDepth>0)}
+function playHitSfxOnce(){try{const a=new Audio(CONFIG.hitSfx);a.preload="auto";a.loop=false;a.currentTime=0;a.play().catch(()=>{});return a}catch{return null}}
+function hit(el){if(!el)return;el.classList.remove("hit");void el.offsetWidth;el.classList.add("hit")}
+function attackPulse(el){if(!el)return;el.classList.remove("attack");void el.offsetWidth;el.classList.add("attack")}
+async function playMoveEvent(ev){
+  const mine=ev.sourceSide===mySide,el=qs(mine?"#playerSprite":"#enemySprite");
+  qs("#battleMessage").textContent=ev.text||`${ev.userName||"포켓몬"}의 ${ev.moveName||"기술"}!`;
+  attackPulse(el);
+  await new Promise(r=>setTimeout(r,CONFIG.moveReadDelayMs));
+}
+async function playHitEvent(ev){
+  const mine=ev.targetSide===mySide,el=qs(mine?"#playerSprite":"#enemySprite");
+  hit(el);playHitSfxOnce();
+  qs("#battleMessage").textContent=`${ev.targetName||"상대 포켓몬"}에게 ${ev.damage||0}의 피해!${ev.hits>1?` (${ev.hits}회)`:""}`;
+  await new Promise(r=>setTimeout(r,CONFIG.hitReactionMs));
+  await new Promise(r=>setTimeout(r,CONFIG.afterHitDelayMs));
+}
+function visualDiff(){
+  const mine=trainerByPerspective(true),enemy=trainerByPerspective(false);const cur={mineHp:mine.active.currentHp,enemyHp:enemy.active.currentHp,mineActive:mine.activeIndex,enemyActive:enemy.activeIndex,megaKeys:[...mine.party.map((p,i)=>p.isMega?`M${i}`:null),...enemy.party.map((p,i)=>p.isMega?`E${i}`:null)].filter(Boolean)};
+  const allEvents=Array.isArray(battle.visualEvents)?battle.visualEvents:[];
+  if(!lastVisual){lastVisualEventId=allEvents.reduce((n,e)=>Math.max(n,Number(e.id)||0),0)}else{
+    const fresh=allEvents.filter(e=>(Number(e.id)||0)>lastVisualEventId);
+    if(fresh.length){
+      lastVisualEventId=Math.max(lastVisualEventId,...fresh.map(e=>Number(e.id)||0));
+      const sequence=fresh.filter(e=>e.type==="move"||e.type==="hit");
+      if(sequence.length)hitSequence=hitSequence.then(async()=>{
+        setVisualLock(true);
+        try{for(const ev of sequence){if(ev.type==="move")await playMoveEvent(ev);else if(ev.type==="hit")await playHitEvent(ev)}}
+        finally{setVisualLock(false);if(battle?.logs?.length)qs("#battleMessage").textContent=battle.logs.at(-1).text}
+      }).catch(()=>{visualLockDepth=0;qs("#battleSection")?.classList.remove("visual-lock")})
+    }
+    if(cur.megaKeys.some(k=>!lastVisual.megaKeys.includes(k)))playMegaFx();
+  }
+  lastVisual=cur
+}
+let megaFxPlaying=false;
+function drawCover(ctx,frame,w,h){const sw=frame.displayWidth||frame.codedWidth||frame.width,sh=frame.displayHeight||frame.codedHeight||frame.height;if(!sw||!sh)return;const scale=Math.max(w/sw,h/sh),dw=sw*scale,dh=sh*scale,dx=(w-dw)/2,dy=(h-dh)/2;ctx.clearRect(0,0,w,h);ctx.drawImage(frame,dx,dy,dw,dh)}
+async function playMegaFx(){
+  if(megaFxPlaying)return;megaFxPlaying=true;const ov=qs("#megaOverlay"),canvas=qs("#megaCanvas"),fallback=qs("#megaFallback");ov.classList.remove("hidden");fallback.classList.add("hidden");fallback.src="";
+  try{
+    if("ImageDecoder" in window&&await ImageDecoder.isTypeSupported("image/gif")){
+      const res=await fetch(`${CONFIG.megaFx}?once=${Date.now()}`,{cache:"no-store"});if(!res.ok)throw new Error(`mega gif ${res.status}`);const data=await res.arrayBuffer();const dec=new ImageDecoder({data,type:"image/gif"});await dec.tracks.ready;const count=dec.tracks.selectedTrack?.frameCount||1,dpr=Math.max(1,window.devicePixelRatio||1),w=Math.max(1,Math.round(innerWidth*dpr)),h=Math.max(1,Math.round(innerHeight*dpr));canvas.width=w;canvas.height=h;canvas.style.width="100vw";canvas.style.height="100vh";const ctx=canvas.getContext("2d");
+      for(let i=0;i<count;i++){const out=await dec.decode({frameIndex:i,completeFramesOnly:true});const frame=out.image;drawCover(ctx,frame,w,h);const ms=Math.max(16,Math.min(1000,(frame.duration||100000)/1000));await new Promise(r=>setTimeout(r,ms));frame.close?.()}
+      dec.close?.();ctx.clearRect(0,0,w,h)
+    }else{
+      canvas.width=1;canvas.height=1;fallback.classList.remove("hidden");fallback.src=`${CONFIG.megaFx}?once=${Date.now()}`;await new Promise(r=>setTimeout(r,CONFIG.megaFxDurationMs));fallback.src="";fallback.classList.add("hidden")
+    }
+  }catch(e){console.warn("Mega FX fallback",e);canvas.width=1;canvas.height=1;fallback.classList.remove("hidden");fallback.src=`${CONFIG.megaFx}?once=${Date.now()}`;await new Promise(r=>setTimeout(r,CONFIG.megaFxDurationMs));fallback.src="";fallback.classList.add("hidden")}
+  ov.classList.add("hidden");megaFxPlaying=false
+}
+function validationHtml(d){if(!d)return"";const errs=(d.errors||[]).map(x=>`<div class="validation-error">✕ ${esc(x)}</div>`).join("");const warns=(d.warnings||[]).map(x=>`<div class="validation-warn">△ ${esc(x)}</div>`).join("");return errs+warns}
+function previewEntry(data){if(!data?.partyData?.length){qs("#entryPreview").innerHTML=`<div class="bad">이 트레이너의 포켓몬 정보를 찾지 못했습니다.</div>${validationHtml(data)}`;return}qs("#entryPreview").innerHTML=`${validationHtml(data)}${data.partyData.map(p=>`<div class="teamrow"><img src="${CONFIG.showdownBase}/${p.shiny?"ani-shiny":"ani"}/${encodeURIComponent(p.showdownId)}.gif" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · 지닌물건 ${esc(displayItemName(p.item))}</small></div><span>레벨 ${p.level}</span></div>`).join("")}`}
+function startLocal(a,b){if(!a||!b||a.errors?.length||b.errors?.length){toast("엔트리 검증 오류가 있어 배틀을 시작할 수 없습니다.","bad");return}mode="local";mySide="A";battle=new Battle(a,b);resetActionSelection();lastControlTurn=null;lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;qs("#lobby").classList.add("hidden");renderBattle();startBgm();scrollTo({top:0,behavior:"smooth"})}
+function chooseEnemyAction(t){const p=t.active,alive=t.party.map((x,i)=>({x,i})).filter(o=>o.i!==t.activeIndex&&!o.x.isFainted());const heal=Object.keys(t.bag||{}).find(id=>["potion","superpotion","hyperpotion","maxpotion","fullrestore"].includes(id)&&t.bag[id]>0);if(heal&&p.currentHp/p.stats.hp<.32&&Math.random()<.7)return{kind:"item",itemId:heal,targetIndex:t.activeIndex};if(alive.length&&p.currentHp/p.stats.hp<.23&&Math.random()<.4)return{kind:"switch",switchIndex:alive[Math.floor(Math.random()*alive.length)].i};const legal=p.moves.map((m,i)=>({m,i})).filter(x=>x.m.pp>0),move=(legal[Math.floor(Math.random()*legal.length)]||{i:0}).i;let mechanic=null;const choices=[];for(const k of["mega","z","dynamax","gmax","tera"])if(mechanicAvailable(k,t,p,p.moves[move]))choices.push(k);if(Math.random()<.12&&choices.length)mechanic=choices[Math.floor(Math.random()*choices.length)];return{kind:"move",moveIndex:move,mechanic}}
+function autoLocalEnemyForcedSwitch(){
+  if(!battle||mode!=="local"||!battle.forceSwitch.B)return false;
+  const t=battle.trainerB;
+  const choices=t.party.map((p,i)=>({p,i})).filter(({p,i})=>i!==t.activeIndex&&!p.isFainted());
+  if(!choices.length)return false;
+  const pick=choices[Math.floor(Math.random()*choices.length)];
+  return battle.switch("B",pick.i,true)
+}
+async function localSubmit(){
+  if(!battle||mode!=="local")return;
+  startBgm();
+  // 데모 AI 쪽에 이전 턴의 강제 교체가 남아 있다면 플레이어 입력을 막지 않고 즉시 처리한다.
+  autoLocalEnemyForcedSwitch();
+  // 플레이어 자신의 포켓몬이 쓰러진 경우에만 플레이어가 직접 교체한다.
+  if(battle.forceSwitch.A){renderBattle();return}
+  const myAction=selectedAction(),enemyAction=chooseEnemyAction(battle.trainerB);
+  battle.executeActions(myAction,enemyAction);
+  // 이번 턴에 상대가 쓰러졌다면 데모 AI가 다음 포켓몬을 자동으로 내보낸다.
+  autoLocalEnemyForcedSwitch();
+  resetActionSelection();lastControlTurn=null;renderBattle()
+}
+function localSwitch(){
+  const idx=Number(selectedSwitchIndex);
+  battle.switch("A",idx,true);
+  // 양쪽이 동시에 쓰러졌더라도 상대 진영은 AI가 자동 교체한다.
+  autoLocalEnemyForcedSwitch();
+  resetActionSelection();lastControlTurn=null;renderBattle()
+}
+
+let scWidget=null,bgmPlaying=false,bgmManuallyStopped=false;
+function syncBgmButtons(){const play=qs("#musicPlay"),stop=qs("#musicStop");if(play)play.disabled=bgmPlaying;if(stop)stop.disabled=!bgmPlaying}
+function initSound(){try{scWidget=SC.Widget(qs("#soundcloudPlayer"));scWidget.bind(SC.Widget.Events.READY,()=>syncBgmButtons());scWidget.bind(SC.Widget.Events.PLAY,()=>{bgmPlaying=true;syncBgmButtons()});scWidget.bind(SC.Widget.Events.PAUSE,()=>{bgmPlaying=false;syncBgmButtons()});scWidget.bind(SC.Widget.Events.FINISH,()=>{if(bgmManuallyStopped)return;try{scWidget.seekTo(0);scWidget.play()}catch{}});syncBgmButtons()}catch{syncBgmButtons()}}
+function startBgm(force=false){if(bgmManuallyStopped&&!force)return;try{scWidget?.play()}catch{}}
+function userStartBgm(){bgmManuallyStopped=false;startBgm(true)}
+function stopBgm(manual=true){if(manual)bgmManuallyStopped=true;try{scWidget?.pause()}catch{}}
+
+let fb=null,authUser=null,myNick=null,presenceRef=null,onlineUsers={},currentRoomId=null,roomRef=null,roomListener=null,outgoingRefs=[];
+function firebaseReady(){return!!(window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey&&window.FIREBASE_CONFIG.databaseURL)}
+async function initFirebase(){if(!firebaseReady()){qs("#firebaseBadge").textContent="온라인: 설정 필요";return false}try{if(!firebase.apps.length)firebase.initializeApp(window.FIREBASE_CONFIG);fb={auth:firebase.auth(),db:firebase.database()};const cred=await fb.auth.signInAnonymously();authUser=cred.user;qs("#firebaseBadge").textContent="온라인: 준비 완료";return true}catch(e){qs("#firebaseBadge").textContent="온라인: 연결 오류";console.error(e);return false}}
+async function onlineLogin(nickname,data){if(!fb&&!(await initFirebase())){qs("#loginStatus").innerHTML=`<span class="warn">엔트리는 확인됐지만 Firebase 설정이 없어 온라인 목록/매칭은 비활성화됩니다.</span>`;return}myNick=norm(nickname);presenceRef=fb.db.ref(`presence/${authUser.uid}`);await presenceRef.onDisconnect().remove();await presenceRef.set({nickname:myNick,displayName:data.name,status:"online",joinedAt:firebase.database.ServerValue.TIMESTAMP});fb.db.ref("presence").on("value",snap=>{onlineUsers=snap.val()||{};renderOnline()});fb.db.ref(`challenges/${authUser.uid}`).on("value",snap=>renderChallenges(snap.val()||{}));qs("#loginStatus").innerHTML=`<span class="good">온라인 접속 완료:</span> ${esc(data.name)} · ${data.partyData.length}마리`}
+function renderOnline(){const q=norm(qs("#onlineSearch").value);const arr=Object.entries(onlineUsers).filter(([uid,u])=>uid!==authUser?.uid&&(!q||norm(u.nickname).includes(q)||norm(u.displayName).includes(q)));qs("#onlineList").innerHTML=arr.length?arr.map(([uid,u])=>`<div class="person"><div><strong>${esc(u.displayName||u.nickname)}</strong><small>@${esc(u.nickname)}</small></div><button class="btn" data-challenge="${esc(uid)}">도전</button></div>`).join(""):`<div class="muted">조건에 맞는 접속자가 없습니다.</div>`;qsa("[data-challenge]").forEach(b=>b.onclick=()=>sendChallenge(b.dataset.challenge))}
+async function sendChallenge(targetUid){if(!authUser||!myTrainerData)return;const target=onlineUsers[targetUid];if(!target)return;const ref=fb.db.ref(`challenges/${targetUid}/${authUser.uid}`);await ref.set({fromUid:authUser.uid,fromNickname:myNick,fromDisplayName:myTrainerData.name,toUid:targetUid,status:"pending",createdAt:firebase.database.ServerValue.TIMESTAMP});toast(`${target.displayName||target.nickname}에게 도전했습니다.`);ref.on("value",snap=>{const c=snap.val();if(c?.status==="accepted"&&c.roomId){ref.off();joinRoom(c.roomId)}});outgoingRefs.push(ref)}
+function renderChallenges(obj){const arr=Object.entries(obj).filter(([,c])=>c?.status==="pending");qs("#challengeList").innerHTML=arr.length?arr.map(([sourceUid,c])=>`<div class="person"><div><strong>${esc(c.fromDisplayName||c.fromNickname)}</strong><small>배틀 신청</small></div><div class="fieldrow"><button class="btn primary" data-accept="${esc(sourceUid)}">수락</button><button class="btn" data-reject="${esc(sourceUid)}">거절</button></div></div>`).join(""):`<div class="muted">도전 없음</div>`;qsa("[data-accept]").forEach(b=>b.onclick=()=>acceptChallenge(b.dataset.accept,obj[b.dataset.accept]));qsa("[data-reject]").forEach(b=>b.onclick=()=>fb.db.ref(`challenges/${authUser.uid}/${b.dataset.reject}`).update({status:"rejected"}))}
+async function acceptChallenge(sourceUid,c){const roomId="room_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7);const room={hostUid:sourceUid,status:"waiting-host",createdAt:firebase.database.ServerValue.TIMESTAMP,participants:{[sourceUid]:{uid:sourceUid,nickname:c.fromNickname,displayName:c.fromDisplayName,side:"A"},[authUser.uid]:{uid:authUser.uid,nickname:myNick,displayName:myTrainerData.name,side:"B"}}};await fb.db.ref(`rooms/${roomId}`).set(room);await fb.db.ref(`challenges/${authUser.uid}/${sourceUid}`).update({status:"accepted",roomId});joinRoom(roomId)}
+async function joinRoom(roomId){if(currentRoomId===roomId)return;currentRoomId=roomId;mode="online";lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;lastControlTurn=null;resetActionSelection();roomRef=fb.db.ref(`rooms/${roomId}`);roomListener=roomRef.on("value",async snap=>{const room=snap.val();if(!room)return;const me=room.participants?.[authUser.uid];if(!me)return;mySide=me.side;if(!room.state&&room.hostUid===authUser.uid){await hostInitRoom(room);return}if(room.state){battle=Battle.hydrate(room.state);qs("#lobby").classList.add("hidden");renderBattle();startBgm();if(room.hostUid===authUser.uid)hostResolveIfReady(room)}})}
+async function hostInitRoom(room){const A=Object.values(room.participants).find(x=>x.side==="A"),B=Object.values(room.participants).find(x=>x.side==="B");await Promise.all([primeKoreanMoveNames(A.nickname),primeKoreanMoveNames(B.nickname)]);const a=getTrainerData(A.nickname),b=getTrainerData(B.nickname);if(!a||!b||a.errors?.length||b.errors?.length){toast("상대 엔트리가 포켓몬 데이터 검증을 통과하지 못했습니다.","bad");return}const init=new Battle(a,b);await roomRef.child("state").set(init.snapshot());await roomRef.child("status").set("battle")}
+async function submitOnlineAction(){if(!roomRef||!battle)return;startBgm();const action=selectedAction();await roomRef.child(`actions/${battle.turn}/${authUser.uid}`).set({...action,at:firebase.database.ServerValue.TIMESTAMP});qs("#submitAction").disabled=true;toast("행동을 제출했습니다. 상대를 기다립니다.")}
+async function submitOnlineSwitch(){const idx=Number(selectedSwitchIndex);await roomRef.child(`switches/${battle.turn}/${authUser.uid}`).set({index:idx,at:firebase.database.ServerValue.TIMESTAMP});toast("교체 선택을 제출했습니다.")}
+let resolving=false;
+async function hostResolveIfReady(room){if(resolving||!room.state)return;const b=Battle.hydrate(room.state);const entries=Object.entries(room.participants||{});if(b.forceSwitch.A||b.forceSwitch.B){const needed=entries.filter(([,p])=>b.forceSwitch[p.side]);const sw=room.switches?.[b.turn]||{};if(!needed.every(([uid])=>sw[uid]))return;resolving=true;for(const[uid,p]of needed)b.switch(p.side,num(sw[uid].index),true);await roomRef.child("state").set(b.snapshot());resolving=false;return}const acts=room.actions?.[b.turn]||{};if(!entries.every(([uid])=>acts[uid]))return;if(room.resolvedTurn===b.turn)return;resolving=true;const getSide=s=>entries.find(([,p])=>p.side===s)?.[0];const a=acts[getSide("A")],c=acts[getSide("B")];b.executeActions(a,c);await roomRef.update({state:b.snapshot(),resolvedTurn:b.turn-1,status:b.finished?"finished":"battle"});resolving=false}
+function submitSwitch(){return mode==="online"?submitOnlineSwitch():localSwitch()}
+
+qs("#loginBtn").onclick=async()=>{const nick=norm(qs("#nicknameInput").value);if(!nick)return toast("닉네임을 입력하세요.");if(!sheetStore.loaded)return toast("Google 시트가 아직 준비되지 않았습니다.","warn");if(!dexStore.ready)return toast("Pokémon Showdown 도감을 불러오지 못했습니다.","bad");await primeKoreanMoveNames(nick);const d=getTrainerData(nick);if(!d){qs("#loginStatus").innerHTML=`<span class="bad">Trainers 탭의 nickname 열에서 '${esc(nick)}'을 찾지 못했습니다.</span>`;qs("#entryPreview").innerHTML="";return}myTrainerData=d;previewEntry(d);if(d.errors.length){qs("#loginStatus").innerHTML=`<span class="bad">엔트리 검증 실패:</span> ${d.errors.length}개 오류. 아래 항목을 시트에서 수정하세요.`;return}qs("#loginStatus").innerHTML=`<span class="good">엔트리 검증 완료:</span> ${esc(d.name)} · ${d.partyData.length}마리${d.warnings.length?` · 경고 ${d.warnings.length}개`:""}`;await onlineLogin(nick,d)};
+qs("#demoBtn").onclick=async()=>{if(!dexStore.ready)return toast("Showdown 도감 연결 후 데모를 사용할 수 있습니다.","warn");await primeKoreanMoveNames();startLocal(demoTrainerData("demo"),demoTrainerData("rival"))};
+qs("#onlineSearch").oninput=renderOnline;
+qs("#submitAction").onclick=()=>mode==="online"?submitOnlineAction():localSubmit();
+qs("#resetBattle").onclick=()=>startLocal(demoTrainerData("demo"),demoTrainerData("rival"));
+qs("#musicPlay").onclick=userStartBgm;
+qs("#musicStop").onclick=()=>stopBgm(true);
+qs("#backLobby").onclick=()=>qs("#lobby").classList.remove("hidden");
+window.addEventListener("load",async()=>{initSound();await Promise.all([loadDex(),loadSheets()]);initFirebase()});
+
+</script>
+</body>
+</html>
