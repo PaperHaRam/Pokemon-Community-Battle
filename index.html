@@ -920,6 +920,7 @@ function mechanicReason(k,t,p,move=null){
 }
 function mechanicAvailable(k,t,p,move=null){return!mechanicReason(k,t,p,move)}
 
+// V3.2.14 — 변신 / 괴짜 / 일루전 구현
 class Pokemon{
   constructor(d){
     this.species=d.species;this.dexName=d.dexName||d.species;this.dexId=d.dexId||toID(d.showdownId);this.nickname=d.nickname||d.species;this.showdownId=d.showdownId;this.shiny=!!d.shiny;this.level=d.level||50;
@@ -927,6 +928,9 @@ class Pokemon{
     this.sourceStats={...(d.stats||d.baseStats)};this.ivs={hp:31,attack:31,defense:31,specialAttack:31,specialDefense:31,speed:31,...d.ivs};this.evs={hp:0,attack:0,defense:0,specialAttack:0,specialDefense:0,speed:0,...d.evs};this.nature=d.nature||"serious";
     this.moves=(d.moves||[]).map(deepMove);this.megaData=d.megaData?JSON.parse(JSON.stringify(d.megaData)):null;this.gmaxShowdownId=d.gmaxShowdownId||null;this.cannotDynamax=!!d.cannotDynamax;this.dynamaxLevel=d.dynamaxLevel??10;
     this.isMega=false;this.isDynamaxed=false;this.isGigantamaxed=false;this.isTerastallized=false;this.dynamaxTurnsLeft=0;this.status=null;this.statusTurns=0;this.toxicCounter=0;
+    // 변신/괴짜/일루전용 전투 상태. JSON 스냅샷에도 그대로 저장된다.
+    this.isTransformed=false;this.transformBackup=null;this.transformedSpriteId=null;this.transformedShiny=null;this.transformedIntoName=null;
+    this.illusionActive=false;this.illusionData=null;
     this.statStages={attack:0,defense:0,specialAttack:0,specialDefense:0,speed:0,accuracy:0,evasion:0};this.protectChain=0;this.protected=false;this.maxGuarded=false;this.stats=this.calcStats();this.currentHp=this.stats.hp;
   }
   calcStats(){
@@ -940,7 +944,10 @@ class Pokemon{
   heal(n){const old=this.currentHp;this.currentHp=Math.min(this.stats.hp,this.currentHp+Math.max(0,Math.floor(n)));return this.currentHp-old}
   resetVolatile(){for(const k in this.statStages)this.statStages[k]=0;this.protectChain=0;this.protected=false;this.maxGuarded=false}
   allPpDepleted(){return this.moves.every(m=>m.pp<=0)}
-  spriteId(){if(this.isGigantamaxed&&this.gmaxShowdownId)return this.gmaxShowdownId;if(this.isMega&&this.megaData?.showdownId)return this.megaData.showdownId;return this.showdownId}
+  actualSpriteId(){if(this.isTransformed&&this.transformedSpriteId)return this.transformedSpriteId;if(this.isGigantamaxed&&this.gmaxShowdownId)return this.gmaxShowdownId;if(this.isMega&&this.megaData?.showdownId)return this.megaData.showdownId;return this.showdownId}
+  spriteId(){if(this.illusionActive&&this.illusionData?.showdownId)return this.illusionData.showdownId;return this.actualSpriteId()}
+  spriteShiny(){if(this.illusionActive&&this.illusionData&&typeof this.illusionData.shiny==="boolean")return this.illusionData.shiny;if(this.isTransformed&&typeof this.transformedShiny==="boolean")return this.transformedShiny;return !!this.shiny}
+  displayName(){return this.illusionActive&&this.illusionData?.nickname?this.illusionData.nickname:this.nickname}
 }
 class Trainer{
   constructor(d){this.id=d.id;this.name=d.name;this.money=d.money||0;this.bag={...(d.bag||{})};this.gear={keyStone:false,zRing:false,dynamaxBand:false,teraOrb:false,...(d.gear||{})};this.party=(d.partyData||[]).map(x=>new Pokemon(x));this.activeIndex=0;this.megaUsed=false;this.zUsed=false;this.dynamaxUsed=false;this.terastalUsed=false;this.pending=null}
@@ -963,8 +970,41 @@ class Battle{
   setWeather(w,turns=5,source=""){if(this.weather===w){this.log(`${WEATHER_KO[w]||w}은(는) 이미 이어지고 있다.`);return false}this.weather=w;this.weatherTurns=w?turns:0;this.log(w?`${source?source+"의 효과로 ":""}${WEATHER_KO[w]||w} 날씨가 시작됐다!`:"날씨가 평온해졌다.","field");return true}
   setTerrain(t,turns=5,source=""){if(this.terrain===t){this.log(`${TERRAIN_KO[t]||t}은(는) 이미 펼쳐져 있다.`);return false}this.terrain=t;this.terrainTurns=t?turns:0;this.log(t?`${source?source+"의 효과로 ":""}${TERRAIN_KO[t]||t}가 펼쳐졌다!`:"필드 효과가 사라졌다.","field");return true}
   applyInitialAbilities(){const pair=[["A",this.trainerA.active],["B",this.trainerB.active]].sort((x,y)=>this.effectiveStat(y[1],"speed")-this.effectiveStat(x[1],"speed"));for(const[,p]of pair)this.applyEntryAbility(p)}
+  sideOfPokemon(p){if(this.trainerA.party.includes(p))return"A";if(this.trainerB.party.includes(p))return"B";return null}
+  ownerOfPokemon(p){const side=this.sideOfPokemon(p);return side?this.trainer(side):null}
+  foeOfPokemon(p){const side=this.sideOfPokemon(p);return side?this.trainer(side==="A"?"B":"A"):null}
+  activateIllusion(p){
+    p.illusionActive=false;p.illusionData=null;
+    if(toID(p.ability)!=="illusion")return false;
+    const owner=this.ownerOfPokemon(p);if(!owner)return false;
+    const disguise=[...owner.party].reverse().find(x=>x!==p&&!x.isFainted());if(!disguise)return false;
+    p.illusionActive=true;p.illusionData={showdownId:disguise.actualSpriteId?disguise.actualSpriteId():disguise.showdownId,shiny:disguise.spriteShiny?disguise.spriteShiny():!!disguise.shiny,nickname:disguise.nickname,species:disguise.species,types:[...(disguise.types||[])],level:disguise.level};
+    return true;
+  }
+  breakIllusion(p,announce=true){if(!p?.illusionActive)return false;p.illusionActive=false;p.illusionData=null;if(announce)this.log(`${p.nickname}의 일루전이 깨졌다!`);return true}
+  transformPokemon(user,target,source="move"){
+    if(!user||!target||user===target||user.isTransformed||target.isFainted())return false;
+    const keepHp=user.currentHp,keepMax=user.stats.hp;
+    user.transformBackup={types:[...user.types],originalTypes:[...user.originalTypes],ability:user.ability,stats:{...user.stats},moves:JSON.parse(JSON.stringify(user.moves))};
+    user.types=[...target.types];user.originalTypes=[...(target.originalTypesBeforeTera??target.originalTypes??target.types)];user.ability=target.ability;
+    user.stats={...target.stats,hp:keepMax};user.currentHp=Math.min(keepMax,keepHp);
+    user.moves=(target.moves||[]).map(m=>{const x=JSON.parse(JSON.stringify(m));x.pp=Math.min(5,Math.max(1,num(x.maxPp,5)));return x});
+    user.statStages={...target.statStages};
+    user.isTransformed=true;user.transformedSpriteId=target.actualSpriteId?target.actualSpriteId():target.spriteId();user.transformedShiny=target.spriteShiny?target.spriteShiny():!!target.shiny;user.transformedIntoName=target.nickname;
+    this.breakIllusion(user,false);
+    this.log(source==="imposter"?`${user.nickname}의 괴짜! ${target.nickname}의 모습으로 변신했다!`:`${user.nickname}이(가) ${target.nickname}의 모습으로 변신했다!`,"transform");
+    return true;
+  }
+  revertTransform(p){
+    if(!p?.isTransformed)return false;const b=p.transformBackup;
+    if(b){p.types=[...b.types];p.originalTypes=[...b.originalTypes];p.ability=b.ability;p.stats={...b.stats};p.moves=JSON.parse(JSON.stringify(b.moves));p.currentHp=Math.min(p.currentHp,p.stats.hp)}
+    p.isTransformed=false;p.transformBackup=null;p.transformedSpriteId=null;p.transformedShiny=null;p.transformedIntoName=null;
+    return true;
+  }
   applyEntryAbility(p){
     const a=toID(p.ability);const source=`${p.nickname}의 ${displayAbilityName(p.ability)}`;
+    if(a==="illusion")this.activateIllusion(p);
+    if(a==="imposter"){const foe=this.foeOfPokemon(p)?.active;if(foe&&!foe.isFainted())this.transformPokemon(p,foe,"imposter");return}
     if(a==="drizzle")this.setWeather("rain",this.weatherDuration(p,"rain"),source);else if(a==="drought"||a==="orichalcumpulse")this.setWeather("sun",this.weatherDuration(p,"sun"),source);else if(a==="sandstream")this.setWeather("sand",this.weatherDuration(p,"sand"),source);else if(a==="snowwarning")this.setWeather("snow",this.weatherDuration(p,"snow"),source);
     else if(a==="electricsurge"||a==="hadronengine")this.setTerrain("electric",this.terrainDuration(p),source);else if(a==="grassysurge")this.setTerrain("grassy",this.terrainDuration(p),source);else if(a==="mistysurge")this.setTerrain("misty",this.terrainDuration(p),source);else if(a==="psychicsurge")this.setTerrain("psychic",this.terrainDuration(p),source);
   }
@@ -1015,13 +1055,14 @@ class Battle{
     const toxicAuto=m.id==="toxic"&&u.types.includes("poison");if(!toxicAuto&&!this.accuracyPass(u,target,m)){this.log("그러나 빗나갔다!");return}
     this.applyMoveField(u,m);
     if(m.category==="status"){
+      if(m.id==="transform"){if(!this.transformPokemon(u,target,"move"))this.log("그러나 변신에 실패했다!");return}
       if(m.heal){const h=u.heal(Math.floor(u.stats.hp*m.heal[0]/m.heal[1]));this.log(`${u.nickname}의 HP가 ${h} 회복됐다!`)}
       if(m.status)this.applyStatus(target,m.status,m);this.applyBoosts(m.target==="self"?u:target,m.boosts);this.applyBoosts(u,m.selfBoosts);if(m.forceSwitch)this.forceRandomSwitch(o);return;
     }
     if(target.maxGuarded){this.log(`${target.nickname}은(는) 다이월로 완전히 막았다!`);return}
     let protectMult=1;if(target.protected){if(m.isZMove||m.isMaxMove){protectMult=.25;this.log("방어를 뚫고 일부 피해를 입혔다!")}else{this.log(`${target.nickname}은(는) 공격을 막았다!`);return}}
     const hits=randomHits(m);let total=0,last=null;for(let i=0;i<hits&&!target.isFainted();i++){last=this.damage(u,target,m);total+=target.takeDamage(Math.floor(last.dmg*protectMult))}
-    if(total>0)this.emitVisual("hit",{sourceSide:t.id,targetSide:o.id,moveId:m.id,moveName:m.name,targetName:target.nickname,damage:total,hits});
+    if(total>0){this.emitVisual("hit",{sourceSide:t.id,targetSide:o.id,moveId:m.id,moveName:m.name,targetName:target.nickname,damage:total,hits});this.breakIllusion(target,true)}
     if(last?.crit)this.log("급소에 맞았다!");if(last?.eff===0)this.log("효과가 없는 것 같다…");else if(last?.eff>=2)this.log("효과가 굉장했다!");else if(last?.eff<1)this.log("효과가 별로인 듯하다…");this.log(`${target.nickname}에게 ${total}의 피해!${hits>1?` (${hits}회)` :""}`);
     if(m.drain&&total>0){const h=u.heal(Math.floor(total*m.drain[0]/m.drain[1]));if(h)this.log(`${u.nickname}이(가) ${h} 회복했다!`)}
     if(m.recoil&&total>0&&!u.isFainted()){const d=u.takeDamage(Math.max(1,Math.floor(total*m.recoil[0]/m.recoil[1])));this.log(`${u.nickname}은(는) 반동으로 ${d}의 피해!`)}
@@ -1050,7 +1091,7 @@ class Battle{
   }
   endDynamax(p){const oldMax=p.stats.hp,base=p.preDynamaxMaxHp,ratio=base/oldMax;p.currentHp=Math.min(base,Math.ceil(p.currentHp*ratio));p.stats.hp=base;p.preDynamaxMaxHp=null;p.isDynamaxed=false;p.isGigantamaxed=false;p.dynamaxTurnsLeft=0}
   updateForcedSwitch(){for(const side of["A","B"]){const t=this.trainer(side);this.forceSwitch[side]=t.active.isFainted()&&t.hasUsable();if(this.forceSwitch[side])this.log(`${t.name}은(는) 다음 포켓몬을 내보내야 한다.`)}}
-  switch(side,index,forced=false){const t=this.trainer(side),old=t.active,next=t.party[index];if(!next||next.isFainted()||next===old)return false;if(this.forceSwitch[side]&&!forced)return false;if(old.isDynamaxed)this.endDynamax(old);old.resetVolatile();t.activeIndex=index;this.forceSwitch[side]=false;this.log(`${t.name}: ${old.nickname} → ${next.nickname}`);this.applyEntryAbility(next);return true}
+  switch(side,index,forced=false){const t=this.trainer(side),old=t.active,next=t.party[index];if(!next||next.isFainted()||next===old)return false;if(this.forceSwitch[side]&&!forced)return false;if(old.isDynamaxed)this.endDynamax(old);this.breakIllusion(old,false);this.revertTransform(old);old.resetVolatile();t.activeIndex=index;this.forceSwitch[side]=false;this.applyEntryAbility(next);this.log(`${t.name}: ${old.nickname} → ${next.displayName?next.displayName():next.nickname}`);return true}
   actionSpeedOrder(){const sa=this.effectiveStat(this.trainerA.active,"speed"),sb=this.effectiveStat(this.trainerB.active,"speed");if(sa!==sb)return sa>sb?["A","B"]:["B","A"];return Math.random()<.5?["A","B"]:["B","A"]}
   executeActions(actionA,actionB){
     if(this.finished)return;if(this.forceSwitch.A||this.forceSwitch.B){this.log("강제 교체를 먼저 완료해야 한다.");return}
@@ -1068,14 +1109,14 @@ class Battle{
   executeTurn(ia,ib){return this.executeActions({kind:"move",moveIndex:ia},{kind:"move",moveIndex:ib})}
   finish(w,l){if(this.finished)return;this.finished=true;const prize=Math.floor(l.money*.1);l.money-=prize;w.money+=prize;this.log(`${w.name}의 승리!`);this.log(`${l.name}은(는) ${prize.toLocaleString()}원을 지급했다.`)}
   snapshot(){return JSON.parse(JSON.stringify(this))}
-  static hydrate(s){const b=Object.create(Battle.prototype);Object.assign(b,s);b.visualEvents=Array.isArray(b.visualEvents)?b.visualEvents:[];b.visualSeq=Number.isFinite(b.visualSeq)?b.visualSeq:(b.visualEvents.at(-1)?.id||0);for(const key of["trainerA","trainerB"]){const t=Object.create(Trainer.prototype);Object.assign(t,s[key]);t.party=(s[key].party||[]).map(p=>{const x=Object.create(Pokemon.prototype);Object.assign(x,p);return x});b[key]=t}return b}
+  static hydrate(s){const b=Object.create(Battle.prototype);Object.assign(b,s);b.visualEvents=Array.isArray(b.visualEvents)?b.visualEvents:[];b.visualSeq=Number.isFinite(b.visualSeq)?b.visualSeq:(b.visualEvents.at(-1)?.id||0);for(const key of["trainerA","trainerB"]){const t=Object.create(Trainer.prototype);Object.assign(t,s[key]);t.party=(s[key].party||[]).map(p=>{const x=Object.create(Pokemon.prototype);Object.assign(x,p);if(typeof x.isTransformed!=="boolean")x.isTransformed=false;if(!("transformBackup" in x))x.transformBackup=null;if(typeof x.illusionActive!=="boolean")x.illusionActive=false;if(!("illusionData" in x))x.illusionData=null;return x});b[key]=t}return b}
 }
 
 let battle=null,mySide="A",selectedMove=0,selectedActionKind="move",selectedSwitchIndex=null,selectedItemId=null,selectedItemTarget=null,lastControlTurn=null,mode="local",myTrainerData=null,lastVisual=null,lastVisualEventId=0,hitSequence=Promise.resolve(),visualLockDepth=0;
-function spriteUrl(p,isMine){const folder=isMine?(p.shiny?"ani-back-shiny":"ani-back"):(p.shiny?"ani-shiny":"ani");return`${CONFIG.showdownBase}/${folder}/${encodeURIComponent(p.spriteId())}.gif`}
+function spriteUrl(p,isMine){const shiny=p.spriteShiny?p.spriteShiny():!!p.shiny;const folder=isMine?(shiny?"ani-back-shiny":"ani-back"):(shiny?"ani-shiny":"ani");return`${CONFIG.showdownBase}/${folder}/${encodeURIComponent(p.spriteId())}.gif`}
 function setSprite(img,p,isMine){const exact=spriteUrl(p,isMine);img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`};img.style.opacity="";img.src=exact}
 function trainerByPerspective(mine=true){return battle.trainer(mine?mySide:(mySide==="A"?"B":"A"))}
-function hud(t){const p=t.active,pct=Math.max(0,Math.min(100,p.currentHp/p.stats.hp*100));const mechs=[p.isMega?"메가진화":"",p.isDynamaxed?(p.isGigantamaxed?"거다이맥스":"다이맥스"):"",p.isTerastallized?`테라스탈 · ${TYPE_KO[p.teraType]||p.teraType}`:""].filter(Boolean);return`<div class="title"><h3>${esc(p.nickname)}</h3><small>레벨 ${p.level}</small></div><div class="hud-meta"><span>${esc(t.name)}</span><span class="type-row">${p.types.map(typePill).join("")}</span>${p.status?`<span class="status-pill">${esc(STATUS_KO[p.status]||p.status)}</span>`:""}</div><div class="held-item">지닌물건 · <b>${esc(displayItemName(p.item))}</b></div><div class="hptext"><b>HP</b><span>${p.currentHp}/${p.stats.hp}</span></div><div class="hp"><div class="hpbar" style="width:${pct}%"></div></div><div class="party-dots">${t.party.map((x,i)=>`<span class="dot ${x.isFainted()?"fainted":""} ${i===t.activeIndex?"active":""}"></span>`).join("")}</div>${mechs.length?`<div class="mechanic-tags">${mechs.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}`}
+function hud(t,isMineView=false){const p=t.active,pct=Math.max(0,Math.min(100,p.currentHp/p.stats.hp*100)),hideByIllusion=!isMineView&&p.illusionActive&&p.illusionData;const shownName=hideByIllusion?p.illusionData.nickname:p.nickname,shownLevel=hideByIllusion?(p.illusionData.level||p.level):p.level,shownTypes=hideByIllusion?(p.illusionData.types||p.types):p.types;const mechs=[p.isMega?"메가진화":"",p.isDynamaxed?(p.isGigantamaxed?"거다이맥스":"다이맥스"):"",p.isTerastallized?`테라스탈 · ${TYPE_KO[p.teraType]||p.teraType}`:"",p.isTransformed?`변신 · ${p.transformedIntoName||"상대"}`:""].filter(Boolean);return`<div class="title"><h3>${esc(shownName)}</h3><small>레벨 ${shownLevel}</small></div><div class="hud-meta"><span>${esc(t.name)}</span><span class="type-row">${shownTypes.map(typePill).join("")}</span>${p.status?`<span class="status-pill">${esc(STATUS_KO[p.status]||p.status)}</span>`:""}</div><div class="held-item">지닌물건 · <b>${esc(displayItemName(p.item))}</b></div><div class="hptext"><b>HP</b><span>${p.currentHp}/${p.stats.hp}</span></div><div class="hp"><div class="hpbar" style="width:${pct}%"></div></div><div class="party-dots">${t.party.map((x,i)=>`<span class="dot ${x.isFainted()?"fainted":""} ${i===t.activeIndex?"active":""}"></span>`).join("")}</div>${mechs.length?`<div class="mechanic-tags">${mechs.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}`}
 function renderTeam(t){return t.party.map((p,i)=>`<div class="teamrow"><img src="${spriteUrl(p,false)}" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · HP ${p.currentHp}/${p.stats.hp} · ${esc(displayItemName(p.item))}</small></div><span>${i===t.activeIndex?"●":""}</span></div>`).join("")}
 function renderGear(t){const g=t.gear||{};return[["키스톤",g.keyStone],["Z링",g.zRing],["다이맥스밴드",g.dynamaxBand],["테라스탈오브",g.teraOrb]].map(([name,on])=>`<span class="gear-chip ${on?"on":"off"}">${on?"✓":"×"} ${name}</span>`).join("")}
 function setTeraOverlay(base,overlay,p,isMine){
@@ -1088,7 +1129,7 @@ function setTeraOverlay(base,overlay,p,isMine){
   base?.closest(".spritebox")?.classList.remove("tera-active");
 }
 function renderBattle(){
-  if(!battle)return;const mine=trainerByPerspective(true),enemy=trainerByPerspective(false),mp=mine.active,ep=enemy.active;qs("#battleSection").classList.remove("hidden");qs("#playerHud").innerHTML=hud(mine);qs("#enemyHud").innerHTML=hud(enemy);setSprite(qs("#playerSprite"),mp,true);setSprite(qs("#enemySprite"),ep,false);setTeraOverlay(qs("#playerSprite"),qs("#playerTeraOverlay"),mp,true);setTeraOverlay(qs("#enemySprite"),qs("#enemyTeraOverlay"),ep,false);
+  if(!battle)return;const mine=trainerByPerspective(true),enemy=trainerByPerspective(false),mp=mine.active,ep=enemy.active;qs("#battleSection").classList.remove("hidden");qs("#playerHud").innerHTML=hud(mine,true);qs("#enemyHud").innerHTML=hud(enemy,false);setSprite(qs("#playerSprite"),mp,true);setSprite(qs("#enemySprite"),ep,false);setTeraOverlay(qs("#playerSprite"),qs("#playerTeraOverlay"),mp,true);setTeraOverlay(qs("#enemySprite"),qs("#enemyTeraOverlay"),ep,false);
   qs("#playerSprite").className=`sprite ${mp.isDynamaxed?"dynamax":""} ${mp.isFainted()?"faint":""}`;qs("#enemySprite").className=`sprite ${ep.isDynamaxed?"dynamax":""} ${ep.isFainted()?"faint":""}`;qs("#turnLabel").textContent=`턴 ${battle.turn}`;qs("#modeLabel").textContent=mode==="online"?`온라인 배틀 · 내 진영 ${mySide}`:"로컬 시뮬레이션";qs("#myTeam").innerHTML=renderTeam(mine);qs("#gearBox").innerHTML=renderGear(mine);qs("#statBox").innerHTML=[["공격",battle.effectiveStat(mp,"attack")],["방어",battle.effectiveStat(mp,"defense")],["특공",battle.effectiveStat(mp,"specialAttack")],["특방",battle.effectiveStat(mp,"specialDefense")],["스피드",battle.effectiveStat(mp,"speed")],["지닌물건",displayItemName(mp.item)],["특성",displayAbilityName(mp.ability)]].map(x=>`<div class="stat"><small>${x[0]}</small>${esc(x[1])}</div>`).join("");qs("#battleLog").innerHTML=battle.logs.length?battle.logs.slice(-50).reverse().map(x=>`<div class="entry ${x.kind||""}">${esc(x.text)}</div>`).join(""):`<div class="muted">로그 없음</div>`;const debug=qs("#debugState");if(debug)debug.textContent=JSON.stringify(battle.snapshot(),null,2);renderArenaEffects();renderControls();visualDiff();if(battle.logs.length)qs("#battleMessage").textContent=battle.logs.at(-1).text;if(battle.finished){qs("#submitAction").disabled=true;stopBgm(false)}
 }
 function renderArenaEffects(){const a=qs("#arena");a.className=`arena ${battle.weather?`weather-${battle.weather}`:""} ${battle.terrain?`has-terrain terrain-bg-${battle.terrain}`:""}`;const tg=qs("#terrainGlow");tg.className=`terrain-glow ${battle.terrain?`terrain-${battle.terrain}`:""}`;qs("#weatherChip").innerHTML=`<b>날씨</b><span>${battle.weather?`${WEATHER_KO[battle.weather]} · ${battle.weatherTurns}턴`:"없음"}</span>`;qs("#terrainChip").innerHTML=`<b>필드</b><span>${battle.terrain?`${TERRAIN_KO[battle.terrain]} · ${battle.terrainTurns}턴`:"없음"}</span>`}
