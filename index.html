@@ -749,7 +749,9 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 
 
 <style>
-/* V3.2.47 — 교배/유전 기술 + 진화 전 계보 learnset 상속 판정.
+/* V3.2.50 — G-Max 스프라이트는 기존 ani 계열을 우선 사용하고, 로드 실패한 개체만 gen5ani 계열로 폴백.
+   V3.2.49 — 온라인 Battle 수신 시 각 클라이언트가 양쪽 파티의 아이템/특성/포켓몬·폼 이름을 최초 1회 로컬라이징.
+   V3.2.48 — 거다이맥스 스프라이트 gen5ani 경로 보정 + 교배/유전 기술 판정 유지.
    V3.2.46 — 지닌물건 전투 효과 확장 / 미번역 특성 로컬라이징 보강 / selfSwitch(U턴·볼트체인지·퀵턴 등) 실제 교체.
    V3.2.44 — 다중 메가폼 중 forme="Mega" 기본형이 있으면 자동 선택. X/Y처럼 기본 Mega가 없는 진짜 분기만 명시 선택 요구.
    V3.2.43 — 다중 메가폼 경고 문구와 실제 메가진화 발동 조건을 분리. 폼 선택은 mega_variant/mega_showdown_id, 발동은 기존 메가스톤/고유 조건을 유지.
@@ -833,7 +835,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 <div class="shell">
   <header class="topbar">
     <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.47 · 교배/유전 기술 판정 확장</span></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.50 · G-Max 스프라이트 자동 폴백</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
@@ -1156,6 +1158,30 @@ async function primeKoreanMoveNames(nickname=null){
   const rows=key?sheetStore.pokemon.filter(r=>norm(rowVal(r,"trainer_nickname","trainer","트레이너"))===key):(DEMO?.pokemon||[]);
   for(const r of rows){const sid=rowVal(r,"showdown_id","sprite_id")||rowVal(r,"species","pokemon","포켓몬");if(sid){const did=toID(sid);species.add(did);const sp=dexSpecies(did);for(const a of Object.values(sp?.abilities||{}))abilities.add(toID(a));for(const formName of(sp?.otherFormes||[])){const fid=toID(formName),fd=dexSpecies(fid);if(fd&&/mega/.test(norm(fd.forme||fd.name))){species.add(fid);for(const a of Object.values(fd.abilities||{}))abilities.add(toID(a));if(fd.requiredItem)items.add(fd.requiredItem)}}}const it=rowVal(r,"item","도구");if(it)items.add(it);const ab=rowVal(r,"ability","특성");if(ab)abilities.add(toID(ab));for(let i=1;i<=4;i++){const v=rowVal(r,`move${i}`,`기술${i}`)||r[`move${i}`];if(v)moves.add(toID(v))}}
   const tasks=[...moves].map(fetchKoreanMoveName).concat([...items].map(fetchKoreanItemName),[...abilities].map(fetchKoreanAbilityName),[...species].map(fetchKoreanSpeciesName));for(let i=0;i<tasks.length;i+=12)await Promise.all(tasks.slice(i,i+12));
+}
+// V3.2.49 — 온라인 각 클라이언트가 현재 Battle 양쪽 파티의 표시 데이터를 직접 로컬라이징한다.
+async function primeBattleLocalization(b){
+  if(!dexStore.ready||!b)return;
+  const items=new Set(),abilities=new Set(),species=new Set();
+  const addSpecies=id=>{id=toID(id);if(id)species.add(id)};
+  const addAbility=a=>{a=toID(a);if(a)abilities.add(a)};
+  const addItem=i=>{if(i)items.add(i)};
+  for(const t of[b.trainerA,b.trainerB]){
+    for(const p of firebaseArray(t?.party)){
+      addSpecies(p?.showdownId);
+      addSpecies(p?.transformedSpriteId);
+      addSpecies(p?.megaData?.showdownId);
+      addSpecies(p?.gmaxShowdownId);
+      addSpecies(p?.illusionData?.showdownId);
+      addAbility(p?.ability);
+      addAbility(p?.transformBackup?.ability);
+      addAbility(p?.megaData?.ability);
+      addItem(p?.item);
+      addItem(p?.megaData?.stone);
+    }
+  }
+  const tasks=[...items].map(fetchKoreanItemName).concat([...abilities].map(fetchKoreanAbilityName),[...species].map(fetchKoreanSpeciesName));
+  for(let i=0;i<tasks.length;i+=12)await Promise.all(tasks.slice(i,i+12));
 }
 function parseInlineBag(v){const out={};for(const part of String(v||"").split(/[|,]/)){const [rawId,rawQty]=part.split(/[:*x×]/);const id=toID(rawId);if(!id)continue;out[id]=(out[id]||0)+Math.max(0,num(rawQty,1))}return out}
 function trainerBag(key,tr,source=sheetStore){const bag=parseInlineBag(rowVal(tr,"bag","items","가방"));for(const r of(source.items||[])){if(norm(rowVal(r,"trainer_nickname","trainer","트레이너"))!==key)continue;const id=toID(rowVal(r,"item_id","item","아이템id","아이템"));if(!id)continue;bag[id]=(bag[id]||0)+Math.max(0,num(rowVal(r,"quantity","qty","수량"),1))}return bag}
@@ -1666,7 +1692,56 @@ function captureVisualHp(){
 function beginVisualPresentation(){visualPresentationActive=true;revealedFaintSides.clear();captureVisualHp();refreshVisualLock()}
 function refreshVisualLock(){qs("#battleSection")?.classList.toggle("visual-lock",visualLockDepth>0||visualPresentationActive)}
 function shouldShowFaint(side,p){return !!p?.isFainted()&&(!visualPresentationActive||revealedFaintSides.has(side))}
-function spriteUrlForId(id,shiny,isMine){const folder=isMine?(shiny?"ani-back-shiny":"ani-back"):(shiny?"ani-shiny":"ani");return`${CONFIG.showdownBase}/${folder}/${encodeURIComponent(id)}.gif`}
+function spriteUrlForId(id,shiny,isMine){
+  // V3.2.50: 모든 폼은 먼저 기존 ani 계열을 사용한다.
+  // 거다이맥스 중 이 경로에 없는 스프라이트만 이미지 로드 실패 시 gen5ani 계열로 폴백한다.
+  const folder=isMine?(shiny?"ani-back-shiny":"ani-back"):(shiny?"ani-shiny":"ani");
+  return`${CONFIG.showdownBase}/${folder}/${encodeURIComponent(id)}.gif`
+}
+function gen5FallbackSpriteUrl(src){
+  let raw=String(src||"");
+  try{raw=decodeURIComponent(raw)}catch{}
+  // gen5 폴백은 거다이맥스 폼에만 적용한다. 이미 gen5 경로라면 다시 시도하지 않는다.
+  if(!/-gmax(?:-|\.)/i.test(raw)||/\/gen5ani(?:-|\/)/i.test(raw))return"";
+  const pairs=[
+    ["/ani-back-shiny/","/gen5ani-back-shiny/"],
+    ["/ani-back/","/gen5ani-back/"],
+    ["/ani-shiny/","/gen5ani-shiny/"],
+    ["/ani/","/gen5ani/"]
+  ];
+  for(const[from,to]of pairs){if(raw.includes(from))return raw.replace(from,to)}
+  return""
+}
+function spriteImageError(img,mode="opacity"){
+  if(!img)return;
+  const fallback=gen5FallbackSpriteUrl(img.currentSrc||img.src||"");
+  if(fallback&&img.dataset.gen5FallbackTried!=="1"){
+    img.dataset.gen5FallbackTried="1";
+    // dataset.spriteSrc는 최초 ani URL을 유지한다. 렌더 갱신 때마다 ani를 재시도하는 현상을 막는다.
+    img.src=fallback;
+    syncTeraNativeSource(img,fallback);
+    return;
+  }
+  img.onerror=null;
+  if(mode==="hide")img.style.visibility="hidden";
+  else{img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`}
+}
+function prepareSpriteImage(img,primary,mode="opacity"){
+  if(!img)return;
+  if(img.dataset.spriteSrc!==primary){
+    img.dataset.spriteSrc=primary;
+    img.dataset.gen5FallbackTried="0";
+    img.style.visibility="";
+    img.style.opacity="";
+    img.onerror=()=>spriteImageError(img,mode);
+    img.src=primary;
+    syncTeraNativeSource(img,primary);
+  }else{
+    img.onerror=()=>spriteImageError(img,mode);
+    // 이미 폴백된 경우 실제 표시 중인 gen5 URL을 오버레이에도 유지한다.
+    syncTeraNativeSource(img,img.currentSrc||img.src||primary);
+  }
+}
 function spriteUrl(p,isMine){const shiny=p.spriteShiny?p.spriteShiny():!!p.shiny;return spriteUrlForId(p.spriteId(),shiny,isMine)}
 function teraOverlayForBase(base){return qs(base?.id==="playerSprite"?"#playerTeraOverlay":"#enemyTeraOverlay")}
 function syncTeraNativeSource(base,src){
@@ -1683,15 +1758,12 @@ function syncTeraNativeSource(base,src){
 }
 function setSprite(img,p,isMine){
   const exact=spriteUrl(p,isMine);
-  img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`};
-  img.style.opacity="";
-  // 원본/테라 복제 GIF/마스크 GIF를 같은 렌더 패스에서 함께 시작시켜 가능한 한 같은 위상으로 재생한다.
-  if(img.dataset.spriteSrc!==exact){img.dataset.spriteSrc=exact;img.src=exact;syncTeraNativeSource(img,exact)}
-  else syncTeraNativeSource(img,exact);
+  // 원본 ani 경로를 먼저 시도하고, G-Max에서만 실패 시 gen5ani로 자동 폴백한다.
+  prepareSpriteImage(img,exact,"opacity");
 }
 function trainerByPerspective(mine=true){return battle.trainer(mine?mySide:(mySide==="A"?"B":"A"))}
 function hud(t,isMineView=false){const p=t.active,vs=visualPresentationActive?visualHpBySide[t.id]:null,shownHp=vs&&vs.activeIndex===t.activeIndex?vs.hp:p.currentHp,shownMax=vs&&vs.activeIndex===t.activeIndex?vs.max:p.stats.hp,pct=Math.max(0,Math.min(100,shownHp/shownMax*100)),hideByIllusion=!isMineView&&p.illusionActive&&p.illusionData;const shownName=hideByIllusion?p.illusionData.nickname:p.nickname,shownLevel=hideByIllusion?(p.illusionData.level||p.level):p.level,shownTypes=hideByIllusion?(p.illusionData.types||p.types):p.types;const mechs=[p.isMega?"메가진화":"",p.isDynamaxed?(p.isGigantamaxed?"거다이맥스":"다이맥스"):"",p.isTerastallized?`테라스탈 · ${TYPE_KO[p.teraType]||p.teraType}`:"",p.isTransformed?`변신 · ${p.transformedIntoName||"상대"}`:""].filter(Boolean);return`<div class="title"><h3>${esc(shownName)}</h3><small>레벨 ${shownLevel}</small></div><div class="hud-meta"><span>${esc(t.name)}</span><span class="type-row">${shownTypes.map(typePill).join("")}</span>${p.status?`<span class="status-pill">${esc(STATUS_KO[p.status]||p.status)}</span>`:""}</div><div class="held-item">지닌물건 · <b>${esc(displayItemName(p.item))}</b></div><div class="hptext"><b>HP</b><span>${Math.round(shownHp)}/${shownMax}</span></div><div class="hp"><div class="hpbar" style="width:${pct}%"></div></div><div class="party-dots">${t.party.map((x,i)=>`<span class="dot ${x.isFainted()?"fainted":""} ${i===t.activeIndex?"active":""}"></span>`).join("")}</div>${mechs.length?`<div class="mechanic-tags">${mechs.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}`}
-function renderTeam(t){return t.party.map((p,i)=>`<div class="teamrow"><img src="${spriteUrl(p,false)}" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · HP ${p.currentHp}/${p.stats.hp} · ${esc(displayItemName(p.item))}</small></div><span>${i===t.activeIndex?"●":""}</span></div>`).join("")}
+function renderTeam(t){return t.party.map((p,i)=>`<div class="teamrow"><img src="${spriteUrl(p,false)}" onerror="spriteImageError(this,'hide')"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · HP ${p.currentHp}/${p.stats.hp} · ${esc(displayItemName(p.item))}</small></div><span>${i===t.activeIndex?"●":""}</span></div>`).join("")}
 function renderGear(t){const g=t.gear||{};return[["키스톤",g.keyStone],["Z링",g.zRing],["다이맥스밴드",g.dynamaxBand],["테라스탈오브",g.teraOrb]].map(([name,on])=>`<span class="gear-chip ${on?"on":"off"}">${on?"✓":"×"} ${name}</span>`).join("")}
 function syncTeraNativeGeometry(base,overlay){
   if(!base||!overlay)return;
@@ -1770,13 +1842,13 @@ function renderMovePane(mine,p){
   if(move?.selfSwitch&&(selectedPivotIndex==null||!alive.some(o=>o.i===selectedPivotIndex)))selectedPivotIndex=alive[0]?.i??null;if(!move?.selfSwitch)selectedPivotIndex=null;
   const lock=p.choiceLockedMove,assault=heldItemId(p)==="assaultvest";
   const moveHtml=moves.length?`<div class="movegrid">${moves.map((m,i)=>{const locked=!!lock&&CHOICE_ITEMS.has(heldItemId(p))&&m.id!==lock,blocked=assault&&m.category==="status",disabled=num(m.pp,0)<=0||locked||blocked,title=locked?`구애 아이템: ${displayMoveName(lock)||lock}만 사용 가능`:blocked?"돌격조끼: 변화기술 사용 불가":"";return`<button class="movebtn type-${m.type||"normal"} ${selectedMove===i?"selected":""}" data-move="${i}" ${disabled?"disabled":""} title="${esc(title)}"><span class="move-top"><strong>${esc(m.name||m.englishName||m.id||"기술")}</strong>${typePill(m.type||"normal")}</span><small>${m.category==="physical"?"물리":m.category==="special"?"특수":"변화"} · 위력 ${m.power||"—"} · 명중 ${m.accuracy>=999?"—":m.accuracy} · PP ${num(m.pp,0)}/${num(m.maxPp,0)}</small>${m.shortDesc?`<em>${esc(m.shortDesc)}</em>`:""}</button>`}).join("")}</div>`:`<div class="statusbox"><b>기술 데이터를 불러오지 못했습니다.</b><br><span class="muted">온라인 동기화 데이터를 다시 읽은 뒤에도 비어 있으면 새 배틀을 시작해 주세요.</span></div>`;
-  const pivotHtml=move?.selfSwitch&&alive.length?`<div class="target-picker target-picker-cards" style="margin-top:12px"><b>${esc(move.name)} 후 교체할 포켓몬</b><div class="switch-grid" style="margin-top:8px">${alive.map(({x,i})=>`<button class="switch-card ${selectedPivotIndex===i?"selected":""}" data-pivot-choice="${i}"><img src="${spriteUrl(x,false)}" onerror="this.style.visibility='hidden'"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp}</small></span><span>교체</span></button>`).join("")}</div></div>`:"";
+  const pivotHtml=move?.selfSwitch&&alive.length?`<div class="target-picker target-picker-cards" style="margin-top:12px"><b>${esc(move.name)} 후 교체할 포켓몬</b><div class="switch-grid" style="margin-top:8px">${alive.map(({x,i})=>`<button class="switch-card ${selectedPivotIndex===i?"selected":""}" data-pivot-choice="${i}"><img src="${spriteUrl(x,false)}" onerror="spriteImageError(this,'hide')"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp}</small></span><span>교체</span></button>`).join("")}</div></div>`:"";
   qs("#actionPane").innerHTML=moveHtml+pivotHtml;
   qsa("[data-move]").forEach(b=>b.onclick=()=>{selectedMove=Number(b.dataset.move);selectedPivotIndex=null;startBgm();renderControls()});qsa("[data-pivot-choice]").forEach(b=>b.onclick=()=>{selectedPivotIndex=Number(b.dataset.pivotChoice);renderControls()});
   const ms=[["mega","메가진화"],["z","Z기술"],["dynamax","다이맥스"],["gmax","거다이맥스"],["tera","테라스탈"]];
   qs("#mechanics").innerHTML=ms.map(([k,l])=>{const reason=mechanicReason(k,mine,p,move),ok=!reason&&!!move;return`<button class="btn ${mine.pending===k?"active":""}" data-mech="${k}" title="${esc(reason||l+" 사용 가능")}" ${ok?"":"disabled"}>${l}</button>`}).join("");qsa("[data-mech]").forEach(b=>b.onclick=()=>{battle.queue(mySide,b.dataset.mech,selectedMove);renderControls()})
 }
-function renderSwitchPane(mine){mine.pending=null;const valid=mine.party.findIndex((x,i)=>i!==mine.activeIndex&&!x.isFainted());if(selectedSwitchIndex==null||selectedSwitchIndex===mine.activeIndex||mine.party[selectedSwitchIndex]?.isFainted())selectedSwitchIndex=valid>=0?valid:null;qs("#actionPane").innerHTML=`<div class="switch-grid">${mine.party.map((x,i)=>`<button class="switch-card ${selectedSwitchIndex===i?"selected":""}" data-switch-choice="${i}" ${i===mine.activeIndex||x.isFainted()?"disabled":""}><img src="${spriteUrl(x,false)}" onerror="this.style.visibility='hidden'"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp} · ${x.types.map(t=>TYPE_KO[t]||t).join("/")}</small></span><span>${i===mine.activeIndex?"배틀 중":x.isFainted()?"기절":"교체"}</span></button>`).join("")}</div>`;qsa("[data-switch-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.switchChoice);renderControls()});qs("#mechanics").innerHTML=""}
+function renderSwitchPane(mine){mine.pending=null;const valid=mine.party.findIndex((x,i)=>i!==mine.activeIndex&&!x.isFainted());if(selectedSwitchIndex==null||selectedSwitchIndex===mine.activeIndex||mine.party[selectedSwitchIndex]?.isFainted())selectedSwitchIndex=valid>=0?valid:null;qs("#actionPane").innerHTML=`<div class="switch-grid">${mine.party.map((x,i)=>`<button class="switch-card ${selectedSwitchIndex===i?"selected":""}" data-switch-choice="${i}" ${i===mine.activeIndex||x.isFainted()?"disabled":""}><img src="${spriteUrl(x,false)}" onerror="spriteImageError(this,'hide')"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp} · ${x.types.map(t=>TYPE_KO[t]||t).join("/")}</small></span><span>${i===mine.activeIndex?"배틀 중":x.isFainted()?"기절":"교체"}</span></button>`).join("")}</div>`;qsa("[data-switch-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.switchChoice);renderControls()});qs("#mechanics").innerHTML=""}
 function itemTargets(mine,def){
   if(!def)return[];
   return mine.party.map((p,i)=>[i,p]).filter(([,p])=>def.kind==="revive"?p.isFainted():!p.isFainted())
@@ -1787,14 +1859,14 @@ function renderItemPane(mine){
   if(!selectedItemId||!mine.bag[selectedItemId])selectedItemId=entries[0]?.[0]||null;
   const def=itemDef(selectedItemId),targets=itemTargets(mine,def);
   if(selectedItemTarget==null||!targets.some(([i])=>i===selectedItemTarget))selectedItemTarget=targets[0]?.[0]??null;
-  qs("#actionPane").innerHTML=`<div class="bag-grid">${entries.length?entries.map(([id,q])=>{const d=itemDef(id);return`<button class="bag-card ${selectedItemId===id?"selected":""}" data-item-choice="${id}"><span><b>${esc(d.name)}</b><small>${esc(d.desc)}</small></span><span class="qty">×${q}</span></button>`}).join(""):`<div class="statusbox">사용 가능한 배틀 아이템이 없습니다.</div>`}</div>${def?`<div class="target-picker target-picker-cards"><b>사용할 포켓몬 선택</b><div class="item-target-grid">${targets.length?targets.map(([i,p])=>`<button class="item-target-card ${selectedItemTarget===i?"selected":""}" data-item-target="${i}"><img src="${spriteUrl(p,false)}" onerror="this.style.visibility='hidden'"><span><strong>${esc(p.nickname)}</strong><small>HP ${p.currentHp}/${p.stats.hp}${p.status?` · ${STATUS_KO[p.status]||p.status}`:""}</small></span></button>`).join(""):`<span class="muted">이 아이템을 사용할 수 있는 포켓몬이 없습니다.</span>`}</div></div>`:""}`;
+  qs("#actionPane").innerHTML=`<div class="bag-grid">${entries.length?entries.map(([id,q])=>{const d=itemDef(id);return`<button class="bag-card ${selectedItemId===id?"selected":""}" data-item-choice="${id}"><span><b>${esc(d.name)}</b><small>${esc(d.desc)}</small></span><span class="qty">×${q}</span></button>`}).join(""):`<div class="statusbox">사용 가능한 배틀 아이템이 없습니다.</div>`}</div>${def?`<div class="target-picker target-picker-cards"><b>사용할 포켓몬 선택</b><div class="item-target-grid">${targets.length?targets.map(([i,p])=>`<button class="item-target-card ${selectedItemTarget===i?"selected":""}" data-item-target="${i}"><img src="${spriteUrl(p,false)}" onerror="spriteImageError(this,'hide')"><span><strong>${esc(p.nickname)}</strong><small>HP ${p.currentHp}/${p.stats.hp}${p.status?` · ${STATUS_KO[p.status]||p.status}`:""}</small></span></button>`).join(""):`<span class="muted">이 아이템을 사용할 수 있는 포켓몬이 없습니다.</span>`}</div></div>`:""}`;
   qsa("[data-item-choice]").forEach(b=>b.onclick=()=>{selectedItemId=b.dataset.itemChoice;selectedItemTarget=null;renderControls()});
   qsa("[data-item-target]").forEach(b=>b.onclick=()=>{selectedItemTarget=Number(b.dataset.itemTarget);renderControls()});
   qs("#mechanics").innerHTML=""
 }
 function renderControls(){
   const mine=trainerByPerspective(true),p=mine.active,forced=battle.forceSwitch[mySide]&&!visualPresentationActive;if(lastControlTurn!==battle.turn){lastControlTurn=battle.turn;resetActionSelection()}qs("#forceSwitchBox").classList.toggle("hidden",!forced);qs("#normalControls").classList.toggle("hidden",forced);
-  if(forced){const fsReason=battle.forceSwitchMeta?.[mySide]?.reason,fsText=fsReason==="faint"?"포켓몬이 쓰러졌습니다. 다음 포켓몬을 선택하세요.":"교체할 포켓몬을 선택하세요.";qs("#forceSwitchBox").innerHTML=`<div class="statusbox"><b>${fsText}</b><div class="switch-grid" style="margin-top:10px">${mine.party.map((x,i)=>!x.isFainted()&&i!==mine.activeIndex?`<button class="switch-card" data-force-choice="${i}"><img src="${spriteUrl(x,false)}"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp}</small></span><span>선택</span></button>`:"").join("")}</div></div>`;qsa("[data-force-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.forceChoice);submitSwitch()});return}
+  if(forced){const fsReason=battle.forceSwitchMeta?.[mySide]?.reason,fsText=fsReason==="faint"?"포켓몬이 쓰러졌습니다. 다음 포켓몬을 선택하세요.":"교체할 포켓몬을 선택하세요.";qs("#forceSwitchBox").innerHTML=`<div class="statusbox"><b>${fsText}</b><div class="switch-grid" style="margin-top:10px">${mine.party.map((x,i)=>!x.isFainted()&&i!==mine.activeIndex?`<button class="switch-card" data-force-choice="${i}"><img src="${spriteUrl(x,false)}" onerror="spriteImageError(this,'hide')"><span><b>${esc(x.nickname)}</b><small>HP ${x.currentHp}/${x.stats.hp}</small></span><span>선택</span></button>`:"").join("")}</div></div>`;qsa("[data-force-choice]").forEach(b=>b.onclick=()=>{selectedSwitchIndex=Number(b.dataset.forceChoice);submitSwitch()});return}
   qsa("[data-action-tab]").forEach(b=>{b.classList.toggle("active",b.dataset.actionTab===selectedActionKind);b.onclick=()=>{selectedActionKind=b.dataset.actionTab;if(selectedActionKind!=="move")mine.pending=null;renderControls()}});if(selectedActionKind==="switch")renderSwitchPane(mine);else if(selectedActionKind==="item")renderItemPane(mine);else renderMovePane(mine,p);
   qs("#actionSummary").textContent=actionSummaryText();p.moves=firebaseArray(p.moves);const valid=selectedActionKind==="move"?!!p.moves[selectedMove]:selectedActionKind==="switch"?selectedSwitchIndex!=null:!!(selectedItemId&&selectedItemTarget!=null);qs("#submitAction").disabled=visualPresentationActive||battle.finished||!valid;qs("#resetBattle").classList.toggle("hidden",mode==="online")
 }
@@ -1917,9 +1989,8 @@ function setSwitchPresentationSprite(ev,phase="new"){
   const useOld=phase==="old",id=useOld?ev.oldSpriteId:ev.newSpriteId,shiny=useOld?!!ev.oldShiny:!!ev.newShiny;
   if(!id)return;
   const src=spriteUrlForId(id,shiny,mine);
-  img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`};
   img.classList.remove("faint");img.style.removeProperty("opacity");
-  if(img.dataset.spriteSrc!==src){img.dataset.spriteSrc=src;img.src=src;syncTeraNativeSource(img,src)}else syncTeraNativeSource(img,src);
+  prepareSpriteImage(img,src,"opacity");
 }
 function prepareSwitchPresentation(ev){
   if(!ev?.targetSide)return;
@@ -2057,8 +2128,8 @@ function setMegaPresentationSprite(ev,phase="after"){
   const before=phase==="before",id=before?ev.beforeSpriteId:ev.afterSpriteId,shiny=before?!!ev.beforeShiny:!!ev.afterShiny;
   if(!id)return;
   const src=spriteUrlForId(id,shiny,mine);
-  img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`};img.style.opacity="";
-  if(img.dataset.spriteSrc!==src){img.dataset.spriteSrc=src;img.src=src;syncTeraNativeSource(img,src)}else syncTeraNativeSource(img,src);
+  img.style.opacity="";
+  prepareSpriteImage(img,src,"opacity");
 }
 function visualDiff(){
   const mine=trainerByPerspective(true),enemy=trainerByPerspective(false);const cur={mineHp:mine.active.currentHp,enemyHp:enemy.active.currentHp,mineActive:mine.activeIndex,enemyActive:enemy.activeIndex,megaKeys:[...mine.party.map((p,i)=>p.isMega?`M${i}`:null),...enemy.party.map((p,i)=>p.isMega?`E${i}`:null)].filter(Boolean)};
@@ -2135,7 +2206,7 @@ async function playMegaFx(ev){
   changeSprite();ov.classList.add("hidden");megaFxPlaying=false
 }
 function validationHtml(d){if(!d)return"";const errs=(d.errors||[]).map(x=>`<div class="validation-error">✕ ${esc(x)}</div>`).join("");const warns=(d.warnings||[]).map(x=>`<div class="validation-warn">△ ${esc(x)}</div>`).join("");return errs+warns}
-function previewEntry(data){if(!data?.partyData?.length){qs("#entryPreview").innerHTML=`<div class="bad">이 트레이너의 포켓몬 정보를 찾지 못했습니다.</div>${validationHtml(data)}`;return}qs("#entryPreview").innerHTML=`${validationHtml(data)}${data.partyData.map(p=>`<div class="teamrow"><img src="${CONFIG.showdownBase}/${p.shiny?"ani-shiny":"ani"}/${encodeURIComponent(p.showdownId)}.gif" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · 지닌물건 ${esc(displayItemName(p.item))}</small></div><span>레벨 ${p.level}</span></div>`).join("")}`}
+function previewEntry(data){if(!data?.partyData?.length){qs("#entryPreview").innerHTML=`<div class="bad">이 트레이너의 포켓몬 정보를 찾지 못했습니다.</div>${validationHtml(data)}`;return}qs("#entryPreview").innerHTML=`${validationHtml(data)}${data.partyData.map(p=>`<div class="teamrow"><img src="${CONFIG.showdownBase}/${p.shiny?"ani-shiny":"ani"}/${encodeURIComponent(p.showdownId)}.gif" onerror="spriteImageError(this,'hide')"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · 지닌물건 ${esc(displayItemName(p.item))}</small></div><span>레벨 ${p.level}</span></div>`).join("")}`}
 function startLocal(a,b){if(!a||!b||a.errors?.length||b.errors?.length){toast("엔트리 검증 오류가 있어 배틀을 시작할 수 없습니다.","bad");return}mode="local";mySide="A";battle=new Battle(a,b);resetActionSelection();lastControlTurn=null;lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;visualPresentationActive=false;visualHpBySide.A=null;visualHpBySide.B=null;revealedFaintSides.clear();qs("#lobby").classList.add("hidden");renderBattle();startBgm();scrollTo({top:0,behavior:"smooth"})}
 function chooseEnemyAction(t){const p=t.active;p.moves=firebaseArray(p.moves);const alive=t.party.map((x,i)=>({x,i})).filter(o=>o.i!==t.activeIndex&&!o.x.isFainted());const heal=Object.keys(t.bag||{}).find(id=>["potion","superpotion","hyperpotion","maxpotion","fullrestore"].includes(id)&&t.bag[id]>0);if(heal&&p.currentHp/p.stats.hp<.32&&Math.random()<.7)return{kind:"item",itemId:heal,targetIndex:t.activeIndex};if(alive.length&&p.currentHp/p.stats.hp<.23&&Math.random()<.4)return{kind:"switch",switchIndex:alive[Math.floor(Math.random()*alive.length)].i};const legal=p.moves.map((m,i)=>({m,i})).filter(x=>x.m.pp>0&&!(heldItemId(p)==="assaultvest"&&x.m.category==="status")&&(!p.choiceLockedMove||!CHOICE_ITEMS.has(heldItemId(p))||x.m.id===p.choiceLockedMove)),move=(legal[Math.floor(Math.random()*legal.length)]||{i:0}).i;let mechanic=null;const choices=[];for(const k of["mega","z","dynamax","gmax","tera"])if(mechanicAvailable(k,t,p,p.moves[move]))choices.push(k);if(Math.random()<.12&&choices.length)mechanic=choices[Math.floor(Math.random()*choices.length)];const pivotSwitchIndex=p.moves[move]?.selfSwitch&&alive.length?alive[Math.floor(Math.random()*alive.length)].i:null;return{kind:"move",moveIndex:move,mechanic,pivotSwitchIndex}}
 function autoLocalEnemyForcedSwitch(){
@@ -2183,7 +2254,7 @@ function startBgm(force=false){if(bgmManuallyStopped&&!force)return;playLockedBg
 function userStartBgm(){bgmManuallyStopped=false;playLockedBgm(false)}
 function stopBgm(manual=true){if(manual)bgmManuallyStopped=true;try{scWidget?.pause()}catch{}}
 
-let fb=null,authUser=null,myNick=null,presenceRef=null,onlineUsers={},currentRoomId=null,roomRef=null,roomListener=null,outgoingRefs=[];
+let fb=null,authUser=null,myNick=null,presenceRef=null,onlineUsers={},currentRoomId=null,roomRef=null,roomListener=null,outgoingRefs=[],localizedBattleRoomId=null;
 function firebaseReady(){return!!(window.FIREBASE_CONFIG&&window.FIREBASE_CONFIG.apiKey&&window.FIREBASE_CONFIG.databaseURL)}
 async function initFirebase(){if(!firebaseReady()){qs("#firebaseBadge").textContent="온라인: 설정 필요";return false}try{if(!firebase.apps.length)firebase.initializeApp(window.FIREBASE_CONFIG);fb={auth:firebase.auth(),db:firebase.database()};const cred=await fb.auth.signInAnonymously();authUser=cred.user;qs("#firebaseBadge").textContent="온라인: 준비 완료";return true}catch(e){qs("#firebaseBadge").textContent="온라인: 연결 오류";console.error(e);return false}}
 async function onlineLogin(nickname,data){if(!fb&&!(await initFirebase())){qs("#loginStatus").innerHTML=`<span class="warn">엔트리는 확인됐지만 Firebase 설정이 없어 온라인 목록/매칭은 비활성화됩니다.</span>`;return}myNick=norm(nickname);presenceRef=fb.db.ref(`presence/${authUser.uid}`);await presenceRef.onDisconnect().remove();await presenceRef.set({nickname:myNick,displayName:data.name,status:"online",joinedAt:firebase.database.ServerValue.TIMESTAMP});fb.db.ref("presence").on("value",snap=>{onlineUsers=snap.val()||{};renderOnline()});fb.db.ref(`challenges/${authUser.uid}`).on("value",snap=>renderChallenges(snap.val()||{}));qs("#loginStatus").innerHTML=`<span class="good">온라인 접속 완료:</span> ${esc(data.name)} · ${data.partyData.length}마리`}
@@ -2191,7 +2262,7 @@ function renderOnline(){const q=norm(qs("#onlineSearch").value);const arr=Object
 async function sendChallenge(targetUid){if(!authUser||!myTrainerData)return;const target=onlineUsers[targetUid];if(!target)return;const ref=fb.db.ref(`challenges/${targetUid}/${authUser.uid}`);await ref.set({fromUid:authUser.uid,fromNickname:myNick,fromDisplayName:myTrainerData.name,toUid:targetUid,status:"pending",createdAt:firebase.database.ServerValue.TIMESTAMP});toast(`${target.displayName||target.nickname}에게 도전했습니다.`);ref.on("value",snap=>{const c=snap.val();if(c?.status==="accepted"&&c.roomId){ref.off();joinRoom(c.roomId)}});outgoingRefs.push(ref)}
 function renderChallenges(obj){const arr=Object.entries(obj).filter(([,c])=>c?.status==="pending");qs("#challengeList").innerHTML=arr.length?arr.map(([sourceUid,c])=>`<div class="person"><div><strong>${esc(c.fromDisplayName||c.fromNickname)}</strong><small>배틀 신청</small></div><div class="fieldrow"><button class="btn primary" data-accept="${esc(sourceUid)}">수락</button><button class="btn" data-reject="${esc(sourceUid)}">거절</button></div></div>`).join(""):`<div class="muted">도전 없음</div>`;qsa("[data-accept]").forEach(b=>b.onclick=()=>acceptChallenge(b.dataset.accept,obj[b.dataset.accept]));qsa("[data-reject]").forEach(b=>b.onclick=()=>fb.db.ref(`challenges/${authUser.uid}/${b.dataset.reject}`).update({status:"rejected"}))}
 async function acceptChallenge(sourceUid,c){const roomId="room_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7);const room={hostUid:sourceUid,status:"waiting-host",createdAt:firebase.database.ServerValue.TIMESTAMP,participants:{[sourceUid]:{uid:sourceUid,nickname:c.fromNickname,displayName:c.fromDisplayName,side:"A"},[authUser.uid]:{uid:authUser.uid,nickname:myNick,displayName:myTrainerData.name,side:"B"}}};await fb.db.ref(`rooms/${roomId}`).set(room);await fb.db.ref(`challenges/${authUser.uid}/${sourceUid}`).update({status:"accepted",roomId});joinRoom(roomId)}
-async function joinRoom(roomId){if(currentRoomId===roomId)return;currentRoomId=roomId;mode="online";lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;visualPresentationActive=false;visualHpBySide.A=null;visualHpBySide.B=null;revealedFaintSides.clear();lastControlTurn=null;resetActionSelection();roomRef=fb.db.ref(`rooms/${roomId}`);roomListener=roomRef.on("value",async snap=>{const room=snap.val();if(!room)return;const me=room.participants?.[authUser.uid];if(!me)return;mySide=me.side;if(!room.state&&room.hostUid===authUser.uid){await hostInitRoom(room);return}if(room.state){const nextBattle=Battle.hydrate(room.state),hasFresh=!!battle&&lastVisual!==null&&firebaseArray(nextBattle.visualEvents).some(e=>(Number(e.id)||0)>lastVisualEventId);if(hasFresh)beginVisualPresentation();battle=nextBattle;qs("#lobby").classList.add("hidden");renderBattle();startBgm();if(room.hostUid===authUser.uid)hostResolveIfReady(room)}})}
+async function joinRoom(roomId){if(currentRoomId===roomId)return;currentRoomId=roomId;localizedBattleRoomId=null;mode="online";lastVisual=null;lastVisualEventId=0;hitSequence=Promise.resolve();visualLockDepth=0;visualPresentationActive=false;visualHpBySide.A=null;visualHpBySide.B=null;revealedFaintSides.clear();lastControlTurn=null;resetActionSelection();roomRef=fb.db.ref(`rooms/${roomId}`);roomListener=roomRef.on("value",async snap=>{const room=snap.val();if(!room)return;const me=room.participants?.[authUser.uid];if(!me)return;mySide=me.side;if(!room.state&&room.hostUid===authUser.uid){await hostInitRoom(room);return}if(room.state){const nextBattle=Battle.hydrate(room.state),hasFresh=!!battle&&lastVisual!==null&&firebaseArray(nextBattle.visualEvents).some(e=>(Number(e.id)||0)>lastVisualEventId);if(localizedBattleRoomId!==roomId){await primeBattleLocalization(nextBattle);localizedBattleRoomId=roomId}if(hasFresh)beginVisualPresentation();battle=nextBattle;qs("#lobby").classList.add("hidden");renderBattle();startBgm();if(room.hostUid===authUser.uid)hostResolveIfReady(room)}})}
 async function hostInitRoom(room){const A=Object.values(room.participants).find(x=>x.side==="A"),B=Object.values(room.participants).find(x=>x.side==="B");await Promise.all([primeKoreanMoveNames(A.nickname),primeKoreanMoveNames(B.nickname)]);const a=getTrainerData(A.nickname),b=getTrainerData(B.nickname);if(!a||!b||a.errors?.length||b.errors?.length){toast("상대 엔트리가 포켓몬 데이터 검증을 통과하지 못했습니다.","bad");return}const init=new Battle(a,b);await roomRef.child("state").set(init.snapshot());await roomRef.child("status").set("battle")}
 async function submitOnlineAction(){if(!roomRef||!battle)return;startBgm();const action=selectedAction();await roomRef.child(`actions/${battle.turn}/${authUser.uid}`).set({...action,at:firebase.database.ServerValue.TIMESTAMP});qs("#submitAction").disabled=true;toast("행동을 제출했습니다. 상대를 기다립니다.")}
 async function submitOnlineSwitch(){const idx=Number(selectedSwitchIndex);await roomRef.child(`switches/${battle.turn}/${authUser.uid}`).set({index:idx,at:firebase.database.ServerValue.TIMESTAMP});toast("교체 선택을 제출했습니다.")}
