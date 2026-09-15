@@ -749,7 +749,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 
 
 <style>
-/* V3.2.30 — 피격 후 HP가 부드럽게 감소하는 연출 추가.
+/* V3.2.31 — 회복 시 HP가 부드럽게 증가하는 연출 추가.
    V3.2.29의 테라스탈 그림자/잔상 제거 규칙도 유지. */
 
 /* V3.2.29 — CSS 전체 점검 후 테라스탈 그림자/잔상 제거.
@@ -823,7 +823,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 <div class="shell">
   <header class="topbar">
     <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.30 · 피격 후 HP 감소 애니메이션 / 테라 잔상 제거</span></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.31 · 피해/회복 HP 애니메이션 / 테라 잔상 제거</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
@@ -1235,6 +1235,11 @@ class Battle{
   trainer(side){return side==="A"?this.trainerA:this.trainerB}
   log(text,kind="normal",meta={}){this.logs.push({turn:this.turn,text,kind,at:Date.now()});this.emitVisual("script",{text,kind,...meta})}
   emitVisual(type,data={}){const ev={id:++this.visualSeq,type,turn:this.turn,...data};this.visualEvents.push(ev);if(this.visualEvents.length>96)this.visualEvents.splice(0,this.visualEvents.length-96);return ev}
+  emitHealVisual(side,target,hpBefore,amount,source="heal"){
+    if(!target||!(amount>0))return null;
+    const t=this.trainer(side),targetIndex=t?.party?.indexOf(target)??-1;
+    return this.emitVisual("heal",{targetSide:side,targetIndex,targetName:target.nickname,amount,hpBefore,hpAfter:target.currentHp,maxHp:target.stats.hp,source});
+  }
   dbg(text){this.debug.push(`[T${this.turn}] ${text}`)}
   grounded(p){return!p.types.includes("flying")&&toID(p.ability)!=="levitate"}
   effectiveStat(p,stat){let v=Math.floor(p.stats[stat]*statStageMul(p.statStages[stat]||0));if(stat==="speed"&&p.status==="paralysis")v=Math.floor(v*.5);if(stat==="defense"&&this.weather==="snow"&&p.types.includes("ice"))v=Math.floor(v*1.5);if(stat==="specialDefense"&&this.weather==="sand"&&p.types.includes("rock"))v=Math.floor(v*1.5);return Math.max(1,v)}
@@ -1331,7 +1336,7 @@ class Battle{
     this.applyMoveField(u,m);
     if(m.category==="status"){
       if(m.id==="transform"){if(!this.transformPokemon(u,target,"move"))this.log("그러나 변신에 실패했다!");return}
-      if(m.heal){const h=u.heal(Math.floor(u.stats.hp*m.heal[0]/m.heal[1]));this.log(`${u.nickname}의 HP가 ${h} 회복됐다!`)}
+      if(m.heal){const hpBefore=u.currentHp,h=u.heal(Math.floor(u.stats.hp*m.heal[0]/m.heal[1]));this.log(`${u.nickname}의 HP가 ${h} 회복됐다!`);if(h)this.emitHealVisual(t.id,u,hpBefore,h,"move")}
       if(m.status)this.applyStatus(target,m.status,m);this.applyBoosts(m.target==="self"?u:target,m.boosts);this.applyBoosts(u,m.selfBoosts);if(m.forceSwitch)this.forceRandomSwitch(o);return;
     }
     if(target.maxGuarded){this.log(`${target.nickname}은(는) 다이월로 완전히 막았다!`);return}
@@ -1339,7 +1344,7 @@ class Battle{
     const hpBefore=target.currentHp;const hits=randomHits(m);let total=0,last=null;for(let i=0;i<hits&&!target.isFainted();i++){last=this.damage(u,target,m);total+=target.takeDamage(Math.floor(last.dmg*protectMult))}
     if(total>0){this.emitVisual("hit",{sourceSide:t.id,targetSide:o.id,moveId:m.id,moveName:m.name,targetName:target.nickname,damage:total,hits,hpBefore,hpAfter:target.currentHp,maxHp:target.stats.hp});this.breakIllusion(target,true)}
     if(last?.crit)this.log("급소에 맞았다!");if(last?.eff===0)this.log("효과가 없는 것 같다…");else if(last?.eff>=2)this.log("효과가 굉장했다!");else if(last?.eff<1)this.log("효과가 별로인 듯하다…");this.log(`${target.nickname}에게 ${total}의 피해!${hits>1?` (${hits}회)` :""}`);
-    if(m.drain&&total>0){const h=u.heal(Math.floor(total*m.drain[0]/m.drain[1]));if(h)this.log(`${u.nickname}이(가) ${h} 회복했다!`)}
+    if(m.drain&&total>0){const hpBefore=u.currentHp,h=u.heal(Math.floor(total*m.drain[0]/m.drain[1]));if(h){this.log(`${u.nickname}이(가) ${h} 회복했다!`);this.emitHealVisual(t.id,u,hpBefore,h,"drain")}}
     if(m.recoil&&total>0&&!u.isFainted()){const d=u.takeDamage(Math.max(1,Math.floor(total*m.recoil[0]/m.recoil[1])));this.log(`${u.nickname}은(는) 반동으로 ${d}의 피해!`);if(u.isFainted())this.log(`${u.nickname}은(는) 쓰러졌다!`,"faint",{targetSide:t.id})}
     if(m.struggle&&!u.isFainted()){const d=u.takeDamage(Math.max(1,Math.floor(u.stats.hp/4)));this.log(`${u.nickname}은(는) 반동으로 ${d}의 피해!`);if(u.isFainted())this.log(`${u.nickname}은(는) 쓰러졌다!`,"faint",{targetSide:t.id})}
     if(!target.isFainted()){if(m.status)this.applyStatus(target,m.status,m);this.applyBoosts(target,m.boosts);this.applySecondary(u,target,m.secondary,m);for(const s of m.secondaries||[])this.applySecondary(u,target,s,m)}
@@ -1350,18 +1355,18 @@ class Battle{
     const t=this.trainer(side),id=toID(itemId),def=itemDef(id),qty=num(t.bag?.[id],0),target=t.party[num(targetIndex,t.activeIndex)];
     if(!def||qty<=0||!target){this.log(`${t.name}: 아이템을 사용할 수 없다.`);return false}
     let applied=false;
-    if(def.kind==="heal"&&!target.isFainted()&&target.currentHp<target.stats.hp){const h=target.heal(def.amount);this.log(`${t.name}은(는) ${target.nickname}에게 ${def.name}을 사용했다! HP가 ${h} 회복됐다.`,"item");applied=h>0}
-    else if(def.kind==="healFull"&&!target.isFainted()&&target.currentHp<target.stats.hp){const h=target.heal(target.stats.hp);this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 HP가 ${h} 회복됐다.`,"item");applied=h>0}
-    else if(def.kind==="fullRestore"&&!target.isFainted()&&(target.currentHp<target.stats.hp||target.status)){const h=target.heal(target.stats.hp),had=target.status;target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${target.nickname}에게 ${def.name}을 사용했다!${h?` HP ${h} 회복.`:""}${had?` ${STATUS_KO[had]||had} 회복.`:""}`,"item");applied=true}
+    if(def.kind==="heal"&&!target.isFainted()&&target.currentHp<target.stats.hp){const hpBefore=target.currentHp,h=target.heal(def.amount);this.log(`${t.name}은(는) ${target.nickname}에게 ${def.name}을 사용했다! HP가 ${h} 회복됐다.`,"item");if(h)this.emitHealVisual(side,target,hpBefore,h,"item");applied=h>0}
+    else if(def.kind==="healFull"&&!target.isFainted()&&target.currentHp<target.stats.hp){const hpBefore=target.currentHp,h=target.heal(target.stats.hp);this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 HP가 ${h} 회복됐다.`,"item");if(h)this.emitHealVisual(side,target,hpBefore,h,"item");applied=h>0}
+    else if(def.kind==="fullRestore"&&!target.isFainted()&&(target.currentHp<target.stats.hp||target.status)){const hpBefore=target.currentHp,h=target.heal(target.stats.hp),had=target.status;target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${target.nickname}에게 ${def.name}을 사용했다!${h?` HP ${h} 회복.`:""}${had?` ${STATUS_KO[had]||had} 회복.`:""}`,"item");if(h)this.emitHealVisual(side,target,hpBefore,h,"item");applied=true}
     else if(def.kind==="status"&&!target.isFainted()&&def.statuses.includes(target.status)){const old=target.status;target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 ${STATUS_KO[old]||old} 상태가 나았다.`,"item");applied=true}
     else if(def.kind==="statusAll"&&!target.isFainted()&&target.status){const old=target.status;target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 ${STATUS_KO[old]||old} 상태가 나았다.`,"item");applied=true}
-    else if(def.kind==="revive"&&target.isFainted()){target.currentHp=Math.max(1,Math.ceil(target.stats.hp*def.ratio));target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}이(가) HP ${target.currentHp}로 일어났다.`,"item");applied=true}
+    else if(def.kind==="revive"&&target.isFainted()){const hpBefore=target.currentHp;target.currentHp=Math.max(1,Math.ceil(target.stats.hp*def.ratio));target.status=null;target.statusTurns=0;target.toxicCounter=0;this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}이(가) HP ${target.currentHp}로 일어났다.`,"item");this.emitHealVisual(side,target,hpBefore,target.currentHp-hpBefore,"revive");applied=true}
     else if(def.kind==="boost"&&!target.isFainted()){const before=target.statStages[def.stat]||0;target.statStages[def.stat]=clampStage(before+def.stages);applied=target.statStages[def.stat]!==before;if(applied)this.log(`${t.name}은(는) ${def.name}을 사용했다! ${target.nickname}의 ${STAT_NAME[def.stat]}이 크게 올랐다!`,"item")}
     if(!applied){this.log(`${def.name}을 사용해도 효과가 없었다.`);return false}t.bag[id]=qty-1;if(t.bag[id]<=0)delete t.bag[id];return true
   }
   clearProtection(){for(const t of[this.trainerA,this.trainerB]){t.active.protected=false;t.active.maxGuarded=false}}
   endTurn(){
-    for(const t of[this.trainerA,this.trainerB]){const p=t.active;if(p.isFainted())continue;let residual=0,label=null;if(p.status==="burn"){residual=Math.max(1,Math.floor(p.stats.hp/16));label="화상"}else if(p.status==="poison"){residual=Math.max(1,Math.floor(p.stats.hp/8));label="독"}else if(p.status==="toxic"){residual=Math.max(1,Math.floor(p.stats.hp*p.toxicCounter/16));p.toxicCounter=Math.min(15,p.toxicCounter+1);label="맹독"}if(residual){const d=p.takeDamage(residual);this.log(`${p.nickname}은(는) ${label}으로 ${d}의 피해를 입었다!`)}if(!p.isFainted()&&this.weather==="sand"&&!p.types.some(x=>["rock","ground","steel"].includes(x))&&!["magicguard","overcoat"].includes(toID(p.ability))){const d=p.takeDamage(Math.max(1,Math.floor(p.stats.hp/16)));this.log(`${p.nickname}은(는) 모래바람으로 ${d}의 피해를 입었다!`)}if(!p.isFainted()&&this.terrain==="grassy"&&this.grounded(p)){const h=p.heal(Math.max(1,Math.floor(p.stats.hp/16)));if(h)this.log(`${p.nickname}은(는) 그래스필드로 ${h} 회복했다!`)}if(!p.isFainted()&&p.isDynamaxed){p.dynamaxTurnsLeft--;if(p.dynamaxTurnsLeft<=0)this.endDynamax(p)}if(p.isFainted())this.log(`${p.nickname}은(는) 쓰러졌다!`,"faint",{targetSide:t.id})}
+    for(const t of[this.trainerA,this.trainerB]){const p=t.active;if(p.isFainted())continue;let residual=0,label=null;if(p.status==="burn"){residual=Math.max(1,Math.floor(p.stats.hp/16));label="화상"}else if(p.status==="poison"){residual=Math.max(1,Math.floor(p.stats.hp/8));label="독"}else if(p.status==="toxic"){residual=Math.max(1,Math.floor(p.stats.hp*p.toxicCounter/16));p.toxicCounter=Math.min(15,p.toxicCounter+1);label="맹독"}if(residual){const d=p.takeDamage(residual);this.log(`${p.nickname}은(는) ${label}으로 ${d}의 피해를 입었다!`)}if(!p.isFainted()&&this.weather==="sand"&&!p.types.some(x=>["rock","ground","steel"].includes(x))&&!["magicguard","overcoat"].includes(toID(p.ability))){const d=p.takeDamage(Math.max(1,Math.floor(p.stats.hp/16)));this.log(`${p.nickname}은(는) 모래바람으로 ${d}의 피해를 입었다!`)}if(!p.isFainted()&&this.terrain==="grassy"&&this.grounded(p)){const hpBefore=p.currentHp,h=p.heal(Math.max(1,Math.floor(p.stats.hp/16)));if(h){this.log(`${p.nickname}은(는) 그래스필드로 ${h} 회복했다!`);this.emitHealVisual(t.id,p,hpBefore,h,"terrain")}}if(!p.isFainted()&&p.isDynamaxed){p.dynamaxTurnsLeft--;if(p.dynamaxTurnsLeft<=0)this.endDynamax(p)}if(p.isFainted())this.log(`${p.nickname}은(는) 쓰러졌다!`,"faint",{targetSide:t.id})}
     if(this.weatherTurns>0&&--this.weatherTurns===0){this.weather=null;this.log("날씨가 평온해졌다.","field")}if(this.terrainTurns>0&&--this.terrainTurns===0){this.terrain=null;this.log("필드 효과가 사라졌다.","field")}this.clearProtection();const a=this.trainerA.hasUsable(),b=this.trainerB.hasUsable();if(!a&&!b){this.finished=true;this.log("양쪽 모두 전투 불능! 무승부다.");return}if(!a){this.finish(this.trainerB,this.trainerA);return}if(!b){this.finish(this.trainerA,this.trainerB);return}this.updateForcedSwitch();
   }
   endDynamax(p){const oldMax=p.stats.hp,base=p.preDynamaxMaxHp,ratio=base/oldMax;p.currentHp=Math.min(base,Math.ceil(p.currentHp*ratio));p.stats.hp=base;p.preDynamaxMaxHp=null;p.isDynamaxed=false;p.isGigantamaxed=false;p.dynamaxTurnsLeft=0}
@@ -1630,6 +1635,18 @@ async function playHitEvent(ev){
   const remain=Math.max(0,CONFIG.hitReactionMs-woundLead-980);if(remain)await new Promise(r=>setTimeout(r,remain));
   await new Promise(r=>setTimeout(r,CONFIG.afterHitDelayMs));
 }
+async function playHealEvent(ev){
+  const side=ev.targetSide,t=battle?.trainer(side),p=t?.active,targetIndex=Number(ev.targetIndex);
+  // 벤치 포켓몬 회복은 전투 HUD 체력바가 없으므로 문구만 실시간으로 보여 준다.
+  if(!t||Number.isFinite(targetIndex)&&targetIndex>=0&&targetIndex!==t.activeIndex){await new Promise(r=>setTimeout(r,220));return}
+  const max=Math.max(1,Number(ev.maxHp)||p?.stats?.hp||1),before=Math.max(0,Number.isFinite(Number(ev.hpBefore))?Number(ev.hpBefore):(visualHpBySide[side]?.hp??p?.currentHp??0)-(Number(ev.amount)||0)),after=Math.min(max,Math.max(before,Number.isFinite(Number(ev.hpAfter))?Number(ev.hpAfter):before+(Number(ev.amount)||0)));
+  setVisualHp(side,before,max,true);
+  qs("#battleMessage").textContent=`${ev.targetName||"포켓몬"}의 HP가 ${Math.max(0,Math.round(after-before))} 회복됐다!`;
+  // 회복 문구가 먼저 보인 뒤 HP 바와 숫자가 함께 차오른다.
+  await new Promise(r=>setTimeout(r,260));
+  await animateVisualHp(side,before,after,max,900);
+  await new Promise(r=>setTimeout(r,220));
+}
 function visualDiff(){
   const mine=trainerByPerspective(true),enemy=trainerByPerspective(false);const cur={mineHp:mine.active.currentHp,enemyHp:enemy.active.currentHp,mineActive:mine.activeIndex,enemyActive:enemy.activeIndex,megaKeys:[...mine.party.map((p,i)=>p.isMega?`M${i}`:null),...enemy.party.map((p,i)=>p.isMega?`E${i}`:null)].filter(Boolean)};
   const allEvents=Array.isArray(battle.visualEvents)?battle.visualEvents:[];
@@ -1637,17 +1654,17 @@ function visualDiff(){
     const fresh=allEvents.filter(e=>(Number(e.id)||0)>lastVisualEventId).sort((a,b)=>(Number(a.id)||0)-(Number(b.id)||0));
     if(fresh.length){
       lastVisualEventId=Math.max(lastVisualEventId,...fresh.map(e=>Number(e.id)||0));
-      const sequence=fresh.filter(e=>e.type==="script"||e.type==="move"||e.type==="hit");
+      const sequence=fresh.filter(e=>e.type==="script"||e.type==="move"||e.type==="hit"||e.type==="heal");
       if(sequence.length){
         visualPresentationActive=true;
-        // 이미 계산된 최종 HP가 연출 시작 전에 보이지 않도록 첫 피격 직전 HP로 HUD를 즉시 되돌린다.
-        const firstHitBySide={};for(const ev of sequence)if(ev.type==="hit"&&ev.targetSide&&!firstHitBySide[ev.targetSide])firstHitBySide[ev.targetSide]=ev;
-        for(const [side,ev] of Object.entries(firstHitBySide)){const t=battle?.trainer(side),p=t?.active,max=Math.max(1,Number(ev.maxHp)||p?.stats?.hp||1),before=Number.isFinite(Number(ev.hpBefore))?Number(ev.hpBefore):Math.min(max,(p?.currentHp||0)+(Number(ev.damage)||0));setVisualHp(side,before,max,true)}
+        // 이미 계산된 최종 HP가 연출 시작 전에 보이지 않도록 각 진영의 첫 HP 변화 직전 값으로 HUD를 즉시 되돌린다.
+        const firstHpEventBySide={};for(const ev of sequence)if((ev.type==="hit"||ev.type==="heal")&&ev.targetSide&&!firstHpEventBySide[ev.targetSide])firstHpEventBySide[ev.targetSide]=ev;
+        for(const [side,ev] of Object.entries(firstHpEventBySide)){const t=battle?.trainer(side),p=t?.active,targetIndex=Number(ev.targetIndex);if(Number.isFinite(targetIndex)&&targetIndex>=0&&t&&targetIndex!==t.activeIndex)continue;const max=Math.max(1,Number(ev.maxHp)||p?.stats?.hp||1),before=Number.isFinite(Number(ev.hpBefore))?Number(ev.hpBefore):(ev.type==="hit"?Math.min(max,(p?.currentHp||0)+(Number(ev.damage)||0)):Math.max(0,(p?.currentHp||0)-(Number(ev.amount)||0)));setVisualHp(side,before,max,true)}
         refreshVisualLock();
         hitSequence=hitSequence.then(async()=>{
           setVisualLock(true);
           try{
-            for(const ev of sequence){if(ev.type==="script")await playScriptEvent(ev);else if(ev.type==="move")await playMoveEvent(ev);else if(ev.type==="hit")await playHitEvent(ev)}
+            for(const ev of sequence){if(ev.type==="script")await playScriptEvent(ev);else if(ev.type==="move")await playMoveEvent(ev);else if(ev.type==="hit")await playHitEvent(ev);else if(ev.type==="heal")await playHealEvent(ev)}
           }finally{
             setVisualLock(false);visualPresentationActive=false;visualHpBySide.A=null;visualHpBySide.B=null;refreshVisualLock();
             // 데모 AI의 강제 교체는 쓰러짐 연출이 끝난 뒤에야 실행한다.
