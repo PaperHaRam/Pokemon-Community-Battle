@@ -635,9 +635,9 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 .battle.visual-lock .controls{pointer-events:none;opacity:.78;}
 </style>
 
-<style id="v3-2-25-terastal-crystal-mask">
-/* V3.2.25 — Cristal.png를 현재 포켓몬 GIF 프레임의 알파 실루엣 안에 합성한다.
-   캔버스 전체는 원본 스프라이트와 같은 변형/애니메이션을 사용하며 최종 불투명도는 30%. */
+<style id="v3-2-26-terastal-crystal-mask">
+/* V3.2.26 — Cristal.png를 디코딩한 현재 포켓몬 GIF 프레임의 알파 실루엣 안에 합성한다.
+   각 GIF 프레임을 직접 갱신하므로 캔버스 오버레이도 애니메이션되며 최종 불투명도는 60%. */
 .tera-canvas-anchor{
   position:absolute !important;
   left:50% !important;
@@ -658,7 +658,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
   height:100% !important;
   max-width:none !important;
   max-height:none !important;
-  opacity:.30 !important;
+  opacity:.60 !important;
   pointer-events:none !important;
   mix-blend-mode:normal !important;
   filter:none !important;
@@ -675,7 +675,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 <div class="shell">
   <header class="topbar">
     <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.25 · 테라스탈 Cristal 마스크 / 실시간 연출</span></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.26 · 애니메이션 Cristal 마스크 / 60%</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
@@ -1254,12 +1254,20 @@ function beginVisualPresentation(){visualPresentationActive=true;revealedFaintSi
 function refreshVisualLock(){qs("#battleSection")?.classList.toggle("visual-lock",visualLockDepth>0||visualPresentationActive)}
 function shouldShowFaint(side,p){return !!p?.isFainted()&&(!visualPresentationActive||revealedFaintSides.has(side))}
 function spriteUrl(p,isMine){const shiny=p.spriteShiny?p.spriteShiny():!!p.shiny;const folder=isMine?(shiny?"ani-back-shiny":"ani-back"):(shiny?"ani-shiny":"ani");return`${CONFIG.showdownBase}/${folder}/${encodeURIComponent(p.spriteId())}.gif`}
-function setSprite(img,p,isMine){const exact=spriteUrl(p,isMine);img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`};img.style.opacity="";img.src=exact}
+function setSprite(img,p,isMine){
+  const exact=spriteUrl(p,isMine);
+  img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`};
+  img.style.opacity="";
+  // 같은 포켓몬을 다시 렌더링할 때 GIF src를 매번 재지정하면 애니메이션이 1프레임으로 되감길 수 있다.
+  // URL이 실제로 바뀔 때만 교체하고 시작 시각을 기록해 테라 캔버스와 프레임 위상을 맞춘다.
+  if(img.dataset.spriteSrc!==exact){img.dataset.spriteSrc=exact;img.__spriteStartedAt=performance.now();img.src=exact}
+}
 function trainerByPerspective(mine=true){return battle.trainer(mine?mySide:(mySide==="A"?"B":"A"))}
 function hud(t,isMineView=false){const p=t.active,pct=Math.max(0,Math.min(100,p.currentHp/p.stats.hp*100)),hideByIllusion=!isMineView&&p.illusionActive&&p.illusionData;const shownName=hideByIllusion?p.illusionData.nickname:p.nickname,shownLevel=hideByIllusion?(p.illusionData.level||p.level):p.level,shownTypes=hideByIllusion?(p.illusionData.types||p.types):p.types;const mechs=[p.isMega?"메가진화":"",p.isDynamaxed?(p.isGigantamaxed?"거다이맥스":"다이맥스"):"",p.isTerastallized?`테라스탈 · ${TYPE_KO[p.teraType]||p.teraType}`:"",p.isTransformed?`변신 · ${p.transformedIntoName||"상대"}`:""].filter(Boolean);return`<div class="title"><h3>${esc(shownName)}</h3><small>레벨 ${shownLevel}</small></div><div class="hud-meta"><span>${esc(t.name)}</span><span class="type-row">${shownTypes.map(typePill).join("")}</span>${p.status?`<span class="status-pill">${esc(STATUS_KO[p.status]||p.status)}</span>`:""}</div><div class="held-item">지닌물건 · <b>${esc(displayItemName(p.item))}</b></div><div class="hptext"><b>HP</b><span>${p.currentHp}/${p.stats.hp}</span></div><div class="hp"><div class="hpbar" style="width:${pct}%"></div></div><div class="party-dots">${t.party.map((x,i)=>`<span class="dot ${x.isFainted()?"fainted":""} ${i===t.activeIndex?"active":""}"></span>`).join("")}</div>${mechs.length?`<div class="mechanic-tags">${mechs.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}`}
 function renderTeam(t){return t.party.map((p,i)=>`<div class="teamrow"><img src="${spriteUrl(p,false)}" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · HP ${p.currentHp}/${p.stats.hp} · ${esc(displayItemName(p.item))}</small></div><span>${i===t.activeIndex?"●":""}</span></div>`).join("")}
 function renderGear(t){const g=t.gear||{};return[["키스톤",g.keyStone],["Z링",g.zRing],["다이맥스밴드",g.dynamaxBand],["테라스탈오브",g.teraOrb]].map(([name,on])=>`<span class="gear-chip ${on?"on":"off"}">${on?"✓":"×"} ${name}</span>`).join("")}
 let teraCrystalTexture=null,teraCrystalTextureFailed=false;
+const teraGifFrameCache=new Map();
 function getTeraCrystalTexture(){
   if(teraCrystalTexture)return teraCrystalTexture;
   const img=new Image();
@@ -1275,17 +1283,62 @@ function teraCanvasForBase(base){
   return qs(base.id==="playerSprite"?"#playerTeraOverlay":"#enemyTeraOverlay");
 }
 function teraAnchorForCanvas(canvas){return canvas?.closest(".tera-canvas-anchor")||null}
+function releaseTeraGifFrames(entry){
+  if(!entry?.frames)return;
+  for(const f of entry.frames){try{f.bitmap?.close?.()}catch{}}
+}
+async function decodeTeraGif(src){
+  if(!src)throw new Error("sprite URL 없음");
+  if(teraGifFrameCache.has(src))return teraGifFrameCache.get(src);
+  const task=(async()=>{
+    if(typeof ImageDecoder==="undefined")throw new Error("ImageDecoder 미지원");
+    if(ImageDecoder.isTypeSupported&&!(await ImageDecoder.isTypeSupported("image/gif")))throw new Error("GIF ImageDecoder 미지원");
+    const res=await fetch(src,{mode:"cors",cache:"force-cache"});
+    if(!res.ok)throw new Error(`sprite gif ${res.status}`);
+    const data=await res.arrayBuffer();
+    const dec=new ImageDecoder({data,type:"image/gif"});
+    await dec.tracks.ready;
+    try{if(dec.completed)await dec.completed}catch{}
+    const track=dec.tracks.selectedTrack;
+    const count=Math.max(1,Number(track?.frameCount)||1);
+    const frames=[];let total=0;
+    for(let i=0;i<count;i++){
+      const result=await dec.decode({frameIndex:i});
+      const vf=result.image;
+      const duration=Math.max(20,(Number(vf.duration)||100000)/1000); // VideoFrame.duration은 μs
+      let bitmap;
+      if(typeof createImageBitmap==="function")bitmap=await createImageBitmap(vf);
+      else bitmap=vf;
+      frames.push({bitmap,duration,start:total});
+      total+=duration;
+      if(bitmap!==vf)try{vf.close?.()}catch{}
+    }
+    try{dec.close?.()}catch{}
+    return{frames,totalDuration:Math.max(total,100),width:frames[0]?.bitmap?.width||0,height:frames[0]?.bitmap?.height||0};
+  })().catch(err=>{teraGifFrameCache.delete(src);throw err});
+  teraGifFrameCache.set(src,task);
+  return task;
+}
+function teraFrameAt(anim,elapsedMs){
+  if(!anim?.frames?.length)return null;
+  const total=Math.max(1,anim.totalDuration||1);
+  let t=((elapsedMs%total)+total)%total;
+  // 프레임 수가 작으므로 선형 탐색이 가장 가볍다.
+  for(let i=anim.frames.length-1;i>=0;i--)if(t>=anim.frames[i].start)return anim.frames[i].bitmap;
+  return anim.frames[0].bitmap;
+}
 function stopTeraCanvas(canvas){
   if(!canvas)return;
   canvas.__teraActive=false;
   if(canvas.__teraRaf){cancelAnimationFrame(canvas.__teraRaf);canvas.__teraRaf=null}
+  canvas.__teraBase=null;canvas.__teraPokemon=null;canvas.__teraAnim=null;canvas.__teraAnimSrc=null;canvas.__teraAnimLoading=null;
   const anchor=teraAnchorForCanvas(canvas);
   anchor?.classList.add("hidden");
   const ctx=canvas.getContext?.("2d");
   if(ctx)ctx.clearRect(0,0,canvas.width||1,canvas.height||1);
 }
 function drawImageCover(ctx,img,w,h){
-  const sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;if(!sw||!sh)return;
+  const sw=img.naturalWidth||img.width||img.displayWidth,sh=img.naturalHeight||img.height||img.displayHeight;if(!sw||!sh)return;
   const scale=Math.max(w/sw,h/sh),dw=sw*scale,dh=sh*scale,dx=(w-dw)/2,dy=(h-dh)/2;
   ctx.drawImage(img,dx,dy,dw,dh);
 }
@@ -1299,28 +1352,46 @@ function syncTeraCanvas(base,canvas,p){
   canvas.classList.toggle("dynamax",!!p?.isDynamaxed);
   canvas.classList.toggle("faint",base.classList.contains("faint"));
 }
+function ensureTeraGifAnimation(base,canvas){
+  const src=base?.currentSrc||base?.src||base?.dataset?.spriteSrc||"";
+  if(!src)return;
+  if(canvas.__teraAnimSrc===src&&(canvas.__teraAnim||canvas.__teraAnimLoading))return;
+  canvas.__teraAnimSrc=src;canvas.__teraAnim=null;
+  const token={src};canvas.__teraAnimLoading=token;
+  decodeTeraGif(src).then(anim=>{
+    if(!canvas.__teraActive||canvas.__teraAnimLoading!==token||canvas.__teraAnimSrc!==src)return;
+    canvas.__teraAnim=anim;canvas.__teraAnimLoading=null;
+  }).catch(err=>{
+    if(canvas.__teraAnimLoading===token)canvas.__teraAnimLoading=null;
+    console.warn("테라스탈 GIF 프레임 디코딩 실패 — DOM 프레임 복사로 폴백합니다.",err);
+  });
+}
 function startTeraCanvas(base,canvas,p){
   if(!base||!canvas)return;
   const anchor=teraAnchorForCanvas(canvas);if(!anchor)return;
   anchor.classList.remove("hidden");
   canvas.__teraActive=true;canvas.__teraBase=base;canvas.__teraPokemon=p;
   syncTeraCanvas(base,canvas,p);
-  getTeraCrystalTexture();
+  getTeraCrystalTexture();ensureTeraGifAnimation(base,canvas);
   if(canvas.__teraRaf)return;
-  const frame=()=>{
+  const frame=(now)=>{
     if(!canvas.__teraActive){canvas.__teraRaf=null;return}
     const b=canvas.__teraBase,pk=canvas.__teraPokemon,tex=getTeraCrystalTexture();
     if(!b||!pk?.isTerastallized){stopTeraCanvas(canvas);return}
-    syncTeraCanvas(b,canvas,pk);
+    syncTeraCanvas(b,canvas,pk);ensureTeraGifAnimation(b,canvas);
     const ctx=canvas.getContext("2d");
     if(ctx){
       const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);
       if(b.complete&&b.naturalWidth&&tex.complete&&tex.naturalWidth&&!teraCrystalTextureFailed){
         try{
-          // 1) 현재 애니메이션 프레임을 그대로 복제한다.
-          ctx.globalCompositeOperation="source-over";ctx.globalAlpha=1;ctx.drawImage(b,0,0,w,h);
-          // 2) Cristal.png를 비율 유지 + cover 방식으로 확대/축소하여 복제본 전체를 덮는다.
-          //    source-atop 덕분에 포켓몬의 알파 실루엣 밖에는 결정 텍스처가 보이지 않는다.
+          // ImageDecoder가 준비되면 실제 GIF 각 프레임을 직접 사용한다.
+          // base의 최초 재생 시각을 기준으로 잡아 원본 GIF와 가능한 한 같은 위상으로 움직인다.
+          const anim=canvas.__teraAnim;
+          const started=Number(b.__spriteStartedAt)||now;
+          const gifFrame=anim?teraFrameAt(anim,now-started):null;
+          const source=gifFrame||b; // 미지원 환경에서는 기존 DOM drawImage 방식으로 안전하게 폴백.
+          ctx.globalCompositeOperation="source-over";ctx.globalAlpha=1;ctx.drawImage(source,0,0,w,h);
+          // Cristal.png를 cover로 확대/축소하고 포켓몬 프레임의 알파 영역에만 남긴다.
           ctx.globalCompositeOperation="source-atop";drawImageCover(ctx,tex,w,h);
           ctx.globalCompositeOperation="source-over";ctx.globalAlpha=1;
         }catch(err){ctx.clearRect(0,0,w,h)}
@@ -1433,7 +1504,7 @@ function hit(el){
     if(el.__hitTimer){clearTimeout(el.__hitTimer);el.__hitTimer=null}
   };
   const start=performance.now();
-  const frame=(now)=>{const ms=Math.min(duration,now-start);if(box)box.style.setProperty("left",`${xAt(ms).toFixed(2)}px`,"important");const blinkOpacity=opacityAt(ms);el.style.setProperty("opacity",String(blinkOpacity),"important");if(teraCanvas&&teraCanvas.__teraActive)teraCanvas.style.setProperty("opacity",String(.30*blinkOpacity),"important");if(ms<duration){const id=requestAnimationFrame(frame);el.__hitRaf=id;if(box)box.__hitRaf=id;return}cleanup()};
+  const frame=(now)=>{const ms=Math.min(duration,now-start);if(box)box.style.setProperty("left",`${xAt(ms).toFixed(2)}px`,"important");const blinkOpacity=opacityAt(ms);el.style.setProperty("opacity",String(blinkOpacity),"important");if(teraCanvas&&teraCanvas.__teraActive)teraCanvas.style.setProperty("opacity",String(.60*blinkOpacity),"important");if(ms<duration){const id=requestAnimationFrame(frame);el.__hitRaf=id;if(box)box.__hitRaf=id;return}cleanup()};
   const id=requestAnimationFrame(frame);el.__hitRaf=id;if(box)box.__hitRaf=id;
   el.__hitTimer=setTimeout(cleanup,duration+180);
 }
