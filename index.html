@@ -749,7 +749,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 
 
 <style>
-/* V3.2.41 — 기술 강제 교체도 일반 교체 연출 적용 + 강제 교체된 포켓몬의 예약 행동 취소 + 울음소리 35%.
+/* V3.2.43 — 다중 메가폼 경고 문구와 실제 메가진화 발동 조건을 분리. 폼 선택은 mega_variant/mega_showdown_id, 발동은 기존 메가스톤/고유 조건을 유지.
    V3.2.38 — Recover.mp3 재생 볼륨을 40%로 조정.
    V3.2.35 — 메가진화 GIF 재생 중간에 폼 스프라이트 전환 + Recover.mp3 종료 후 HP 회복 애니메이션.
    V3.2.34 — 울음소리 순차 연출 + 교체 바운스 + 메가진화 GIF 완료 후 다음 연출.
@@ -830,7 +830,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 <div class="shell">
   <header class="topbar">
     <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.41 · 기술 강제 교체 애니메이션 / 예약 행동 취소</span></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.43 · 다중 메가폼 경고 수정 / 메가스톤 조건 복원</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
@@ -1061,7 +1061,7 @@ async function fetchKoreanAbilityName(abilityName){const id=toID(abilityName);if
 async function fetchKoreanSpeciesName(showdownId){const id=toID(showdownId),sp=dexSpecies(id);if(!sp?.num)return"";const key=String(Math.abs(sp.num));if(speciesKoMap[key])return speciesKoMap[key];try{const data=await fetchJson(`${CONFIG.pokeApi}/pokemon-species/${Math.abs(sp.num)}/`);const ko=koNameFrom(data);if(ko)speciesKoMap[key]=ko;return ko}catch{return""}}
 function displayItemName(raw){if(!raw)return"없음";const id=toID(raw);return itemKoMap[id]||ITEM_KO_FALLBACK[id]||raw}
 function displayAbilityName(raw){if(!raw)return"없음";return abilityKoMap[toID(raw)]||raw}
-function displaySpeciesName(showdownId,fallback="포켓몬"){const sp=dexSpecies(showdownId),base=sp?.num?speciesKoMap[String(Math.abs(sp.num))]:"";if(!base)return fallback||sp?.name||showdownId;const f=norm(sp?.forme||"");if(f.startsWith("mega")){const suffix=/x$/.test(f)?"X":/y$/.test(f)?"Y":"";return`메가${base}${suffix}`}if(f.includes("gmax"))return`거다이맥스 ${base}`;if(f==="alola")return`알로라의 모습 ${base}`;if(f==="galar")return`가라르의 모습 ${base}`;if(f==="hisui")return`히스이의 모습 ${base}`;if(f==="paldea")return`팔데아의 모습 ${base}`;return base}
+function displaySpeciesName(showdownId,fallback="포켓몬"){const sp=dexSpecies(showdownId),base=sp?.num?speciesKoMap[String(Math.abs(sp.num))]:"";if(!base)return fallback||sp?.name||showdownId;const f=norm(sp?.forme||"");if(f.startsWith("mega")){const suffix=/x$/.test(f)?"X":/y$/.test(f)?"Y":/z$/.test(f)?"Z":"";return`메가${base}${suffix}`}if(f.includes("gmax"))return`거다이맥스 ${base}`;if(f==="alola")return`알로라의 모습 ${base}`;if(f==="galar")return`가라르의 모습 ${base}`;if(f==="hisui")return`히스이의 모습 ${base}`;if(f==="paldea")return`팔데아의 모습 ${base}`;return base}
 async function primeKoreanMoveNames(nickname=null){
   if(!dexStore.ready)return;const moves=new Set(),items=new Set(),abilities=new Set(),species=new Set(),key=nickname?norm(nickname):null;
   const rows=key?sheetStore.pokemon.filter(r=>norm(rowVal(r,"trainer_nickname","trainer","트레이너"))===key):(DEMO?.pokemon||[]);
@@ -1086,12 +1086,25 @@ async function loadSheets(){
 function displayMoveName(id){const key=toID(id),r=sheetStore.moves.find(x=>toID(rowVal(x,"move_id","id","기술id"))===key);return (r?rowVal(r,"display_name","name","기술명"):"")||moveKoMap[key]||""}
 function autoMegaData(baseId,item,manualId="",variant=""){
   const base=dexSpecies(baseId);if(!base)return null;
-  const ids=(base.otherFormes||[]).map(toID).filter(id=>/mega/.test(norm(dexSpecies(id)?.forme||dexSpecies(id)?.name)));
+  // Showdown에 같은 종의 메가 계열 폼이 여러 개 존재할 수 있으므로 ID 기준으로 중복 제거한다.
+  const ids=[...new Set((base.otherFormes||[]).map(toID).filter(id=>/mega/.test(norm(dexSpecies(id)?.forme||dexSpecies(id)?.name))))];
   const forms=ids.map(id=>({id,data:dexSpecies(id)})).filter(x=>x.data);if(!forms.length)return null;
-  const held=canonicalItem(item),wanted=norm(variant).replace(/[^xy]/g,"");let chosen=null;
-  if(manualId){const mid=toID(manualId);const d=dexSpecies(mid);if(d)chosen={id:mid,data:d}}
+  const held=canonicalItem(item),rawVariant=norm(variant).replace(/^mega[\s_-]*/,"").replace(/[^a-z0-9]/g,"");let chosen=null;
+  if(manualId){
+    const mid=toID(manualId),d=dexSpecies(mid);
+    if(d&&forms.some(x=>x.id===mid))chosen={id:mid,data:d};
+  }
+  // 메가스톤은 여러 메가폼 중 일치하는 폼을 자동 판별하는 데도 사용한다. 실제 발동 조건 검사는 별도로 수행한다.
   if(!chosen&&held)chosen=forms.find(x=>canonicalItem(x.data.requiredItem||"")===held);
-  if(!chosen&&wanted)chosen=forms.find(x=>norm(x.data.forme||x.data.name).replace(/[^a-z]/g,"").endsWith(wanted));
+  if(!chosen&&rawVariant){
+    const want=rawVariant;
+    chosen=forms.find(x=>{
+      const forme=norm(x.data.forme||"").replace(/[^a-z0-9]/g,"");
+      const name=norm(x.data.name||"").replace(/[^a-z0-9]/g,"");
+      if(["normal","base","default","standard","regular","mega"].includes(want))return forme==="mega"||name.endsWith("mega");
+      return forme===`mega${want}`||forme.endsWith(want)||name.endsWith(`mega${want}`)||name.endsWith(want);
+    })||null;
+  }
   if(!chosen&&forms.length===1)chosen=forms[0];
   if(!chosen)return{ambiguous:true,options:forms.map(x=>({showdownId:spriteIdFromDexId(x.id,x.data),name:x.data.name,stone:x.data.requiredItem||null}))};
   const d=chosen.data;return{showdownId:spriteIdFromDexId(chosen.id,d),name:displaySpeciesName(chosen.id,d.name),types:(d.types||[]).map(norm),ability:Object.values(d.abilities||{})[0]||"",stone:d.requiredItem||null,requiredMove:toID(d.requiredMove||""),statsMode:"base",stats:{hp:d.baseStats.hp,attack:d.baseStats.atk,defense:d.baseStats.def,specialAttack:d.baseStats.spa,specialDefense:d.baseStats.spd,speed:d.baseStats.spe}};
@@ -1131,7 +1144,7 @@ function buildPokemonData(r){
   const item=rowVal(r,"item","도구")||null;
   const teraType=norm(rowVal(r,"tera_type","tera","테라타입"))||norm(sp.types?.[0])||"normal";if(!TYPE_KO[teraType])errors.push(`${speciesKo}: 알 수 없는 테라타입 '${teraType}'`);
   const megaData=autoMegaData(dexId,item,rowVal(r,"mega_showdown_id"),rowVal(r,"mega_variant","메가분기"));
-  if(megaData?.ambiguous)errors.push(`${speciesKo}: 메가진화 형태가 여러 개입니다. 지닌물건에 정확한 메가스톤을 넣거나 mega_variant(X/Y) 또는 mega_showdown_id를 지정하세요.`);
+  if(megaData?.ambiguous)errors.push(`${speciesKo}: 메가진화 형태가 여러 개입니다. mega_variant 또는 mega_showdown_id로 사용할 메가폼을 지정하세요.`);
   const gmaxShowdownId=autoGmaxId(dexId,rowVal(r,"gmax_showdown_id"));
   return{errors,warnings,data:{species:speciesKo,dexName:speciesKo,nickname:rowVal(r,"nickname","별명")||speciesKo,showdownId:spriteId,dexId,shiny:bool(rowVal(r,"shiny","이로치")),level:num(rowVal(r,"level","레벨"),50),types:(sp.types||["Normal"]).map(norm),ability,item,teraType,statsMode:statMode,stats:statMode==="final"&&CONFIG.allowCustomFinalStats?finalStats:base,baseStats:base,ivs,evs,nature:norm(rowVal(r,"nature","성격"))||"serious",moveIds:moveIds.map(toID),moves,dynamaxLevel:Math.max(0,Math.min(10,num(rowVal(r,"dynamax_level"),10))),megaData,gmaxShowdownId,cannotDynamax:!!sp.cannotDynamax}};
 }
@@ -1193,7 +1206,7 @@ function mechanicExclusionReason(k,p){
 }
 function mechanicReason(k,t,p,move=null){
   const exclusive=mechanicExclusionReason(k,p);if(exclusive)return exclusive;
-  if(k==="mega"){if(t.megaUsed)return"이미 이번 배틀에서 메가진화를 사용했습니다.";if(!t.gear?.keyStone)return"트레이너에게 키스톤이 없습니다.";if(!p.megaData)return"이 포켓몬은 메가진화할 수 없습니다.";if(!hasMegaRequirement(p))return p.megaData.stone?`${displayItemName(p.megaData.stone)}을(를) 지니고 있어야 합니다.`:"필요한 메가진화 조건을 만족하지 못했습니다.";if(p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
+  if(k==="mega"){if(t.megaUsed)return"이미 이번 배틀에서 메가진화를 사용했습니다.";if(!t.gear?.keyStone)return"트레이너에게 키스톤이 없습니다.";if(!p.megaData)return"이 포켓몬은 메가진화할 수 없습니다.";if(!hasMegaRequirement(p))return p.megaData.stone?`${displayItemName(p.megaData.stone)}을(를) 지니고 있어야 합니다.`:(p.megaData.requiredMove?`메가진화에 필요한 기술(${displayMoveName(p.megaData.requiredMove)||p.megaData.requiredMove})을 배우고 있어야 합니다.`:"필요한 메가진화 조건을 만족하지 못했습니다.");if(p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
   if(k==="z"){if(t.zUsed)return"이미 이번 배틀에서 Z기술을 사용했습니다.";if(!t.gear?.zRing)return"트레이너에게 Z링이 없습니다.";if(!move)return"먼저 기술을 선택하세요.";if(move.category==="status")return"현재 엔진은 공격 기술의 Z기술만 지원합니다.";const need=Z_CRYSTAL_BY_TYPE[move.type];if(!need)return"이 기술 타입에 대응하는 Z크리스탈을 찾을 수 없습니다.";if(canonicalItem(p.item)!==need)return`${displayItemName(need)}을(를) 지니고 있어야 합니다.`;if(p.isMega||p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
   if(k==="dynamax"){if(t.dynamaxUsed)return"이미 이번 배틀에서 다이맥스를 사용했습니다.";if(!t.gear?.dynamaxBand)return"트레이너에게 다이맥스밴드가 없습니다.";if(p.cannotDynamax)return"이 포켓몬은 다이맥스할 수 없습니다.";if(p.isMega||p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
   if(k==="gmax"){if(t.dynamaxUsed)return"이미 이번 배틀에서 다이맥스 계열을 사용했습니다.";if(!t.gear?.dynamaxBand)return"트레이너에게 다이맥스밴드가 없습니다.";if(!p.gmaxShowdownId)return"이 포켓몬은 거다이맥스할 수 없습니다.";if(p.isMega||p.isDynamaxed||p.isTerastallized)return"현재 다른 기믹이 적용 중입니다.";return""}
