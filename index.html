@@ -749,7 +749,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 
 
 <style>
-/* V3.2.40 — 교체 첫 프레임 튐 제거 + 기절 교체 리콜 생략 + 울음소리 35%.
+/* V3.2.41 — 기술 강제 교체도 일반 교체 연출 적용 + 강제 교체된 포켓몬의 예약 행동 취소 + 울음소리 35%.
    V3.2.38 — Recover.mp3 재생 볼륨을 40%로 조정.
    V3.2.35 — 메가진화 GIF 재생 중간에 폼 스프라이트 전환 + Recover.mp3 종료 후 HP 회복 애니메이션.
    V3.2.34 — 울음소리 순차 연출 + 교체 바운스 + 메가진화 GIF 완료 후 다음 연출.
@@ -830,7 +830,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 <div class="shell">
   <header class="topbar">
     <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.40 · 교체 프레임 튐 수정 / 기절 교체 중복 리콜 제거</span></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.41 · 기술 강제 교체 애니메이션 / 예약 행동 취소</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
@@ -1353,7 +1353,7 @@ class Battle{
   getOrder(a,b){if(a.priority!==b.priority)return a.priority>b.priority?["A","B"]:["B","A"];const sa=this.effectiveStat(this.trainerA.active,"speed"),sb=this.effectiveStat(this.trainerB.active,"speed");if(sa!==sb)return sa>sb?["A","B"]:["B","A"];return Math.random()<.5?["A","B"]:["B","A"]}
   applyMoveField(user,m){if(m.weather)this.setWeather(m.weather,this.weatherDuration(user,m.weather),m.name);if(m.terrain)this.setTerrain(m.terrain,this.terrainDuration(user),m.name)}
   applySecondary(user,target,s,m){if(!s||Math.random()*100>=num(s.chance,100))return;if(s.status)this.applyStatus(target,s.status,m);this.applyBoosts(target,s.boosts);this.applyBoosts(user,s.selfBoosts)}
-  forceRandomSwitch(targetTrainer){const opts=targetTrainer.party.map((p,i)=>({p,i})).filter(x=>x.i!==targetTrainer.activeIndex&&!x.p.isFainted());if(!opts.length)return false;const pick=opts[Math.floor(Math.random()*opts.length)];this.switch(targetTrainer.id,pick.i,true);return true}
+  forceRandomSwitch(targetTrainer,meta={}){const opts=targetTrainer.party.map((p,i)=>({p,i})).filter(x=>x.i!==targetTrainer.activeIndex&&!x.p.isFainted());if(!opts.length)return false;const pick=opts[Math.floor(Math.random()*opts.length)];this.switch(targetTrainer.id,pick.i,true,{forcedByMove:true,...meta});return true}
   executeMove(t,o,m){
     const u=t.active,target=o.active;if(m.failed)return;if(!this.canAct(u))return;this.log(`${u.nickname}의 ${m.name}!`,m.isZMove?"zmove":m.isMaxMove?"dyna":"move");this.emitVisual("move",{sourceSide:t.id,targetSide:o.id,text:`${u.nickname}의 ${m.name}!`,moveName:m.name,userName:u.nickname});
     if(m.protect||m.maxGuard){const ok=this.protectSuccess(u);if(ok){u.protected=!m.maxGuard;u.maxGuarded=!!m.maxGuard;u.protectChain++;this.log(`${u.nickname}은(는) 몸을 지켰다!`)}else{u.protectChain=0;this.log("그러나 실패했다!")}return}u.protectChain=0;
@@ -1363,7 +1363,7 @@ class Battle{
     if(m.category==="status"){
       if(m.id==="transform"){if(!this.transformPokemon(u,target,"move"))this.log("그러나 변신에 실패했다!");return}
       if(m.heal){const hpBefore=u.currentHp,h=u.heal(Math.floor(u.stats.hp*m.heal[0]/m.heal[1]));this.log(`${u.nickname}의 HP가 ${h} 회복됐다!`);if(h)this.emitHealVisual(t.id,u,hpBefore,h,"move")}
-      if(m.status)this.applyStatus(target,m.status,m);this.applyBoosts(m.target==="self"?u:target,m.boosts);this.applyBoosts(u,m.selfBoosts);if(m.forceSwitch)this.forceRandomSwitch(o);return;
+      if(m.status)this.applyStatus(target,m.status,m);this.applyBoosts(m.target==="self"?u:target,m.boosts);this.applyBoosts(u,m.selfBoosts);if(m.forceSwitch)this.forceRandomSwitch(o,{sourceSide:t.id,moveId:m.id,moveName:m.name});return;
     }
     if(target.maxGuarded){this.log(`${target.nickname}은(는) 다이월로 완전히 막았다!`);return}
     let protectMult=1;if(target.protected){if(m.isZMove||m.isMaxMove){protectMult=.25;this.log("방어를 뚫고 일부 피해를 입혔다!")}else{this.log(`${target.nickname}은(는) 공격을 막았다!`);return}}
@@ -1374,7 +1374,7 @@ class Battle{
     if(m.recoil&&total>0&&!u.isFainted()){const d=u.takeDamage(Math.max(1,Math.floor(total*m.recoil[0]/m.recoil[1])));this.log(`${u.nickname}은(는) 반동으로 ${d}의 피해!`);if(u.isFainted())this.log(`${u.nickname}은(는) 쓰러졌다!`,"faint",{targetSide:t.id})}
     if(m.struggle&&!u.isFainted()){const d=u.takeDamage(Math.max(1,Math.floor(u.stats.hp/4)));this.log(`${u.nickname}은(는) 반동으로 ${d}의 피해!`);if(u.isFainted())this.log(`${u.nickname}은(는) 쓰러졌다!`,"faint",{targetSide:t.id})}
     if(!target.isFainted()){if(m.status)this.applyStatus(target,m.status,m);this.applyBoosts(target,m.boosts);this.applySecondary(u,target,m.secondary,m);for(const s of m.secondaries||[])this.applySecondary(u,target,s,m)}
-    this.applyBoosts(u,m.selfBoosts);if(m.forceSwitch&&!target.isFainted())this.forceRandomSwitch(o);
+    this.applyBoosts(u,m.selfBoosts);if(m.forceSwitch&&!target.isFainted())this.forceRandomSwitch(o,{sourceSide:t.id,moveId:m.id,moveName:m.name});
     if(target.isFainted())this.log(`${target.nickname}은(는) 쓰러졌다!`,"faint",{targetSide:o.id});
   }
   useItem(side,itemId,targetIndex){
@@ -1397,7 +1397,7 @@ class Battle{
   }
   endDynamax(p){const oldMax=p.stats.hp,base=p.preDynamaxMaxHp,ratio=base/oldMax;p.currentHp=Math.min(base,Math.ceil(p.currentHp*ratio));p.stats.hp=base;p.preDynamaxMaxHp=null;p.isDynamaxed=false;p.isGigantamaxed=false;p.dynamaxTurnsLeft=0}
   updateForcedSwitch(){for(const side of["A","B"]){const t=this.trainer(side);this.forceSwitch[side]=t.active.isFainted()&&t.hasUsable();if(this.forceSwitch[side])this.log(`${t.name}은(는) 다음 포켓몬을 내보내야 한다.`)}}
-  switch(side,index,forced=false){const t=this.trainer(side),old=t.active,next=t.party[index];if(!next||next.isFainted()||next===old)return false;if(this.forceSwitch[side]&&!forced)return false;const oldFainted=old.isFainted(),oldSpriteId=old.spriteId?old.spriteId():(old.actualSpriteId?old.actualSpriteId():old.showdownId),oldShiny=old.spriteShiny?old.spriteShiny():!!old.shiny;if(old.isDynamaxed)this.endDynamax(old);this.breakIllusion(old,false);this.revertTransform(old);old.resetVolatile();t.activeIndex=index;this.forceSwitch[side]=false;const newSpriteId=next.spriteId?next.spriteId():(next.actualSpriteId?next.actualSpriteId():next.showdownId),newShiny=next.spriteShiny?next.spriteShiny():!!next.shiny;const exact=next.actualSpriteId?next.actualSpriteId():next.showdownId;this.log(`${t.name}: ${old.nickname} → ${next.displayName?next.displayName():next.nickname}`,"switch",{targetSide:side,oldSpriteId,oldShiny,newSpriteId,newShiny,oldFainted,forced:!!forced});this.emitVisual("cry",{reason:"switch",targetSide:side,cryId:exact||next.showdownId,baseCryId:next.showdownId||exact,pokemonName:next.nickname});this.applyEntryAbility(next);return true}
+  switch(side,index,forced=false,meta={}){const t=this.trainer(side),old=t.active,next=t.party[index];if(!next||next.isFainted()||next===old)return false;if(this.forceSwitch[side]&&!forced)return false;const oldFainted=old.isFainted(),forcedByMove=!!meta?.forcedByMove,oldSpriteId=old.spriteId?old.spriteId():(old.actualSpriteId?old.actualSpriteId():old.showdownId),oldShiny=old.spriteShiny?old.spriteShiny():!!old.shiny;if(old.isDynamaxed)this.endDynamax(old);this.breakIllusion(old,false);this.revertTransform(old);old.resetVolatile();t.activeIndex=index;this.forceSwitch[side]=false;const newSpriteId=next.spriteId?next.spriteId():(next.actualSpriteId?next.actualSpriteId():next.showdownId),newShiny=next.spriteShiny?next.spriteShiny():!!next.shiny;const exact=next.actualSpriteId?next.actualSpriteId():next.showdownId;this.log(`${t.name}: ${old.nickname} → ${next.displayName?next.displayName():next.nickname}`,"switch",{targetSide:side,oldSpriteId,oldShiny,newSpriteId,newShiny,oldFainted,forced:!!forced,forcedByMove,sourceSide:meta?.sourceSide||null,moveId:meta?.moveId||null,moveName:meta?.moveName||null});this.emitVisual("cry",{reason:"switch",targetSide:side,cryId:exact||next.showdownId,baseCryId:next.showdownId||exact,pokemonName:next.nickname});this.applyEntryAbility(next);return true}
   actionSpeedOrder(){const sa=this.effectiveStat(this.trainerA.active,"speed"),sb=this.effectiveStat(this.trainerB.active,"speed");if(sa!==sb)return sa>sb?["A","B"]:["B","A"];return Math.random()<.5?["A","B"]:["B","A"]}
   executeActions(actionA,actionB){
     if(this.finished)return;if(this.forceSwitch.A||this.forceSwitch.B){this.log("강제 교체를 먼저 완료해야 한다.");return}
@@ -1407,9 +1407,9 @@ class Battle{
     for(const side of specialOrder){const a=actions[side];if(a.kind!=="switch")continue;const ok=this.switch(side,num(a.switchIndex,-1),false);if(!ok)this.log(`${this.trainer(side).name}: 교체에 실패했다.`)}
     for(const side of specialOrder){const a=actions[side];if(a.kind!=="item")continue;this.useItem(side,a.itemId,a.targetIndex)}
     for(const side of["A","B"]){if(actions[side].kind==="move")this.activateBeforeOrder(this.trainer(side));else this.trainer(side).pending=null}
-    const moves={};for(const side of["A","B"]){if(actions[side].kind==="move")moves[side]=this.prepareMove(this.trainer(side),num(actions[side].moveIndex,0))}
+    const moves={},moveUsers={};for(const side of["A","B"]){if(actions[side].kind==="move"){moveUsers[side]=this.trainer(side).active;moves[side]=this.prepareMove(this.trainer(side),num(actions[side].moveIndex,0))}}
     let order=[];if(moves.A&&moves.B)order=this.getOrder(moves.A,moves.B);else if(moves.A)order=["A"];else if(moves.B)order=["B"];
-    for(const side of order){const t=this.trainer(side),o=this.trainer(side==="A"?"B":"A"),mv=moves[side];if(t.active.isFainted()||o.active.isFainted())continue;this.executeMove(t,o,mv);if(!o.hasUsable()){this.finish(t,o);break}}
+    for(const side of order){const t=this.trainer(side),o=this.trainer(side==="A"?"B":"A"),mv=moves[side];if(t.active!==moveUsers[side])continue;if(t.active.isFainted()||o.active.isFainted())continue;this.executeMove(t,o,mv);if(!o.hasUsable()){this.finish(t,o);break}}
     if(!this.finished){this.endTurn();this.turn++}
   }
   executeTurn(ia,ib){return this.executeActions({kind:"move",moveIndex:ia},{kind:"move",moveIndex:ib})}
