@@ -749,7 +749,8 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 
 
 <style>
-/* V3.2.34 — 울음소리 순차 연출 + 교체 바운스 + 메가진화 GIF 완료 후 다음 연출.
+/* V3.2.35 — 메가진화 GIF 재생 중간에 폼 스프라이트 전환 + Recover.mp3 종료 후 HP 회복 애니메이션.
+   V3.2.34 — 울음소리 순차 연출 + 교체 바운스 + 메가진화 GIF 완료 후 다음 연출.
    V3.2.33 — 모든 실제 HP 회복 시 Recover.mp3 1회 재생(부활 제외).
    V3.2.32 — 교체/기절 시 Pokémon Showdown 울음소리 재생 추가.
    첫 전투 개시 때는 울음소리를 재생하지 않으며, 실제 교체/기절 이벤트에만 반응한다.
@@ -827,7 +828,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 <div class="shell">
   <header class="topbar">
     <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.34 · 울음소리 순차 연출 / 교체 바운스 / 메가진화 연출 큐</span></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.35 · 메가진화 중간 폼 전환 / 회복 효과음 완료 후 HP 회복</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
@@ -1315,7 +1316,12 @@ class Battle{
   activateBeforeOrder(t){
     const p=t.active,k=t.pending;
     if(k==="mega"){
-      const oldMax=p.stats.hp,ratio=p.currentHp/oldMax;p.nickname=p.megaData.name;p.types=[...p.megaData.types];p.ability=p.megaData.ability||p.ability;p.sourceStats={...p.megaData.stats};p.statsMode="base";p.stats=p.calcStats();p.currentHp=Math.max(1,Math.min(p.stats.hp,Math.floor(p.stats.hp*ratio)));p.isMega=true;p.mechanicLock="mega";t.megaUsed=true;this.log(`${p.species} → ${p.nickname}!`,"mega");this.emitVisual("megaFx",{sourceSide:t.id,pokemonName:p.nickname});this.applyEntryAbility(p);
+      // 전투 계산은 즉시 메가 폼을 사용하되, 화면 연출용으로 변신 전/후 스프라이트를 모두 기록한다.
+      // visualDiff가 먼저 변신 전 스프라이트를 복원하고, 메가 GIF 재생 중간에 after 스프라이트로 바꾼다.
+      const beforeSpriteId=p.actualSpriteId?p.actualSpriteId():p.showdownId,beforeShiny=p.spriteShiny?p.spriteShiny():!!p.shiny;
+      const oldMax=p.stats.hp,ratio=p.currentHp/oldMax;p.nickname=p.megaData.name;p.types=[...p.megaData.types];p.ability=p.megaData.ability||p.ability;p.sourceStats={...p.megaData.stats};p.statsMode="base";p.stats=p.calcStats();p.currentHp=Math.max(1,Math.min(p.stats.hp,Math.floor(p.stats.hp*ratio)));p.isMega=true;p.mechanicLock="mega";t.megaUsed=true;
+      const afterSpriteId=p.actualSpriteId?p.actualSpriteId():p.megaData?.showdownId||p.showdownId,afterShiny=p.spriteShiny?p.spriteShiny():!!p.shiny;
+      this.log(`${p.species} → ${p.nickname}!`,"mega");this.emitVisual("megaFx",{sourceSide:t.id,pokemonName:p.nickname,beforeSpriteId,beforeShiny,afterSpriteId,afterShiny});this.applyEntryAbility(p);
     }else if(k==="dynamax"||k==="gmax"){
       const mult=1.5+.05*p.dynamaxLevel;p.preDynamaxMaxHp=p.stats.hp;p.stats.hp=Math.floor(p.stats.hp*mult);p.currentHp=Math.floor(p.currentHp*mult);p.isDynamaxed=true;p.isGigantamaxed=k==="gmax";p.dynamaxTurnsLeft=3;p.mechanicLock="dynamax";t.dynamaxUsed=true;this.log(`${p.nickname}이(가) ${k==="gmax"?"거다이맥스":"다이맥스"}했다!`,"dyna");
     }else if(k==="tera"){
@@ -1430,7 +1436,8 @@ function captureVisualHp(){
 function beginVisualPresentation(){visualPresentationActive=true;revealedFaintSides.clear();captureVisualHp();refreshVisualLock()}
 function refreshVisualLock(){qs("#battleSection")?.classList.toggle("visual-lock",visualLockDepth>0||visualPresentationActive)}
 function shouldShowFaint(side,p){return !!p?.isFainted()&&(!visualPresentationActive||revealedFaintSides.has(side))}
-function spriteUrl(p,isMine){const shiny=p.spriteShiny?p.spriteShiny():!!p.shiny;const folder=isMine?(shiny?"ani-back-shiny":"ani-back"):(shiny?"ani-shiny":"ani");return`${CONFIG.showdownBase}/${folder}/${encodeURIComponent(p.spriteId())}.gif`}
+function spriteUrlForId(id,shiny,isMine){const folder=isMine?(shiny?"ani-back-shiny":"ani-back"):(shiny?"ani-shiny":"ani");return`${CONFIG.showdownBase}/${folder}/${encodeURIComponent(id)}.gif`}
+function spriteUrl(p,isMine){const shiny=p.spriteShiny?p.spriteShiny():!!p.shiny;return spriteUrlForId(p.spriteId(),shiny,isMine)}
 function teraOverlayForBase(base){return qs(base?.id==="playerSprite"?"#playerTeraOverlay":"#enemyTeraOverlay")}
 function syncTeraNativeSource(base,src){
   const overlay=teraOverlayForBase(base);if(!overlay||!src)return;
@@ -1562,7 +1569,21 @@ function renderControls(){
 }
 function setVisualLock(on){visualLockDepth=Math.max(0,visualLockDepth+(on?1:-1));refreshVisualLock()}
 function playHitSfxOnce(){try{const a=new Audio(CONFIG.hitSfx);a.preload="auto";a.loop=false;a.currentTime=0;a.play().catch(()=>{});return a}catch{return null}}
-function playRecoverSfxOnce(){try{const a=new Audio(CONFIG.recoverSfx);a.preload="auto";a.loop=false;a.currentTime=0;const v=Number(CONFIG.recoverSfxVolume);a.volume=Math.max(0,Math.min(1,Number.isFinite(v)?v:1));a.play().catch(()=>{});return a}catch{return null}}
+function playRecoverSfxOnce(){
+  // V3.2.35: 회복 애니메이션이 Recover.mp3보다 먼저 시작되지 않도록 재생 종료까지 기다린다.
+  return new Promise(resolve=>{
+    try{
+      const a=new Audio(CONFIG.recoverSfx);a.preload="auto";a.loop=false;a.currentTime=0;
+      const v=Number(CONFIG.recoverSfxVolume);a.volume=Math.max(0,Math.min(1,Number.isFinite(v)?v:1));
+      let done=false,timer=null;
+      const finish=()=>{if(done)return;done=true;if(timer)clearTimeout(timer);a.removeEventListener("ended",finish);a.removeEventListener("error",finish);resolve(a)};
+      a.addEventListener("ended",finish,{once:true});a.addEventListener("error",finish,{once:true});
+      // 손상되거나 duration을 얻지 못하는 오디오 때문에 연출 큐가 영원히 멈추지 않도록 안전 타임아웃.
+      timer=setTimeout(finish,8000);
+      const playPromise=a.play();if(playPromise?.catch)playPromise.catch(finish);
+    }catch{resolve(null)}
+  })
+}
 function hit(el){
   if(!el)return;
   const box=el.closest(".spritebox");
@@ -1720,17 +1741,31 @@ async function playHitEvent(ev){
 }
 async function playHealEvent(ev){
   const side=ev.targetSide,t=battle?.trainer(side),p=t?.active,targetIndex=Number(ev.targetIndex);
-  // 실제 HP가 오른 모든 회복 이벤트에서 1회 재생한다. 부활(revive)은 예외.
-  if(ev.source!=="revive"&&Number(ev.amount)>0)playRecoverSfxOnce();
-  // 벤치 포켓몬 회복은 전투 HUD 체력바가 없으므로 문구만 실시간으로 보여 준다.
-  if(!t||Number.isFinite(targetIndex)&&targetIndex>=0&&targetIndex!==t.activeIndex){await new Promise(r=>setTimeout(r,220));return}
-  const max=Math.max(1,Number(ev.maxHp)||p?.stats?.hp||1),before=Math.max(0,Number.isFinite(Number(ev.hpBefore))?Number(ev.hpBefore):(visualHpBySide[side]?.hp??p?.currentHp??0)-(Number(ev.amount)||0)),after=Math.min(max,Math.max(before,Number.isFinite(Number(ev.hpAfter))?Number(ev.hpAfter):before+(Number(ev.amount)||0)));
-  setVisualHp(side,before,max,true);
-  qs("#battleMessage").textContent=`${ev.targetName||"포켓몬"}의 HP가 ${Math.max(0,Math.round(after-before))} 회복됐다!`;
-  // 회복 문구가 먼저 보인 뒤 HP 바와 숫자가 함께 차오른다.
-  await new Promise(r=>setTimeout(r,260));
+  const shouldPlayRecover=ev.source!=="revive"&&Number(ev.amount)>0;
+  // 벤치 포켓몬도 실제 회복이면 Recover.mp3는 1회 재생하지만, HUD 애니메이션은 없다.
+  const isBench=!t||Number.isFinite(targetIndex)&&targetIndex>=0&&targetIndex!==t.activeIndex;
+  let max=1,before=0,after=0;
+  if(!isBench){
+    max=Math.max(1,Number(ev.maxHp)||p?.stats?.hp||1);
+    before=Math.max(0,Number.isFinite(Number(ev.hpBefore))?Number(ev.hpBefore):(visualHpBySide[side]?.hp??p?.currentHp??0)-(Number(ev.amount)||0));
+    after=Math.min(max,Math.max(before,Number.isFinite(Number(ev.hpAfter))?Number(ev.hpAfter):before+(Number(ev.amount)||0)));
+    setVisualHp(side,before,max,true);
+  }
+  qs("#battleMessage").textContent=`${ev.targetName||"포켓몬"}의 HP가 ${Math.max(0,Math.round(isBench?Number(ev.amount)||0:after-before))} 회복됐다!`;
+  // Recover.mp3가 끝난 다음에만 HP 바/숫자 회복이 시작된다. 부활은 효과음 없이 기존 처리.
+  if(shouldPlayRecover)await playRecoverSfxOnce();
+  if(isBench){await new Promise(r=>setTimeout(r,180));return}
   await animateVisualHp(side,before,after,max,900);
   await new Promise(r=>setTimeout(r,220));
+}
+function setMegaPresentationSprite(ev,phase="after"){
+  if(!ev?.sourceSide)return;
+  const mine=ev.sourceSide===mySide,img=qs(mine?"#playerSprite":"#enemySprite");if(!img)return;
+  const before=phase==="before",id=before?ev.beforeSpriteId:ev.afterSpriteId,shiny=before?!!ev.beforeShiny:!!ev.afterShiny;
+  if(!id)return;
+  const src=spriteUrlForId(id,shiny,mine);
+  img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`};img.style.opacity="";
+  if(img.dataset.spriteSrc!==src){img.dataset.spriteSrc=src;img.src=src;syncTeraNativeSource(img,src)}else syncTeraNativeSource(img,src);
 }
 function visualDiff(){
   const mine=trainerByPerspective(true),enemy=trainerByPerspective(false);const cur={mineHp:mine.active.currentHp,enemyHp:enemy.active.currentHp,mineActive:mine.activeIndex,enemyActive:enemy.activeIndex,megaKeys:[...mine.party.map((p,i)=>p.isMega?`M${i}`:null),...enemy.party.map((p,i)=>p.isMega?`E${i}`:null)].filter(Boolean)};
@@ -1742,6 +1777,9 @@ function visualDiff(){
       const sequence=fresh.filter(e=>e.type==="script"||e.type==="megaFx"||e.type==="move"||e.type==="hit"||e.type==="heal"||e.type==="cry");
       if(sequence.length){
         visualPresentationActive=true;
+        // 메가 계산은 이미 끝났어도 화면은 GIF 시작 전까지 기존 폼으로 되돌린다.
+        // 이 코드는 같은 renderBattle 호출 안에서 실행되므로 메가 폼이 먼저 화면에 굳어 보이는 것을 막는다.
+        for(const ev of sequence)if(ev.type==="megaFx")setMegaPresentationSprite(ev,"before");
         // 이미 계산된 최종 HP가 연출 시작 전에 보이지 않도록 각 진영의 첫 HP 변화 직전 값으로 HUD를 즉시 되돌린다.
         const firstHpEventBySide={};for(const ev of sequence)if((ev.type==="hit"||ev.type==="heal")&&ev.targetSide&&!firstHpEventBySide[ev.targetSide])firstHpEventBySide[ev.targetSide]=ev;
         for(const [side,ev] of Object.entries(firstHpEventBySide)){const t=battle?.trainer(side),p=t?.active,targetIndex=Number(ev.targetIndex);if(Number.isFinite(targetIndex)&&targetIndex>=0&&t&&targetIndex!==t.activeIndex)continue;const max=Math.max(1,Number(ev.maxHp)||p?.stats?.hp||1),before=Number.isFinite(Number(ev.hpBefore))?Number(ev.hpBefore):(ev.type==="hit"?Math.min(max,(p?.currentHp||0)+(Number(ev.damage)||0)):Math.max(0,(p?.currentHp||0)-(Number(ev.amount)||0)));setVisualHp(side,before,max,true)}
@@ -1749,7 +1787,7 @@ function visualDiff(){
         hitSequence=hitSequence.then(async()=>{
           setVisualLock(true);
           try{
-            for(const ev of sequence){if(ev.type==="script")await playScriptEvent(ev);else if(ev.type==="megaFx")await playMegaFx();else if(ev.type==="move")await playMoveEvent(ev);else if(ev.type==="hit")await playHitEvent(ev);else if(ev.type==="heal")await playHealEvent(ev);else if(ev.type==="cry")await playCryEvent(ev)}
+            for(const ev of sequence){if(ev.type==="script")await playScriptEvent(ev);else if(ev.type==="megaFx")await playMegaFx(ev);else if(ev.type==="move")await playMoveEvent(ev);else if(ev.type==="hit")await playHitEvent(ev);else if(ev.type==="heal")await playHealEvent(ev);else if(ev.type==="cry")await playCryEvent(ev)}
           }finally{
             setVisualLock(false);visualPresentationActive=false;visualHpBySide.A=null;visualHpBySide.B=null;refreshVisualLock();
             // 데모 AI의 강제 교체는 쓰러짐 연출이 끝난 뒤에야 실행한다.
@@ -1764,18 +1802,40 @@ function visualDiff(){
 }
 let megaFxPlaying=false;
 function drawCover(ctx,frame,w,h){const sw=frame.displayWidth||frame.codedWidth||frame.width,sh=frame.displayHeight||frame.codedHeight||frame.height;if(!sw||!sh)return;const scale=Math.max(w/sw,h/sh),dw=sw*scale,dh=sh*scale,dx=(w-dw)/2,dy=(h-dh)/2;ctx.clearRect(0,0,w,h);ctx.drawImage(frame,dx,dy,dw,dh)}
-async function playMegaFx(){
-  if(megaFxPlaying)return;megaFxPlaying=true;const ov=qs("#megaOverlay"),canvas=qs("#megaCanvas"),fallback=qs("#megaFallback");ov.classList.remove("hidden");fallback.classList.add("hidden");fallback.src="";
+async function playMegaFx(ev){
+  if(megaFxPlaying)return;megaFxPlaying=true;
+  const ov=qs("#megaOverlay"),canvas=qs("#megaCanvas"),fallback=qs("#megaFallback");
+  // GIF 재생 시작 직전까지는 반드시 기존 폼을 유지한다.
+  setMegaPresentationSprite(ev,"before");
+  ov.classList.remove("hidden");fallback.classList.add("hidden");fallback.src="";
+  let spriteChanged=false;
+  const changeSprite=()=>{if(spriteChanged)return;spriteChanged=true;setMegaPresentationSprite(ev,"after")};
   try{
     if("ImageDecoder" in window&&await ImageDecoder.isTypeSupported("image/gif")){
-      const res=await fetch(`${CONFIG.megaFx}?once=${Date.now()}`,{cache:"no-store"});if(!res.ok)throw new Error(`mega gif ${res.status}`);const data=await res.arrayBuffer();const dec=new ImageDecoder({data,type:"image/gif"});await dec.tracks.ready;const count=dec.tracks.selectedTrack?.frameCount||1,dpr=Math.max(1,window.devicePixelRatio||1),w=Math.max(1,Math.round(innerWidth*dpr)),h=Math.max(1,Math.round(innerHeight*dpr));canvas.width=w;canvas.height=h;canvas.style.width="100vw";canvas.style.height="100vh";const ctx=canvas.getContext("2d");
-      for(let i=0;i<count;i++){const out=await dec.decode({frameIndex:i,completeFramesOnly:true});const frame=out.image;drawCover(ctx,frame,w,h);const ms=Math.max(16,Math.min(1000,(frame.duration||100000)/1000));await new Promise(r=>setTimeout(r,ms));frame.close?.()}
-      dec.close?.();ctx.clearRect(0,0,w,h)
+      const res=await fetch(`${CONFIG.megaFx}?once=${Date.now()}`,{cache:"no-store"});if(!res.ok)throw new Error(`mega gif ${res.status}`);
+      const data=await res.arrayBuffer(),dec=new ImageDecoder({data,type:"image/gif"});await dec.tracks.ready;
+      const count=dec.tracks.selectedTrack?.frameCount||1,dpr=Math.max(1,window.devicePixelRatio||1),w=Math.max(1,Math.round(innerWidth*dpr)),h=Math.max(1,Math.round(innerHeight*dpr));
+      const switchFrame=Math.max(1,Math.min(count-1,Math.floor(count*.46)));canvas.width=w;canvas.height=h;canvas.style.width="100vw";canvas.style.height="100vh";const ctx=canvas.getContext("2d");
+      for(let i=0;i<count;i++){
+        const out=await dec.decode({frameIndex:i,completeFramesOnly:true}),frame=out.image;drawCover(ctx,frame,w,h);
+        // 메가진화 GIF가 이미 재생되고 있는 도중(약 46%)에 실제 포켓몬 스프라이트를 메가 폼으로 교체한다.
+        if(!spriteChanged&&i>=switchFrame)changeSprite();
+        const ms=Math.max(16,Math.min(1000,(frame.duration||100000)/1000));await new Promise(r=>setTimeout(r,ms));frame.close?.()
+      }
+      changeSprite();dec.close?.();ctx.clearRect(0,0,w,h)
     }else{
-      canvas.width=1;canvas.height=1;fallback.classList.remove("hidden");fallback.src=`${CONFIG.megaFx}?once=${Date.now()}`;await new Promise(r=>setTimeout(r,CONFIG.megaFxDurationMs));fallback.src="";fallback.classList.add("hidden")
+      canvas.width=1;canvas.height=1;fallback.classList.remove("hidden");fallback.src=`${CONFIG.megaFx}?once=${Date.now()}`;
+      const switchAt=Math.max(250,Math.floor(CONFIG.megaFxDurationMs*.46));
+      await new Promise(r=>setTimeout(r,switchAt));changeSprite();
+      await new Promise(r=>setTimeout(r,Math.max(0,CONFIG.megaFxDurationMs-switchAt)));
+      fallback.src="";fallback.classList.add("hidden")
     }
-  }catch(e){console.warn("Mega FX fallback",e);canvas.width=1;canvas.height=1;fallback.classList.remove("hidden");fallback.src=`${CONFIG.megaFx}?once=${Date.now()}`;await new Promise(r=>setTimeout(r,CONFIG.megaFxDurationMs));fallback.src="";fallback.classList.add("hidden")}
-  ov.classList.add("hidden");megaFxPlaying=false
+  }catch(e){
+    console.warn("Mega FX fallback",e);canvas.width=1;canvas.height=1;fallback.classList.remove("hidden");fallback.src=`${CONFIG.megaFx}?once=${Date.now()}`;
+    const switchAt=Math.max(250,Math.floor(CONFIG.megaFxDurationMs*.46));await new Promise(r=>setTimeout(r,switchAt));changeSprite();await new Promise(r=>setTimeout(r,Math.max(0,CONFIG.megaFxDurationMs-switchAt)));fallback.src="";fallback.classList.add("hidden")
+  }
+  // 어떤 폴백 경로에서도 다음 큐로 넘어가기 전에 메가 스프라이트가 확정되어 있어야 한다.
+  changeSprite();ov.classList.add("hidden");megaFxPlaying=false
 }
 function validationHtml(d){if(!d)return"";const errs=(d.errors||[]).map(x=>`<div class="validation-error">✕ ${esc(x)}</div>`).join("");const warns=(d.warnings||[]).map(x=>`<div class="validation-warn">△ ${esc(x)}</div>`).join("");return errs+warns}
 function previewEntry(data){if(!data?.partyData?.length){qs("#entryPreview").innerHTML=`<div class="bad">이 트레이너의 포켓몬 정보를 찾지 못했습니다.</div>${validationHtml(data)}`;return}qs("#entryPreview").innerHTML=`${validationHtml(data)}${data.partyData.map(p=>`<div class="teamrow"><img src="${CONFIG.showdownBase}/${p.shiny?"ani-shiny":"ani"}/${encodeURIComponent(p.showdownId)}.gif" onerror="this.style.visibility='hidden'"><div><b>${esc(p.nickname)}</b><small>${p.types.map(x=>TYPE_KO[x]||x).join(" / ")} · 지닌물건 ${esc(displayItemName(p.item))}</small></div><span>레벨 ${p.level}</span></div>`).join("")}`}
