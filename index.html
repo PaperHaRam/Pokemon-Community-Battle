@@ -749,7 +749,8 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 
 
 <style>
-/* V3.2.38 — Recover.mp3 재생 볼륨을 40%로 조정.
+/* V3.2.39 — 자연스러운 교체 리콜/등장 애니메이션 + 울음소리 볼륨 35%.
+   V3.2.38 — Recover.mp3 재생 볼륨을 40%로 조정.
    V3.2.35 — 메가진화 GIF 재생 중간에 폼 스프라이트 전환 + Recover.mp3 종료 후 HP 회복 애니메이션.
    V3.2.34 — 울음소리 순차 연출 + 교체 바운스 + 메가진화 GIF 완료 후 다음 연출.
    V3.2.33 — 모든 실제 HP 회복 시 Recover.mp3 1회 재생(부활 제외).
@@ -829,7 +830,7 @@ input,select,.btn{background:#0e1b2d;color:var(--text);border:1px solid var(--li
 <div class="shell">
   <header class="topbar">
     <div class="brand"><h1>Pokémon RP 배틀</h1><p>완전 한글 표시 / 교체·가방 / 지닌물건·기믹 검증 / 온라인 매치</p></div>
-    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.38 · 회복 효과음 40% / 메가진화 중간 폼 전환</span></div>
+    <div class="badges"><span class="badge" id="sheetBadge">시트: 연결 중</span><span class="badge" id="dexBadge">도감: 연결 중</span><span class="badge" id="firebaseBadge">온라인: 설정 확인</span><span class="badge">스프라이트: Showdown</span><span class="badge">V3.2.39 · 자연스러운 교체 애니메이션 / 울음소리 35%</span></div>
   </header>
 
   <section class="panel lobby" id="lobby">
@@ -905,7 +906,7 @@ const CONFIG = {
   showdownBase: "https://play.pokemonshowdown.com/sprites",
   showdownData: "https://play.pokemonshowdown.com/data",
   showdownCryBase: "https://play.pokemonshowdown.com/audio/cries",
-  cryVolume: 0.5,
+  cryVolume: 0.35,
   pokeApi: "https://pokeapi.co/api/v2",
   generation: 9,
   legalityMode: "anygen", // mixed RP mechanics: species must have learned the move in at least one documented generation
@@ -1396,7 +1397,7 @@ class Battle{
   }
   endDynamax(p){const oldMax=p.stats.hp,base=p.preDynamaxMaxHp,ratio=base/oldMax;p.currentHp=Math.min(base,Math.ceil(p.currentHp*ratio));p.stats.hp=base;p.preDynamaxMaxHp=null;p.isDynamaxed=false;p.isGigantamaxed=false;p.dynamaxTurnsLeft=0}
   updateForcedSwitch(){for(const side of["A","B"]){const t=this.trainer(side);this.forceSwitch[side]=t.active.isFainted()&&t.hasUsable();if(this.forceSwitch[side])this.log(`${t.name}은(는) 다음 포켓몬을 내보내야 한다.`)}}
-  switch(side,index,forced=false){const t=this.trainer(side),old=t.active,next=t.party[index];if(!next||next.isFainted()||next===old)return false;if(this.forceSwitch[side]&&!forced)return false;if(old.isDynamaxed)this.endDynamax(old);this.breakIllusion(old,false);this.revertTransform(old);old.resetVolatile();t.activeIndex=index;this.forceSwitch[side]=false;const exact=next.actualSpriteId?next.actualSpriteId():next.showdownId;this.log(`${t.name}: ${old.nickname} → ${next.displayName?next.displayName():next.nickname}`,"switch",{targetSide:side});this.emitVisual("cry",{reason:"switch",targetSide:side,cryId:exact||next.showdownId,baseCryId:next.showdownId||exact,pokemonName:next.nickname});this.applyEntryAbility(next);return true}
+  switch(side,index,forced=false){const t=this.trainer(side),old=t.active,next=t.party[index];if(!next||next.isFainted()||next===old)return false;if(this.forceSwitch[side]&&!forced)return false;const oldSpriteId=old.spriteId?old.spriteId():(old.actualSpriteId?old.actualSpriteId():old.showdownId),oldShiny=old.spriteShiny?old.spriteShiny():!!old.shiny;if(old.isDynamaxed)this.endDynamax(old);this.breakIllusion(old,false);this.revertTransform(old);old.resetVolatile();t.activeIndex=index;this.forceSwitch[side]=false;const newSpriteId=next.spriteId?next.spriteId():(next.actualSpriteId?next.actualSpriteId():next.showdownId),newShiny=next.spriteShiny?next.spriteShiny():!!next.shiny;const exact=next.actualSpriteId?next.actualSpriteId():next.showdownId;this.log(`${t.name}: ${old.nickname} → ${next.displayName?next.displayName():next.nickname}`,"switch",{targetSide:side,oldSpriteId,oldShiny,newSpriteId,newShiny});this.emitVisual("cry",{reason:"switch",targetSide:side,cryId:exact||next.showdownId,baseCryId:next.showdownId||exact,pokemonName:next.nickname});this.applyEntryAbility(next);return true}
   actionSpeedOrder(){const sa=this.effectiveStat(this.trainerA.active,"speed"),sb=this.effectiveStat(this.trainerB.active,"speed");if(sa!==sb)return sa>sb?["A","B"]:["B","A"];return Math.random()<.5?["A","B"]:["B","A"]}
   executeActions(actionA,actionB){
     if(this.finished)return;if(this.forceSwitch.A||this.forceSwitch.B){this.log("강제 교체를 먼저 완료해야 한다.");return}
@@ -1680,6 +1681,41 @@ function tryPlayCryUrl(url,onStarted=null){
     safetyTimer=setTimeout(()=>done(started),8000);
   })
 }
+function setSwitchPresentationSprite(ev,phase="new"){
+  if(!ev?.targetSide)return;
+  const mine=ev.targetSide===mySide,img=qs(mine?"#playerSprite":"#enemySprite");if(!img)return;
+  const useOld=phase==="old",id=useOld?ev.oldSpriteId:ev.newSpriteId,shiny=useOld?!!ev.oldShiny:!!ev.newShiny;
+  if(!id)return;
+  const src=spriteUrlForId(id,shiny,mine);
+  img.onerror=()=>{img.onerror=null;img.style.opacity=.2;img.alt=`스프라이트를 찾을 수 없음`};
+  img.classList.remove("faint");img.style.removeProperty("opacity");
+  if(img.dataset.spriteSrc!==src){img.dataset.spriteSrc=src;img.src=src;syncTeraNativeSource(img,src)}else syncTeraNativeSource(img,src);
+}
+async function playSwitchTransition(ev){
+  if(!ev?.targetSide){await new Promise(r=>setTimeout(r,180));return}
+  const mine=ev.targetSide===mySide,img=qs(mine?"#playerSprite":"#enemySprite"),box=img?.closest(".spritebox"),overlay=teraOverlayForBase(img);
+  if(!img||!box){await new Promise(r=>setTimeout(r,180));return}
+  // 계산상 이미 새 포켓몬이 활성화되어 있어도 화면에서는 이전 포켓몬부터 리콜한다.
+  setSwitchPresentationSprite(ev,"old");
+  if(overlay)overlay.style.setProperty("visibility","hidden","important");
+  const recall=box.animate([
+    {transform:"translateY(0) scale(1)",opacity:1},
+    {offset:.55,transform:"translateY(14px) scale(.88)",opacity:.72},
+    {transform:"translateY(42px) scale(.66)",opacity:0}
+  ],{duration:420,easing:"cubic-bezier(.45,0,.7,1)",fill:"forwards"});
+  try{await recall.finished}catch{}
+  setSwitchPresentationSprite(ev,"new");
+  // 새 포켓몬은 아래에서 살짝 올라오며 원래 크기로 안착한다.
+  const appear=box.animate([
+    {transform:"translateY(44px) scale(.70)",opacity:0},
+    {offset:.62,transform:"translateY(-5px) scale(1.025)",opacity:1},
+    {transform:"translateY(0) scale(1)",opacity:1}
+  ],{duration:560,easing:"cubic-bezier(.16,.84,.28,1)",fill:"forwards"});
+  try{await appear.finished}catch{}
+  try{recall.cancel()}catch{};try{appear.cancel()}catch{}
+  box.style.removeProperty("transform");box.style.removeProperty("opacity");
+  if(overlay){overlay.style.removeProperty("visibility");const t=battle?.trainer(ev.targetSide),p=t?.active;if(p)setTeraOverlay(img,overlay,p,mine)}
+}
 async function playCryEvent(ev){
   for(const url of cryUrls(ev)){
     let stopBob=()=>{};
@@ -1700,7 +1736,7 @@ async function playScriptEvent(ev){
     await new Promise(r=>setTimeout(r,CONFIG.faintReadDelayMs));return;
   }
   if(["move","zmove","dyna"].includes(ev.kind))return; // 바로 다음 move 이벤트가 읽기 시간을 담당
-  if(ev.kind==="switch"){await new Promise(r=>setTimeout(r,180));return}
+  if(ev.kind==="switch"){await playSwitchTransition(ev);return}
   await new Promise(r=>setTimeout(r,ev.kind==="turn"?260:CONFIG.scriptReadDelayMs));
 }
 async function playMoveEvent(ev){
